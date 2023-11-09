@@ -1,0 +1,19 @@
+control:
+    Package: mbkit
+    Version: 0.0.3
+    Architecture: all
+    Maintainer: Tabriik <Tabriik@duck.com>
+    Depends: python
+    Homepage: N/A
+    Description: |-
+        A py Package
+
+installation_prefix: /data/data/com.termux/files/usr
+
+data_files:
+    bin/mbkit:
+        source: mbkit2.py
+        set_shebang: "#!/data/data/com.termux/files/usr/bin/python"
+
+    share/man/man1/mbkit.1:
+        source: mbkit.1

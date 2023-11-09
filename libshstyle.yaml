@@ -1,0 +1,19 @@
+control:
+    Package: libshstyle
+    Version: 0.0.6
+    Architecture: all
+    Maintainer: Tabriik <Tabriik@duck.com>
+    Depends: bash, sed
+    Homepage: N/A
+    Description: |-
+        Bash ascii color library
+
+installation_prefix: /data/data/com.termux/files/usr
+
+data_files:
+    lib/libsh/libshstyle.sh:
+        source: libshstyle.sh
+        set_shebang: "#!/data/data/com.termux/files/usr/bin/bash"
+
+    share/man/man1/libshstyle.1:
+        source: libshstyle.1
