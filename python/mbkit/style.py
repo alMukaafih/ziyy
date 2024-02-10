@@ -46,10 +46,10 @@ class Color:
             self.color = self.escape(7)
         # rgb colors
         elif color.startswith("rgb(") and color.endswith(")"):
-                self.rgb = re.findall(r"rgb\((.+)\)", color)
-                self.rgb = re.sub(r"\,", ";", self.rgb[0])
-                self.rgb = re.sub(r" ", "", self.rgb)
-                self.color = self.escape(f"8;2;{self.rgb}")
+            self.rgb = re.findall(r"rgb\((.+)\)", color)
+            self.rgb = re.sub(r"\,", ";", self.rgb[0])
+            self.rgb = re.sub(r" ", "", self.rgb)
+            self.color = self.escape(f"8;2;{self.rgb}")
         else:
             raise ColorError(style(f"-c yellow -x red {color}"))
 
