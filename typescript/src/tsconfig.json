@@ -7,9 +7,10 @@
         "removeComments": true,
         "esModuleInterop": false,
         "forceConsistentCasingInFileNames": true,
-        "noImplicitAny": false,
+        "noImplicitAny": true,
         "downlevelIteration": true,
-        "strict": false
+        "strict": false,
+        "declaration": true
     },
     "exclude": [
         "./dist/**/*",

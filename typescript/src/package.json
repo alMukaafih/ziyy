@@ -1,0 +1,35 @@
+{
+  "name": "ziyy",
+  "version": "1.0.3",
+  "description": "Terminal string styler",
+  "main": "style.js",
+  "types": "style.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "color",
+    "colour",
+    "colors",
+    "terminal",
+    "console",
+    "cli",
+    "string",
+    "ansi",
+    "style",
+    "styles",
+    "tty",
+    "formatting",
+    "rgb",
+    "256",
+    "shell",
+    "xterm",
+    "log",
+    "logging",
+    "command-line",
+    "text"
+  ],
+  "author": "alMukaafih",
+  "license": "MIT"
+}

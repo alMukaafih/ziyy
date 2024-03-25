@@ -1,18 +1,18 @@
 let reset: string = "\x1b[0m" // reset Styles
 class Color {
-    firstDigit: string;
-    secondDigit: string;
+    firstDigit: number;
+    secondDigit: string | number;
     color: string;
     rgb: string;
     sub: string;
-    constructor(firstDigit) {
+    constructor(firstDigit: number) {
         this.firstDigit = firstDigit
     }
-    _escape(secondDigit) {
+    _escape(secondDigit: string | number) {
         this.secondDigit = secondDigit;
         return `\x1b[${this.firstDigit}${this.secondDigit}m`;
     }
-    colorValue(color) {
+    colorValue(color: string) {
         if (color == "black") {
             this.color = this._escape(0)
         } else if (color == "red") {
@@ -57,7 +57,7 @@ class Color {
 let fg = new Color(3)
 let bg = new Color(4)
 
-export function style(text: string) {
+export function style(text: string): string {
     let matched;
     let value;
     //foreground color
@@ -122,6 +122,21 @@ export function style(text: string) {
     if (text.includes("[/s]")) {
         text = text.replace(/\[\/s\]/g, "\x1b[29m")
     }
+    if (text.includes("[/0]")) {
+        text = text.replace(/\[\/0\]/g, "\x1b[0m")
+    }
 
 return `${text}${reset}`
+}
+
+
+export function template(save: string) {
+    function styler(text: string): string {
+        return style(`${save}${text}`)
+    }
+    return styler
+}
+
+if (require.main === module) {
+    console.log(style("[b]Hello[/0] World!"))
 }
