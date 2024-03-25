@@ -2,3 +2,5 @@
 name = "ziyy"
 version = "0.1.0"
 edition = "2021"
+description = "Convenient Terminal Output Styler."
+license = "MIT OR Apache-2.0"
