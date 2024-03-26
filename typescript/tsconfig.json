@@ -10,16 +10,7 @@
         "noImplicitAny": true,
         "downlevelIteration": true,
         "strict": false,
-        "declaration": true
-    },
-    "exclude": [
-        "./dist/**/*",
-        "./source/",
-        "./src",
-        "./js-docs/",
-        "./docs/",
-        "./webpack.config.js",
-        "./tests/",
-        "toml-nodejs/"
-    ]
+        "declaration": true,
+        "outDir": "dist"
+    }
 }

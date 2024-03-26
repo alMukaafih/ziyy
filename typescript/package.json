@@ -1,12 +1,14 @@
 {
   "name": "ziyy",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Terminal string styler",
-  "main": "style.js",
-  "types": "style.d.ts",
+  "main": "dist/style.js",
+  "types": "dist/style.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepack": "cp ../README.md .",
+    "postpack": "rm README.md"
   },
   "keywords": [
     "color",
@@ -22,7 +24,6 @@
     "tty",
     "formatting",
     "rgb",
-    "256",
     "shell",
     "xterm",
     "log",
@@ -31,5 +32,8 @@
     "text"
   ],
   "author": "alMukaafih",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.11.30"
+  }
 }
