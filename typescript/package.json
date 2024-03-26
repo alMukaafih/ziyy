@@ -1,7 +1,7 @@
 {
   "name": "ziyy",
   "version": "1.0.4",
-  "description": "Terminal string styler",
+  "description": "Convenient Terminal Output Styler.",
   "main": "dist/style.js",
   "types": "dist/style.d.ts",
   "scripts": {
@@ -35,5 +35,9 @@
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.11.30"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alMukaafih/ziyy.git"
   }
 }
