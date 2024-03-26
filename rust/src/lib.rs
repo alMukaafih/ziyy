@@ -1,8 +1,13 @@
-//! A Convenient Library for Styling Terminal Output.
-//!
-//!
-//!
 #![warn(missing_docs)]
+//! A Convenient Library for Styling Terminal Output.
+//! # Example
+//! ```
+//! use ziyy::style;
+//! let text = style("[b][c:yellow]Hello World!");
+//! assert_eq!(text, "\x1b[1m\x1b[33mHello World!\x1b[0m")
+//!```
+//!
+
 const RESET: &str = "\x1b[0m";
 #[allow(dead_code)]
 struct Color {
@@ -109,7 +114,17 @@ impl Parser {
     }
 }
 
-/// Style the text using escape sequence.
+/// Styles your text using escape sequence.
+/// 
+/// It takes in text that has been styled using recognised tags and returns the equivalent that it styles using escape sequences.
+/// It is a one to one relationship
+/// 
+/// # Example
+/// ```
+/// use ziyy::style;
+/// let text = style("[s][c:black]Black Text");
+/// assert_eq!(text, "\x1b[9m\x1b[30mBlack Text\x1b[0m")
+/// ```
 /// 
 pub fn style(text: &str) -> String {
     // initialize fg and bg
@@ -180,7 +195,20 @@ pub fn style(text: &str) -> String {
     format!("{text}{RESET}")
 }
 
-/// Create a new Template for styling text.
+/// Creates a new Template for styling text.
+/// 
+/// It takes in styling information and returns a 
+/// Clousue that can be used to style text using 
+/// the styling information.
+/// 
+/// # Example
+/// ```
+/// use ziyy::template;
+/// let bred = template("[b][c:red]");
+/// let text = bred("Bold Red Text");
+/// assert_eq!(text, "\x1b[1m\x1b[31mBold Red Text\x1b[0m")
+/// ```
+/// 
 pub fn template(save: &str) -> impl for<'a> Fn(&'a str) -> String + '_ {
     move |text: &str| -> String {
         style(format!("{save}{text}").as_str())
