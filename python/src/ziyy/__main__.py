@@ -33,7 +33,7 @@ elif first == "-f" or first == "--file":
     file = open(args[1], "r").read()
     print(style(file), end="")
 elif first == "-V" or first == "--version":
-    print("ziyy 1.0.0")
+    print("ziyy 1.0.6")
 elif first == "-h" or first == "--help":
     print(usage(), end="")
     sys.exit(0)

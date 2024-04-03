@@ -3,10 +3,11 @@ import re
 import sys
 import os
 
+__all__ = ["style", "template"]
+
 class ColorError(Exception):
     pass
-    #def __str__(self):
-        #return "ColorError"
+
 class Color:
     def __init__(self, firstDigit):
         self.firstDigit = firstDigit
@@ -41,10 +42,6 @@ class Color:
             self.color = self.escape(f"8;2;{self.rgb}")
         else:
             raise ColorError(style(f"[c: yellow][x: red]{color}"))
-
-        color = re.sub(r"\(", r"\(", color, count=1)
-        color = re.sub(r"\)", r"\)", color, count=1)
-        self.sub = color
     def substitute(self, text, tag):
         return text.replace(tag, self.color)
 
@@ -88,7 +85,7 @@ class Parser:
             self.result += chars[i]
             i += 1
 
-def style(text):
+def style(text: str) -> str:
     # initialize fg and bg
     fg = Color(3)
     bg = Color(4)
@@ -149,12 +146,11 @@ def style(text):
             
 
     return f"{text}{RESET}"
-    
 
 def template(save):
-        return lambda text: style(f"{save}{text}")
+    return lambda text: style(f"{save}{text}")
 
 if __name__ == "__main__":
-    p = template("[b][c:blue]")
+    p = template("[b][c:rgb(0,150,75)]")
     print(p("Yes"))
     print(p("Hello"))

@@ -1,6 +1,6 @@
 [package]
 name = "ziyy"
-version = "0.1.1"
+version = "1.0.6"
 readme = "../README.md"
 repository = "https://github.com/alMukaafih/ziyy.git"
 edition = "2021"

@@ -68,55 +68,51 @@ impl Color {
 struct Parser {
     result: String,
     tags: Vec<String>,
-    on: bool,
+    open: bool,
+    esc: bool,
 }
 impl Parser {
     fn parse(&mut self, text: String) {
-        let chars: Vec<_> = text.chars().map(|x| {x}).collect();
-        let mut i = 0;
         let mut tag = String::new();
-        while i < chars.len() {
-            if chars[i] == '\\' {
-                self.result.push(chars[i + 1]);
-                i = i + 2;
-                continue
+        let _: Vec<_> = text.chars().map(|x| {
+            if x == '\\' && !self.esc {
+                self.esc = true;
             }
-            if chars[i] == '[' {
-                self.on = true;
-                self.result.push(chars[i]);
-                tag.push(chars[i]);
-                i = i + 1;
-                continue
+            else if self.esc {
+                self.result.push(x);
+                self.esc = false
             }
-            if chars[i] == ']' {
-                self.on = false;
-                self.result.push(chars[i]);
-                tag.push(chars[i]);
+            else if x == '[' {
+                self.open = true;
+                self.result.push(x);
+                tag.push(x);
+            }
+            else if x == ']' {
+                self.open = false;
+                self.result.push(x);
+                tag.push(x);
                 if !self.tags.contains(&tag) {
-                    self.tags.push(tag);
+                    self.tags.push(tag.clone());
                 }
                 tag = String::new();
-                i = i + 1;
-                continue
             }
-            if self.on && !chars[i].is_whitespace()  {
-                self.result.push(chars[i]);
-                tag.push(chars[i]);
-                i = i + 1;
-                continue
-            } else if self.on && chars[i].is_whitespace() {
-                i = i + 1;
-                continue
+            else if self.open && !x.is_whitespace()  {
+                self.result.push(x);
+                tag.push(x);
             }
-            self.result.push(chars[i]);
-            i = i + 1;
-        }
+            else if self.open && x.is_whitespace() {}
+            else {
+                self.result.push(x);
+            }
+            x
+        }).collect();
     }
     fn new() -> Parser {
         Parser {
             result: String::new(),
             tags: Vec::new(),
-            on: false,
+            open: false,
+            esc: false,
         }
     }
 }
@@ -138,7 +134,7 @@ pub fn style(text: &str) -> String {
     let text = String::from(text);
     let mut fg = Color::new(3);
     let mut bg = Color::new(4);
-    let RESET: &str = "\x1b[0m";
+    const RESET: &str = "\x1b[0m";
     
     let mut p = Parser::new();
     p.parse(text);

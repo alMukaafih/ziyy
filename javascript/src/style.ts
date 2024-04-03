@@ -1,4 +1,3 @@
-let reset: string = "\x1b[0m" // reset Styles
 class Color {
     firstDigit: number;
     secondDigit: string | number;
@@ -53,11 +52,25 @@ class Color {
     }
 }
 
-// initialize fg and bg
-let fg = new Color(3)
-let bg = new Color(4)
+class Parser {
+    result: string
+    tags: Array<string>
+    on: bool
+    constructor() {
+        this.result = ""
+        this.tags = []
+        this.on = false
+    }
+    parse(text: string) {
+        tag = ""
+    }
+}
 
 export function style(text: string): string {
+    // initialize fg and bg
+    let fg = new Color(3)
+    let bg = new Color(4)
+    const RESET: string = "\x1b[0m" // RESET Styles
     let matched;
     let value;
     //foreground color
@@ -126,17 +139,16 @@ export function style(text: string): string {
         text = text.replace(/\[\/0\]/g, "\x1b[0m")
     }
 
-return `${text}${reset}`
+return `${text}${RESET}`
 }
 
 
 export function template(save: string) {
-    function styler(text: string): string {
+    return function(text: string): string {
         return style(`${save}${text}`)
     }
-    return styler
 }
 
 if (require.main === module) {
-    console.log(style("[b]Hello[/0] World!"))
+    console.log(style("[b]Hello[/b] World!"))
 }
