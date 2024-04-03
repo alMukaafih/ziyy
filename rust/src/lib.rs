@@ -8,7 +8,6 @@
 //!```
 //!
 
-const RESET: &str = "\x1b[0m";
 #[allow(dead_code)]
 struct Color {
     first_digit: u8,
@@ -30,21 +29,29 @@ impl Color {
     fn color_value(&mut self, color: &mut str) -> String {
         if color == "black" {
             self.color = self.escape(0)
-        } else if color == "red" {
+        }
+        else if color == "red" {
             self.color = self.escape(1)
-        } else if color == "green" {
+        }
+        else if color == "green" {
             self.color = self.escape(2)
-        } else if color == "yellow" {
+        }
+        else if color == "yellow" {
             self.color = self.escape(3)
-        } else if color == "blue" {
+        }
+        else if color == "blue" {
             self.color = self.escape(4)
-        } else if color == "magenta" {
+        }
+        else if color == "magenta" {
             self.color = self.escape(5)
-        } else if color == "cyan" {
+        }
+        else if color == "cyan" {
             self.color = self.escape(6)
-        } else if color == "white" {
+        }
+        else if color == "white" {
             self.color = self.escape(7)
-        } else if color.starts_with("rgb(") && color.ends_with(")") {
+        }
+        else if color.starts_with("rgb(") && color.ends_with(")") {
             let rgb = color.get_mut(4..(color.len()-1)).unwrap().to_string();
             let rgb = rgb.replace(",", ";");
             self.color = self.escape_str(rgb)
@@ -131,6 +138,7 @@ pub fn style(text: &str) -> String {
     let text = String::from(text);
     let mut fg = Color::new(3);
     let mut bg = Color::new(4);
+    let RESET: &str = "\x1b[0m";
     
     let mut p = Parser::new();
     p.parse(text);

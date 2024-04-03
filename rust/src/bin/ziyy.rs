@@ -38,7 +38,7 @@ fn main() {
         let _ = reader.read_to_string(&mut file);
         print!("{}", style(file.as_str()))
     } else if first == Some("-V".to_string()) || first == Some("--version".to_string()) {
-        println!("ziyy 0.1.0")
+        println!("ziyy 0.1.1")
     } else if first == Some("-h".to_string()) || first == Some("--help".to_string()) {
         print!("{}", usage());
         exit(0);

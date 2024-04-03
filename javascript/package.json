@@ -1,6 +1,6 @@
 {
   "name": "ziyy",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Convenient Terminal Output Styler.",
   "main": "dist/style.js",
   "types": "dist/style.d.ts",
