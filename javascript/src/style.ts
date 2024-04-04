@@ -55,14 +55,20 @@ class Color {
 class Parser {
     result: string
     tags: Array<string>
-    on: bool
+    on: boolean
     constructor() {
         this.result = ""
         this.tags = []
         this.on = false
     }
     parse(text: string) {
-        tag = ""
+        let tag = ""
+        let _ = Array.from(text, x => {
+            if (x == '\\' && !this.esc) {
+                this.esc = true
+            } 
+            return x
+        })
     }
 }
 
