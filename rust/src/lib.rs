@@ -26,37 +26,41 @@ impl Color {
         let first_digit = self.first_digit;
         format!("\x1b[{first_digit}8;2;{second_digit}m").to_string()
     }
-    fn color_value(&mut self, color: &mut str) -> String {
-        if color == "black" {
-            self.color = self.escape(0)
-        }
-        else if color == "red" {
-            self.color = self.escape(1)
-        }
-        else if color == "green" {
-            self.color = self.escape(2)
-        }
-        else if color == "yellow" {
-            self.color = self.escape(3)
-        }
-        else if color == "blue" {
-            self.color = self.escape(4)
-        }
-        else if color == "magenta" {
-            self.color = self.escape(5)
-        }
-        else if color == "cyan" {
-            self.color = self.escape(6)
-        }
-        else if color == "white" {
-            self.color = self.escape(7)
-        }
-        else if color.starts_with("rgb(") && color.ends_with(")") {
-            let rgb = color.get_mut(4..(color.len()-1)).unwrap().to_string();
+    fn color_value(&mut self, color: &str) -> String {
+        if color.starts_with("rgb(") && color.ends_with(")") {
+            let rgb = color.get(4..(color.len()-1)).unwrap().to_string();
             let rgb = rgb.replace(",", ";");
-            self.color = self.escape_str(rgb)
-        } else {
-            panic!("Unrecognised color: {color}")
+            self.color = self.escape_str(rgb);
+            return self.color.clone()
+        }
+        match color {
+            "black" => {
+                self.color = self.escape(0)
+            }
+            "red" => {
+                self.color = self.escape(1)
+            }
+            "green" => {
+                self.color = self.escape(2)
+            }
+            "yellow" => {
+                self.color = self.escape(3)
+            }
+            "blue" => {
+                self.color = self.escape(4)
+            }
+            "magenta" => {
+                self.color = self.escape(5)
+            }
+            "cyan" => {
+                self.color = self.escape(6)
+            }
+            "white" => {
+                self.color = self.escape(7)
+            } 
+            value => {
+                panic!("Unrecognised color: {value}")
+            }
         }
         self.color.clone()
     }

@@ -1,4 +1,3 @@
-#!/bin/python
 import re
 import sys
 import os
@@ -9,15 +8,14 @@ class ColorError(Exception):
     pass
 
 class Color:
-    def __init__(self, firstDigit):
-        self.firstDigit = firstDigit
+    def __init__(self, first_digit):
+        self.first_digit = first_digit
 
-    def escape(self, secondDigit):
-        self.secondDigit = secondDigit
-        return f"\x1b[{self.firstDigit}{self.secondDigit}m"
+    def escape(self, second_digit):
+        self.second_digit = second_digit
+        return f"\x1b[{self.first_digit}{self.second_digit}m"
 
     def color_value(self, color):
-        global string
         # basic colors
         if color == "black":
             self.color = self.escape(0)

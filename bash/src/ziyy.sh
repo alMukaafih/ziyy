@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 #source libziyy.sh
-source ../lib/ziyy/libziyy.sh
+[[ -f ../lib/ziyy/libziyy.sh ]] && source ../lib/ziyy/libziyy.sh
+[[ -f libziyy.sh ]] && source libziyy.sh
 
 function usage {
     style "Convenient Terminal Output Styler.
