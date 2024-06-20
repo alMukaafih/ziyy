@@ -1,4 +1,5 @@
 #![warn(missing_docs)]
+#![allow(dead_code)]
 //! A Convenient Library for Styling Terminal Output.
 //! # Example
 //! ```
@@ -7,6 +8,11 @@
 //! assert_eq!(text, "\x1b[1m\x1b[33mHello World!\x1b[0m")
 //!```
 //!
+
+mod scanner;
+
+use scanner::Scanner;
+use crate::scanner::token::*;
 
 #[allow(dead_code)]
 struct Color {
@@ -119,6 +125,25 @@ impl Parser {
             esc: false,
         }
     }
+}
+
+#[doc(hidden)]
+pub fn compile(source: String) -> String {
+    let mut scanner = Scanner::new(source);
+    let mut line = -1;
+    loop {
+        let token = scanner.scan_token();
+        if token.line != line {
+            print!("{:4} ", token.line);
+            line = token.line;
+        } else {
+            print!("   | ");
+        }
+        print!("{:2} '{}'\n", token.kind.as_u8(), token.content);
+        if token.kind == TokenKind::Eof { break };
+    }
+    
+    String::new()
 }
 
 /// Styles your text using escape sequence.
