@@ -1,0 +1,14 @@
+<c.white>Convenient Terminal Output Styler.
+
+<c.green><b>Usage:</b> <c.cyan><b>ziyy</b> [OPTION] [TEXT]</c>
+
+<b>Options:</b></c>
+  <c.cyan><b>-V</b></c>, <c.cyan><b>--version</b></c>
+          Print version info and exit
+  <c.cyan><b>-f</b></c>, <c.cyan><b>--file</b> \<FILENAME\></c>
+          Read input from file.
+  <c.cyan><b>-n</b></c>, <c.cyan><b>--no-newline</b></c>
+          Do not print newline after text.
+  <c.cyan><b>-h</b></c>, <c.cyan><b>--help</b></c>
+          Print help
+</c>

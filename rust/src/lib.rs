@@ -63,7 +63,7 @@ impl Color {
             }
             "white" => {
                 self.color = self.escape(7)
-            } 
+            }
             value => {
                 panic!("Unrecognised color: {value}")
             }
@@ -128,7 +128,7 @@ impl Parser {
 }
 
 #[doc(hidden)]
-pub fn compile(source: String) -> String {
+pub fn compile(source: &str) -> String {
     let mut scanner = Scanner::new(source);
     let mut line = -1;
     loop {
@@ -142,29 +142,29 @@ pub fn compile(source: String) -> String {
         print!("{:2} '{}'\n", token.kind.as_u8(), token.content);
         if token.kind == TokenKind::Eof { break };
     }
-    
+
     String::new()
 }
 
 /// Styles your text using escape sequence.
-/// 
+///
 /// It takes in text that has been styled using recognised tags and returns the equivalent that it styles using escape sequences.
 /// It is a one to one relationship
-/// 
+///
 /// # Example
 /// ```
 /// use ziyy::style;
 /// let text = style("[s][c:black]Black Text");
 /// assert_eq!(text, "\x1b[9m\x1b[30mBlack Text\x1b[0m")
 /// ```
-/// 
+///
 pub fn style(text: &str) -> String {
     // initialize fg and bg
     let text = String::from(text);
     let mut fg = Color::new(3);
     let mut bg = Color::new(4);
     const RESET: &str = "\x1b[0m";
-    
+
     let mut p = Parser::new();
     p.parse(text);
     let mut text = String::from(p.result);
@@ -188,7 +188,7 @@ pub fn style(text: &str) -> String {
         else if tag == "[/b]" {
             text = text.replace("[/b]", "\x1b[22m");
         }
-        
+
         // Italics
         else if tag == "[i]" {
             text = text.replace("[i]", "\x1b[3m");
@@ -197,7 +197,7 @@ pub fn style(text: &str) -> String {
         else if tag == "[/i]" {
             text = text.replace("[/i]", "\x1b[23m");
         }
-        
+
         // Remove colors
         else if tag == "[/c]" {
             text = text.replace("[/c]", "\x1b[39m");
@@ -212,11 +212,11 @@ pub fn style(text: &str) -> String {
         else if tag == "[/u]" {
             text = text.replace("[/u]", "\x1b[24m");
         }
-    
+
         // Strike through
         else if tag == "[s]" {
             text = text.replace("[s]", "\x1b[9m");
-    
+
         }
         else if tag == "[/s]" {
             text = text.replace("[/s]/", "\x1b[29m");
@@ -229,11 +229,11 @@ pub fn style(text: &str) -> String {
 }
 
 /// Creates a new Template for styling text.
-/// 
-/// It takes in styling information and returns a 
-/// Clousue that can be used to style text using 
+///
+/// It takes in styling information and returns a
+/// Clousue that can be used to style text using
 /// the styling information.
-/// 
+///
 /// # Example
 /// ```
 /// use ziyy::template;
@@ -241,7 +241,7 @@ pub fn style(text: &str) -> String {
 /// let text = bred("Bold Red Text");
 /// assert_eq!(text, "\x1b[1m\x1b[31mBold Red Text\x1b[0m")
 /// ```
-/// 
+///
 pub fn template(save: &str) -> impl for<'a> Fn(&'a str) -> String + '_ {
     move |text: &str| -> String {
         style(format!("{save}{text}").as_str())
@@ -254,5 +254,5 @@ fn print() {
     //let t: String = r("text");
     //assert_eq!("\x1b[32m text\u{1b}[0m", style("[c : green] text"));
     assert_eq!("\x1b[1m text\u{1b}[0m", style("[b] text"))
-    
+
 }

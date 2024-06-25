@@ -1,0 +1,11 @@
+[package]
+name = "ziyy-proc"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "ziyy_proc"
+path = "src/lib.rs"
+proc-macro = true
+
+[dependencies]

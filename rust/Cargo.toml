@@ -8,3 +8,13 @@ description = "Convenient Terminal Output Styler."
 license = "MIT OR Apache-2.0"
 keywords = ["terminal", "color", "style", "rgb", "cli"]
 categories = ["command-line-interface", "command-line-utilities"]
+resolver = "2"
+
+[workspace]
+members = ["ziyy-proc"]
+
+[dependencies]
+ziyy-proc = { path = "ziyy-proc", optional = true }
+
+[features]
+resolve = ["dep:ziyy-proc"]

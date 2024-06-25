@@ -2,26 +2,26 @@
 pub enum TokenKind {
     // Single-character tokens.
     LeftParen/* ( */, RightParen/* ) */,
-    LeftBrace/* { */, RightBrace/* } */,
-    LeftSquare/* [ */, RightSquare/* ] */,
-    Colon/* : */, Equal/* = */, 
-    Comma/* , */, SemiColon/* ; */,
-    Plus,
+    //LeftBrace/* { */, RightBrace/* } */,
+    //LeftSquare/* [ */, RightSquare/* ] */,
+    //Colon/* : */, Equal/* = */,
+    Comma/* , */, //SemiColon/* ; */,
+    OpenTag, CloseTag,
+    //Plus,
+    Dot, Slash,
     // Literals.
-    Identifier, String, Number, Text,
+    Identifier, /* String, */ Number, Text,
     // Builtin Variables.
     Black, Red, Green, Yellow,
     Blue, Magenta, Cyan, White,
-    B, I, S, U,
-    Reset, ResetB, ResetC,
-    ResetI, ResetS, ResetU,
+    B, C, I, S, U, X,
     // Keywords.
-    Fn, Eof, Error
+    Eof, Error
 }
 
 impl TokenKind {
     pub fn as_u8(&self) -> u8 {
-        *self as u8 
+        *self as u8
     }
 }
 

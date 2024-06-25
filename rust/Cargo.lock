@@ -5,3 +5,10 @@ version = 3
 [[package]]
 name = "ziyy"
 version = "1.0.6"
+dependencies = [
+ "ziyy-proc",
+]
+
+[[package]]
+name = "ziyy-proc"
+version = "0.1.0"
