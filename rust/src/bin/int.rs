@@ -1,5 +1,8 @@
+use std::io::stdout;
+
 use ziyy::compile;
 
 fn main() {
-    compile(include_str!("help.z"));
+    let mut out = stdout().lock();
+    compile(include_str!("help.z"), &mut out);
 }

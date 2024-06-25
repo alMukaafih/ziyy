@@ -26,8 +26,9 @@ impl TokenKind {
 }
 
 #[derive(Debug)]
-pub struct Token {
+pub struct Token<'a> {
     pub kind: TokenKind,
-    pub content: String,
+    pub content: &'a str,
+    pub err_code: u8,
     pub line: i32,
 }

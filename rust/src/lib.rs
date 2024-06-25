@@ -10,9 +10,11 @@
 //!
 
 mod scanner;
+pub mod value;
 
-use scanner::Scanner;
-use crate::scanner::token::*;
+use std::io::Write;
+
+use crate::scanner::{Scanner, token::*};
 
 #[allow(dead_code)]
 struct Color {
@@ -128,22 +130,26 @@ impl Parser {
 }
 
 #[doc(hidden)]
-pub fn compile(source: &str) -> String {
+pub fn compile(source: &str, out: &mut impl Write) {
     let mut scanner = Scanner::new(source);
     let mut line = -1;
     loop {
         let token = scanner.scan_token();
+        let content;
+        if token.err_code == 0 {
+            content = token.content
+        } else {
+            content = "Unexpected character."
+        }
         if token.line != line {
-            print!("{:4} ", token.line);
+            let _ = write!(out, "{:4} ", token.line);
             line = token.line;
         } else {
-            print!("   | ");
+            let _ = write!(out, "   | ");
         }
-        print!("{:2} '{}'\n", token.kind.as_u8(), token.content);
+        let _ = write!(out, "{:?} '{}'\n", token.kind, content);
         if token.kind == TokenKind::Eof { break };
     }
-
-    String::new()
 }
 
 /// Styles your text using escape sequence.
