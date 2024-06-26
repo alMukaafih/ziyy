@@ -10,6 +10,7 @@ pub struct Scanner<'a> {
     line: i32,
     text_line: i32,
     text_mode: bool,
+    escape: u8,
 }
 
 fn is_alpha(c: char) -> bool {
@@ -29,6 +30,7 @@ impl<'a> Scanner<'a> {
             line: 1,
             text_line: 1,
             text_mode: true,
+            escape: 0,
         }
     }
 
@@ -58,9 +60,8 @@ impl<'a> Scanner<'a> {
     }
 
     pub fn make_token(&mut self, kind: TokenKind) -> Token<'_> {
-        let s;
         let sl = &self.source[(self.start as usize)..(self.current as usize)];
-        s = unsafe { str::from_utf8_unchecked(sl) };
+        let s = unsafe { str::from_utf8_unchecked(sl) };
         Token {
             kind,
             content: s,
@@ -70,9 +71,8 @@ impl<'a> Scanner<'a> {
     }
 
     pub fn error_token(&self, code: u8) -> Token<'_> {
-        let s;
         let sl = &self.source[(self.start as usize)..(self.current as usize)];
-        s = unsafe { str::from_utf8_unchecked(sl) };
+        let s = unsafe { str::from_utf8_unchecked(sl) };
         Token {
             kind: TokenKind::Error,
             content: s,
@@ -82,9 +82,8 @@ impl<'a> Scanner<'a> {
     }
 
     pub fn text_token(&mut self) -> Token<'_> {
-        let s;
         let sl = &self.source[(self.start as usize)..(self.current as usize)];
-        s = unsafe { str::from_utf8_unchecked(sl) };
+        let s = unsafe { str::from_utf8_unchecked(sl) };
         Token {
             kind: TokenKind::Text,
             content: s,
@@ -100,13 +99,13 @@ impl<'a> Scanner<'a> {
             match c {
                 ' ' | '\r' | '\t' => {
                     self.advance();
-                    break;
+                    continue;
                 }
                 '\n' => {
                     self.line += 1;
                     self.text_line += 1;
                     self.advance();
-                    break;
+                    continue;
                 }
                 _ => return
             }
@@ -115,9 +114,8 @@ impl<'a> Scanner<'a> {
     }
 
     pub fn check_keyword(&mut self, start: i32, length: i32, rest: &str, kind: TokenKind) -> TokenKind {
-        let s;
         let sl = &self.source[((self.start + start) as usize)..(self.current as usize)];
-        s = unsafe { str::from_utf8_unchecked(sl) };
+        let s = unsafe { str::from_utf8_unchecked(sl) };
         if self.current - self.start == start + length && s == rest {
             kind
         }
@@ -202,8 +200,18 @@ impl<'a> Scanner<'a> {
     // }
 
     pub fn scan_token(&mut self) -> Token<'_> {
-        self.skip_whitespace();
+        if self.escape == 0 {self.skip_whitespace();}
         self.start = self.current;
+        if self.escape == 2 && self.peek() == '\\' {
+            self.escape = 1;
+            self.advance();
+            return self.make_token(TokenKind::BackSlash)
+        }
+        if self.escape == 1 {
+            self.escape = 0;
+            self.advance();
+            return self.text_token();
+        }
         if self.is_at_end() { return self.make_token(TokenKind::Eof) }
 
         let c = self.advance();
@@ -223,9 +231,8 @@ impl<'a> Scanner<'a> {
                     self.text_line += 1;
                 }
                 if self.peek() == '\\' {
-                    self.advance();
-                    self.advance();
-                    continue
+                    self.escape = 2;
+                    return self.text_token();
                 }
                 if self.peek() != '<' {
                     self.advance();

@@ -1,8 +1,8 @@
-<c.white>Convenient Terminal Output Styler.
+Convenient Terminal Output Styler.
 
-<c.green><b>Usage:</b> <c.cyan><b>ziyy</b> [OPTION] [TEXT]</c>
+<c.green><b><u>Usage:</u></b> <c.cyan><b>ziyy</b> <i>[OPTION] [TEXT]</i></c>
 
-<b>Options:</b></c>
+<b><u>Options:</u></b></c>
   <c.cyan><b>-V</b></c>, <c.cyan><b>--version</b></c>
           Print version info and exit
   <c.cyan><b>-f</b></c>, <c.cyan><b>--file</b> \<FILENAME\></c>
@@ -11,4 +11,3 @@
           Do not print newline after text.
   <c.cyan><b>-h</b></c>, <c.cyan><b>--help</b></c>
           Print help
-</c>

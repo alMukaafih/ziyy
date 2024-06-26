@@ -30,9 +30,9 @@ fn main() {
     }
     let first = args.nth(1);
     if first == Some("-n".to_string()) || first == Some("--no-newline".to_string()) {
-        print!("{}", style(args.nth(0).unwrap().as_str()))
+        print!("{}", style(args.next().unwrap().as_str()))
     } else if first == Some("-f".to_string()) || first == Some("--file".to_string()) {
-        let f = File::open(args.nth(0).unwrap()).unwrap();
+        let f = File::open(args.next().unwrap()).unwrap();
         let mut reader = BufReader::new(f);
         let mut file = String::new();
         let _ = reader.read_to_string(&mut file);

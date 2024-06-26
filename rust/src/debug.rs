@@ -9,13 +9,12 @@
 //!```
 //!
 
-mod compiler;
 mod scanner;
 pub mod value;
 
 use std::io::Write;
 
-use crate::compiler::Compiler;
+use crate::scanner::{Scanner, token::*};
 
 #[allow(dead_code)]
 struct Color {
@@ -25,7 +24,7 @@ struct Color {
 #[allow(dead_code)]
 impl Color {
     fn new(first_digit: u8) -> Color {
-        Color { first_digit, color: String::new() }
+        Color { first_digit: first_digit, color: String::new() }
     }
     fn escape(&self, second_digit: u8) -> String {
         let first_digit = self.first_digit;
@@ -36,9 +35,9 @@ impl Color {
         format!("\x1b[{first_digit}8;2;{second_digit}m").to_string()
     }
     fn color_value(&mut self, color: &str) -> String {
-        if color.starts_with("rgb(") && color.ends_with(')') {
+        if color.starts_with("rgb(") && color.ends_with(")") {
             let rgb = color.get(4..(color.len()-1)).unwrap().to_string();
-            let rgb = rgb.replace(',', ";");
+            let rgb = rgb.replace(",", ";");
             self.color = self.escape_str(rgb);
             return self.color.clone()
         }
@@ -73,7 +72,7 @@ impl Color {
         }
         self.color.clone()
     }
-    fn substitute(&self, text: &mut str, tag: String) -> String {
+    fn substitute(&self, text: &mut String, tag: String) -> String {
         text.replace(&tag, &self.color)
     }
 }
@@ -132,8 +131,25 @@ impl Parser {
 
 #[doc(hidden)]
 pub fn compile(source: &str, out: &mut impl Write) {
-    let mut compiler = Compiler::new(source, out);
-    compiler.compile();
+    let mut scanner = Scanner::new(source);
+    let mut line = -1;
+    loop {
+        let token = scanner.scan_token();
+        let content;
+        if token.err_code == 0 {
+            content = token.content
+        } else {
+            content = "Unexpected character."
+        }
+        if token.line != line {
+            let _ = write!(out, "{:4} ", token.line);
+            line = token.line;
+        } else {
+            let _ = write!(out, "   | ");
+        }
+        let _ = write!(out, "{:?} '{}'\n", token.kind, content);
+        if token.kind == TokenKind::Eof { break };
+    }
 }
 
 /// Styles your text using escape sequence.
@@ -157,7 +173,7 @@ pub fn style(text: &str) -> String {
 
     let mut p = Parser::new();
     p.parse(text);
-    let mut text = p.result;
+    let mut text = String::from(p.result);
     for mut tag in p.tags {
         let len = tag.len();
         if tag.starts_with("[c:") {

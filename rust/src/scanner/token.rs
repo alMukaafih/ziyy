@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum TokenKind {
     // Single-character tokens.
     LeftParen/* ( */, RightParen/* ) */,
@@ -8,7 +8,7 @@ pub enum TokenKind {
     Comma/* , */, //SemiColon/* ; */,
     OpenTag, CloseTag,
     //Plus,
-    Dot, Slash,
+    Dot, Slash, BackSlash,
     // Literals.
     Identifier, /* String, */ Number, Text,
     // Builtin Variables.
@@ -16,7 +16,9 @@ pub enum TokenKind {
     Blue, Magenta, Cyan, White,
     B, C, I, S, U, X,
     // Keywords.
-    Eof, Error
+    Eof, Error,
+    #[default]
+    Def
 }
 
 impl TokenKind {
@@ -25,7 +27,7 @@ impl TokenKind {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Token<'a> {
     pub kind: TokenKind,
     pub content: &'a str,
