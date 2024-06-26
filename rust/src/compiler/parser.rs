@@ -27,6 +27,7 @@ impl<'a, W: Write> Parser<'a, W> {
     }
 
     pub fn parse_to_out(&mut self) {
+        let _ = write!(self.out, "{}",  RESET);
         loop {
             let token = self.scanner.scan_token();
             match token.kind {
