@@ -1,7 +1,7 @@
 pub mod token;
 
-use std::str;
 use crate::scanner::token::*;
+use std::str;
 
 pub struct Scanner<'a> {
     source: &'a [u8],
@@ -35,7 +35,7 @@ impl<'a> Scanner<'a> {
     }
 
     pub fn is_at_end(&mut self) -> bool {
-        self.current as usize +1 > self.source.len()
+        self.current as usize + 1 > self.source.len()
     }
 
     pub fn advance(&mut self) -> char {
@@ -94,7 +94,9 @@ impl<'a> Scanner<'a> {
 
     pub fn skip_whitespace(&mut self) {
         loop {
-            if self.text_mode {return;}
+            if self.text_mode {
+                return;
+            }
             let c = self.peek();
             match c {
                 ' ' | '\r' | '\t' => {
@@ -107,19 +109,23 @@ impl<'a> Scanner<'a> {
                     self.advance();
                     continue;
                 }
-                _ => return
+                _ => return,
             }
-
         }
     }
 
-    pub fn check_keyword(&mut self, start: i32, length: i32, rest: &str, kind: TokenKind) -> TokenKind {
+    pub fn check_keyword(
+        &mut self,
+        start: i32,
+        length: i32,
+        rest: &str,
+        kind: TokenKind,
+    ) -> TokenKind {
         let sl = &self.source[((self.start + start) as usize)..(self.current as usize)];
         let s = unsafe { str::from_utf8_unchecked(sl) };
         if self.current - self.start == start + length && s == rest {
             kind
-        }
-        else {
+        } else {
             TokenKind::Identifier
         }
     }
@@ -134,29 +140,29 @@ impl<'a> Scanner<'a> {
                 's' => S,
                 'u' => U,
                 'x' => X,
-                _   => Identifier,
+                _ => Identifier,
             }
         } else {
             match self.source[self.start as usize] as char {
-                'b' => {
-                    match self.source[self.start as usize + 1] as char {
-                        'l' => {
-                            match self.source[self.start as usize + 2] as char {
-                                'a' => self.check_keyword(3, 2, "ck", TokenKind::Black),
-                                'u' => self.check_keyword(3, 1, "e", TokenKind::Blue),
-                                _ => Identifier
-                            }
-                        },
-                        _ => Identifier
-                    }
+                'b' => match self.source[self.start as usize + 1] as char {
+                    'l' => match self.source[self.start as usize + 2] as char {
+                        'a' => self.check_keyword(3, 2, "ck", TokenKind::Black),
+                        'u' => self.check_keyword(3, 1, "e", TokenKind::Blue),
+                        _ => Identifier,
+                    },
+                    _ => Identifier,
                 },
                 'c' => self.check_keyword(1, 3, "yan", TokenKind::Cyan),
                 'g' => self.check_keyword(1, 4, "reen", TokenKind::Green),
                 'm' => self.check_keyword(1, 6, "agenta", TokenKind::Magenta),
-                'r' => self.check_keyword(1, 2, "ed", TokenKind::Red),
+                'r' => match self.source[self.start as usize + 1] as char {
+                    'e' => self.check_keyword(2, 1, "d", TokenKind::Red),
+                    'g' => self.check_keyword(2, 1, "b", TokenKind::Rgb),
+                    _ => Identifier,
+                },
                 'w' => self.check_keyword(1, 4, "hite", TokenKind::White),
                 'y' => self.check_keyword(1, 5, "ellow", TokenKind::Yellow),
-                _ => Identifier
+                _ => Identifier,
             }
         }
     }
@@ -171,14 +177,16 @@ impl<'a> Scanner<'a> {
     }
 
     pub fn number(&mut self) -> Token<'_> {
-        while is_digit(self.peek()) { self.advance(); }
+        while is_digit(self.peek()) {
+            self.advance();
+        }
 
-        if self.peek() == '.' && is_digit(self.peek_next()) {
+        /* if self.peek() == '.' && is_digit(self.peek_next()) {
             self.advance();
 
             while is_digit(self.peek()) { self.advance(); };
 
-        }
+        } */
         self.make_token(TokenKind::Number)
     }
 
@@ -200,28 +208,31 @@ impl<'a> Scanner<'a> {
     // }
 
     pub fn scan_token(&mut self) -> Token<'_> {
-        if self.escape == 0 {self.skip_whitespace();}
+        if self.escape == 0 {
+            self.skip_whitespace();
+        }
         self.start = self.current;
         if self.escape == 2 && self.peek() == '\\' {
             self.escape = 1;
             self.advance();
-            return self.make_token(TokenKind::BackSlash)
+            return self.make_token(TokenKind::BackSlash);
         }
         if self.escape == 1 {
             self.escape = 0;
             self.advance();
             return self.text_token();
         }
-        if self.is_at_end() { return self.make_token(TokenKind::Eof) }
+        if self.is_at_end() {
+            return self.make_token(TokenKind::Eof);
+        }
 
         let c = self.advance();
         if c == '<' {
             self.text_mode = false;
-            return self.make_token(TokenKind::OpenTag)
-        }
-        else if c =='>' {
+            return self.make_token(TokenKind::OpenTag);
+        } else if c == '>' {
             self.text_mode = true;
-            return self.make_token(TokenKind::CloseTag)
+            return self.make_token(TokenKind::CloseTag);
         }
 
         if self.text_mode {
@@ -236,16 +247,19 @@ impl<'a> Scanner<'a> {
                 }
                 if self.peek() != '<' {
                     self.advance();
-                }
-                else {
-                    break
+                } else {
+                    break;
                 }
             }
             return self.text_token();
         }
 
-        if is_alpha(c) { return  self.identifier() }
-        if is_digit(c) { return self.number() }
+        if is_alpha(c) {
+            return self.identifier();
+        }
+        if is_digit(c) {
+            return self.number();
+        }
 
         match c {
             '(' => self.make_token(TokenKind::LeftParen),
@@ -262,7 +276,7 @@ impl<'a> Scanner<'a> {
             // '=' => self.make_token(TokenKind::Equal),
             //'"' => self.string(),
             '/' => self.make_token(TokenKind::Slash),
-            _   => self.error_token(1)
+            _ => self.error_token(1),
         }
     }
 }

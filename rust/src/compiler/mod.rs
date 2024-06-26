@@ -1,5 +1,5 @@
-use std::io::Write;
 use parser::Parser;
+use std::{collections::HashMap, io::Write};
 
 mod parser;
 mod state;
@@ -9,9 +9,13 @@ pub struct Compiler<'a, W: Write> {
 }
 
 impl<'a, W: Write> Compiler<'a, W> {
-    pub fn new(source: &'a str, out: &'a mut W) -> Compiler<'a, W> {
+    pub fn new(
+        source: &'a str,
+        out: &'a mut W,
+        variables: HashMap<String, String>,
+    ) -> Compiler<'a, W> {
         Compiler {
-            parser: Parser::new(source, out),
+            parser: Parser::new(source, out, variables),
         }
     }
 

@@ -1,0 +1,14 @@
+Convenient Terminal Output Styler.
+
+[38;2;0;150;75m[1m[4mUsage:[24m[22m [38;2;0;150;150m[1mziyy[22m [3m[OPTION] [TEXT][23m[0m[38;2;0;150;75m
+
+[1m[4mOptions:[24m[22m[0m
+  [38;2;0;150;150m[1m-V[22m[0m, [38;2;0;150;150m[1m--version[22m[0m
+          Print version info and exit
+  [38;2;0;150;150m[1m-f[22m[0m, [38;2;0;150;150m[1m--file[22m <FILENAME>[0m
+          Read input from file.
+  [38;2;0;150;150m[1m-n[22m[0m, [38;2;0;150;150m[1m--no-newline[22m[0m
+          Do not print newline after text.
+  [38;2;0;150;150m[1m-h[22m[0m, [38;2;0;150;150m[1m--help[22m[0m
+          Print help
+[0m

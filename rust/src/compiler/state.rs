@@ -9,7 +9,7 @@ impl State {
     pub fn new() -> State {
         State {
             tags: vec![String::new()],
-            saves: vec![RESET.to_string()]
+            saves: vec![RESET.to_string()],
         }
     }
 

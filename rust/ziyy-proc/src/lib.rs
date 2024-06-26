@@ -9,7 +9,7 @@ pub fn import(item: TokenStream) -> TokenStream {
     match token {
         TokenTree::Literal(lit) => {
             s = lit.to_string();
-        },
+        }
         _ => panic!(),
     }
 

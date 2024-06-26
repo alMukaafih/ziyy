@@ -13,19 +13,24 @@ mod compiler;
 mod scanner;
 pub mod value;
 
-use std::io::Write;
+use std::{collections::HashMap, io::Write};
+
+use value::C;
 
 use crate::compiler::Compiler;
 
 #[allow(dead_code)]
 struct Color {
     first_digit: u8,
-    color: String
+    color: String,
 }
 #[allow(dead_code)]
 impl Color {
     fn new(first_digit: u8) -> Color {
-        Color { first_digit, color: String::new() }
+        Color {
+            first_digit,
+            color: String::new(),
+        }
     }
     fn escape(&self, second_digit: u8) -> String {
         let first_digit = self.first_digit;
@@ -37,36 +42,20 @@ impl Color {
     }
     fn color_value(&mut self, color: &str) -> String {
         if color.starts_with("rgb(") && color.ends_with(')') {
-            let rgb = color.get(4..(color.len()-1)).unwrap().to_string();
+            let rgb = color.get(4..(color.len() - 1)).unwrap().to_string();
             let rgb = rgb.replace(',', ";");
             self.color = self.escape_str(rgb);
-            return self.color.clone()
+            return self.color.clone();
         }
         match color {
-            "black" => {
-                self.color = self.escape(0)
-            }
-            "red" => {
-                self.color = self.escape(1)
-            }
-            "green" => {
-                self.color = self.escape(2)
-            }
-            "yellow" => {
-                self.color = self.escape(3)
-            }
-            "blue" => {
-                self.color = self.escape(4)
-            }
-            "magenta" => {
-                self.color = self.escape(5)
-            }
-            "cyan" => {
-                self.color = self.escape(6)
-            }
-            "white" => {
-                self.color = self.escape(7)
-            }
+            "black" => self.color = self.escape(0),
+            "red" => self.color = self.escape(1),
+            "green" => self.color = self.escape(2),
+            "yellow" => self.color = self.escape(3),
+            "blue" => self.color = self.escape(4),
+            "magenta" => self.color = self.escape(5),
+            "cyan" => self.color = self.escape(6),
+            "white" => self.color = self.escape(7),
             value => {
                 panic!("Unrecognised color: {value}")
             }
@@ -87,38 +76,36 @@ struct Parser {
 impl Parser {
     fn parse(&mut self, text: String) {
         let mut tag = String::new();
-        let _: Vec<_> = text.chars().map(|x| {
-            if x == '\\' && !self.esc {
-                self.esc = true;
-            }
-            else if self.esc {
-                self.result.push(x);
-                self.esc = false
-            }
-            else if x == '[' {
-                self.open = true;
-                self.result.push(x);
-                tag.push(x);
-            }
-            else if x == ']' {
-                self.open = false;
-                self.result.push(x);
-                tag.push(x);
-                if !self.tags.contains(&tag) {
-                    self.tags.push(tag.clone());
+        let _: Vec<_> = text
+            .chars()
+            .map(|x| {
+                if x == '\\' && !self.esc {
+                    self.esc = true;
+                } else if self.esc {
+                    self.result.push(x);
+                    self.esc = false
+                } else if x == '[' {
+                    self.open = true;
+                    self.result.push(x);
+                    tag.push(x);
+                } else if x == ']' {
+                    self.open = false;
+                    self.result.push(x);
+                    tag.push(x);
+                    if !self.tags.contains(&tag) {
+                        self.tags.push(tag.clone());
+                    }
+                    tag = String::new();
+                } else if self.open && !x.is_whitespace() {
+                    self.result.push(x);
+                    tag.push(x);
+                } else if self.open && x.is_whitespace() {
+                } else {
+                    self.result.push(x);
                 }
-                tag = String::new();
-            }
-            else if self.open && !x.is_whitespace()  {
-                self.result.push(x);
-                tag.push(x);
-            }
-            else if self.open && x.is_whitespace() {}
-            else {
-                self.result.push(x);
-            }
-            x
-        }).collect();
+                x
+            })
+            .collect();
     }
     fn new() -> Parser {
         Parser {
@@ -132,7 +119,10 @@ impl Parser {
 
 #[doc(hidden)]
 pub fn compile(source: &str, out: &mut impl Write) {
-    let mut compiler = Compiler::new(source, out);
+    let mut vars = HashMap::new();
+    vars.insert("green".to_string(), C::rgb(0, 150, 75));
+    vars.insert("cyan".to_string(), C::rgb(0, 150, 150));
+    let mut compiler = Compiler::new(source, out, vars);
     compiler.compile();
 }
 
@@ -144,78 +134,17 @@ pub fn compile(source: &str, out: &mut impl Write) {
 /// # Example
 /// ```
 /// use ziyy::style;
-/// let text = style("[s][c:black]Black Text");
-/// assert_eq!(text, "\x1b[9m\x1b[30mBlack Text\x1b[0m")
+/// let text = style("<s><c.black>Black Text");
+/// assert_eq!(text, "\u{1b}[9m\u{1b}[30mBlack Text\u{1b}[0m")
 /// ```
 ///
 pub fn style(text: &str) -> String {
-    // initialize fg and bg
-    let text = String::from(text);
-    let mut fg = Color::new(3);
-    let mut bg = Color::new(4);
-    const RESET: &str = "\x1b[0m";
+    let vars = HashMap::new();
+    let mut out: Vec<u8> = vec![];
+    let mut compiler = Compiler::new(text, &mut out, vars);
+    compiler.compile();
 
-    let mut p = Parser::new();
-    p.parse(text);
-    let mut text = p.result;
-    for mut tag in p.tags {
-        let len = tag.len();
-        if tag.starts_with("[c:") {
-            let value = tag.get_mut(3..(len-1)).unwrap();
-            fg.color_value(value);
-            text = fg.substitute(&mut text, tag);
-        }
-        else if tag.starts_with("[x:") {
-            let value = tag.get_mut(3..(len-1)).unwrap();
-            bg.color_value(value);
-            text = bg.substitute(&mut text, tag);
-        }
-        // Bold
-        else if text.contains("[b]") {
-            text = text.replace("[b]", "\x1b[1m");
-        }
-        // Remove Bold
-        else if tag == "[/b]" {
-            text = text.replace("[/b]", "\x1b[22m");
-        }
-
-        // Italics
-        else if tag == "[i]" {
-            text = text.replace("[i]", "\x1b[3m");
-        }
-        // Remove italics
-        else if tag == "[/i]" {
-            text = text.replace("[/i]", "\x1b[23m");
-        }
-
-        // Remove colors
-        else if tag == "[/c]" {
-            text = text.replace("[/c]", "\x1b[39m");
-        }
-        else if tag == "[/x]" {
-            text = text.replace("[/x]", "\x1b[49m");
-        }
-        // Underline
-        else if tag == "[u]" {
-            text = text.replace("[u]", "\x1b[4m");
-        }
-        else if tag == "[/u]" {
-            text = text.replace("[/u]", "\x1b[24m");
-        }
-
-        // Strike through
-        else if tag == "[s]" {
-            text = text.replace("[s]", "\x1b[9m");
-
-        }
-        else if tag == "[/s]" {
-            text = text.replace("[/s]/", "\x1b[29m");
-        }
-        else if tag == "[/0]" {
-            text = text.replace("[/0]", RESET);
-        }
-    }
-    format!("{text}{RESET}")
+    unsafe {String::from_utf8_unchecked(out)}
 }
 
 /// Creates a new Template for styling text.
@@ -227,15 +156,13 @@ pub fn style(text: &str) -> String {
 /// # Example
 /// ```
 /// use ziyy::template;
-/// let bred = template("[b][c:red]");
+/// let bred = template("<b><c.red>");
 /// let text = bred("Bold Red Text");
 /// assert_eq!(text, "\x1b[1m\x1b[31mBold Red Text\x1b[0m")
 /// ```
 ///
 pub fn template(save: &str) -> impl for<'a> Fn(&'a str) -> String + '_ {
-    move |text: &str| -> String {
-        style(format!("{save}{text}").as_str())
-    }
+    move |text: &str| -> String { style(format!("{save}{text}").as_str()) }
 }
 
 #[test]
@@ -244,5 +171,4 @@ fn print() {
     //let t: String = r("text");
     //assert_eq!("\x1b[32m text\u{1b}[0m", style("[c : green] text"));
     assert_eq!("\x1b[1m text\u{1b}[0m", style("[b] text"))
-
 }

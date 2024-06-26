@@ -1,24 +1,44 @@
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum TokenKind {
     // Single-character tokens.
-    LeftParen/* ( */, RightParen/* ) */,
+    LeftParen,  /* ( */
+    RightParen, /* ) */
     //LeftBrace/* { */, RightBrace/* } */,
     //LeftSquare/* [ */, RightSquare/* ] */,
     //Colon/* : */, Equal/* = */,
-    Comma/* , */, //SemiColon/* ; */,
-    OpenTag, CloseTag,
+    Comma, /* , */
+    //SemiColon/* ; */,
+    OpenTag,
+    CloseTag,
     //Plus,
-    Dot, Slash, BackSlash,
+    Dot,
+    Slash,
+    BackSlash,
     // Literals.
-    Identifier, /* String, */ Number, Text,
+    Identifier,
+    /* String, */ Number,
+    Text,
     // Builtin Variables.
-    Black, Red, Green, Yellow,
-    Blue, Magenta, Cyan, White,
-    B, C, I, S, U, X,
+    Black,
+    Red,
+    Green,
+    Yellow,
+    Blue,
+    Magenta,
+    Cyan,
+    White,
+    Rgb,
+    B,
+    C,
+    I,
+    S,
+    U,
+    X,
     // Keywords.
-    Eof, Error,
+    Eof,
+    Error,
     #[default]
-    Def
+    Def,
 }
 
 impl TokenKind {
