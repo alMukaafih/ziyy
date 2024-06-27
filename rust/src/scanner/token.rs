@@ -37,8 +37,6 @@ pub enum TokenKind {
     // Keywords.
     Eof,
     Error,
-    #[default]
-    Def,
 }
 
 impl TokenKind {

@@ -1,6 +1,6 @@
 use std::env;
 use std::fs::File;
-use std::io::{BufReader, Read, stdout};
+use std::io::{BufReader, Read, stdout, Write};
 use std::process::exit;
 use ziyy::compile;
 
@@ -26,11 +26,12 @@ fn main() {
         let _ = reader.read_to_string(&mut file);
         compile(file.as_str(), &mut out)
     } else if first == Some("-V".to_string()) || first == Some("--version".to_string()) {
-        println!("ziyy 1.0.6")
+        println!("ziyy 2.0.0-beta-0")
     } else if first == Some("-h".to_string()) || first == Some("--help".to_string()) {
         usage();
         exit(0);
     } else {
-        compile(first.unwrap().as_str(), &mut out)
+        compile(first.unwrap().as_str(), &mut out);
+        let _ = write!(out, "\n");
     }
 }
