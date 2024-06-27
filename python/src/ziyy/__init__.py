@@ -2,7 +2,19 @@ import re
 import sys
 import os
 
+from typing import TextIO
+from .value import C
+from .compiler import Compiler
+
 __all__ = ["style", "template"]
+
+class String(TextIO):
+    def __init__(self):
+        self.s = ""
+
+    def write(self, s: str) -> int:
+        self.s = self.s + s
+        return len(s)
 
 class ColorError(Exception):
     pass
@@ -83,67 +95,21 @@ class Parser:
             self.result += chars[i]
             i += 1
 
+def _compile(source: str, out: TextIO):
+    vars = {
+        "green": C.rgb(0, 150, 75),
+        "cyan": C.rgb(0, 150, 150)
+    }
+    compiler = Compiler(source, out, vars)
+    compiler.compile()
+
+
 def style(text: str) -> str:
-    # initialize fg and bg
-    fg = Color(3)
-    bg = Color(4)
-    RESET = "\x1b[0m" # RESET
-
-    p = Parser()
-    p.parse(text)
-    text = p.result
-    for tag in p.tags:
-        if tag.startswith("[c:"):
-            value = tag[3:-1]
-            fg.color_value(value)
-            text = fg.substitute(text, tag)
-        elif tag.startswith("[x:"):
-            value = tag[3:-1]
-            bg.color_value(value)
-            text = bg.substitute(text, tag)
-        # Bold
-        if "[b]" in text:
-            text = text.replace("[b]", "\x1b[1m")
-        # Remove Bold
-        if "[/b]" in text:
-            text = text.replace("[/b]", "\x1b[22m")
-        # Italics
-        if "[i]" in text:
-            text = text.replace("[i]", "\x1b[3m")
-            
-        # Remove italics
-        if "[/i]" in text: 
-            text = text.replace("[/i]", "\x1b[23m")
-        
-        
-        # Remove colors
-        if "[/c]" in text:
-            text = text.replace("[/c]", "\x1b[39m")
-        
-        if "[/x]" in text:
-            text = text.replace("[/x]", "\x1b[49m")
-        
-        # Underline
-        if "[u]" in text:
-            text = text.replace("[u]", "\x1b[4m")
-        
-        if "[/u]" in text:
-            text = text.replace("[/u]", "\x1b[24m")
-        
-    
-        # Strike through
-        if "[s]" in text:
-            text = text.replace("[s]", "\x1b[9m")
-    
-        
-        if "[/s]" in text:
-            text = text.replace("[/s]/", "\x1b[29m")
-        
-        if "[/0]" in text:
-            text = text.replace("[/0]", RESET)
-            
-
-    return f"{text}{RESET}"
+    vars = {}
+    out = String()
+    compiler = Compiler(text, out, vars)
+    compiler.compile()
+    return out.s
 
 def template(save):
     return lambda text: style(f"{save}{text}")

@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TokenKind {
     // Single-character tokens.
     LeftParen,  /* ( */
@@ -45,7 +45,7 @@ impl TokenKind {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Token<'a> {
     pub kind: TokenKind,
     pub content: &'a str,

@@ -148,7 +148,7 @@ impl<'a, W: Write> Parser<'a, W> {
                                     }
 
                                     let rgb = C::rgb(r, g, b);
-                                    self.state.push("c", &rgb);
+                                    self.state.push(token.content, &rgb);
                                     let _ = write!(self.out, "{}", &rgb);
                                 }
                                 _ => panic!(),
@@ -318,7 +318,7 @@ impl<'a, W: Write> Parser<'a, W> {
                             let saved = self.state.current_save();
                             let _ = write!(self.out, "{}", saved);
                         }
-                        _ => continue,
+                        _ => panic!(),
                     }
 
                     let token = self.scanner.scan_token();
@@ -351,9 +351,5 @@ impl<'a, W: Write> Parser<'a, W> {
                 _ => continue,
             }
         }
-    }
-
-    fn write_bytes(&mut self, bytes: &str) {
-        let _ = write!(self.out, "{}", bytes);
     }
 }
