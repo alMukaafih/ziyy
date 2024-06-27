@@ -56,6 +56,7 @@ class Parser {
     result: string
     tags: Array<string>
     on: boolean
+    esc: boolean
     constructor() {
         this.result = ""
         this.tags = []

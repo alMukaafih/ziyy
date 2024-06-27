@@ -148,7 +148,7 @@ impl<'a, W: Write> Parser<'a, W> {
                                     }
 
                                     let rgb = C::rgb(r, g, b);
-                                    self.state.push(token.content, &rgb);
+                                    self.state.push("c", &rgb);
                                     let _ = write!(self.out, "{}", &rgb);
                                 }
                                 _ => panic!(),

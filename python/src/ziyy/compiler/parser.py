@@ -112,7 +112,7 @@ class Parser:
                                         raise ParserError
 
                                     rgb = C.rgb(r, g, b)
-                                    self.state.push(token.content, rgb)
+                                    self.state.push("c", rgb)
                                     self.out.write(rgb)
                                 case _: raise ParserError
                         case _: raise ParserError
@@ -183,7 +183,7 @@ class Parser:
                                         raise ParserError
 
                                     rgb = X.rgb(r, g, b)
-                                    self.state.push(token.content, rgb)
+                                    self.state.push("x", rgb)
                                     self.out.write(rgb)
                                 case _: raise ParserError
                         case _: raise ParserError
@@ -243,7 +243,6 @@ class Parser:
                         self.out.write(var)
                     else:
                         raise ParserError
-                        pass
 
                 case TT.Eof:
                     self.out.write(RESET)

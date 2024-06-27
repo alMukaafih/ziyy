@@ -21,4 +21,4 @@ class State:
 
     def current_save(self) -> str:
         l = len(self.saves) - 1
-        return self.tags[l]
+        return self.saves[l]
