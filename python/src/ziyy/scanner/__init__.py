@@ -1,7 +1,7 @@
 from .token import *
 
 def is_alpha(c: str) -> bool:
-    return len(c) > 0 and c.isascii() and c.isalpha()
+    return len(c) > 0 and c.isascii() and c.isalpha() or c == '_'
 
 def is_digit(c: str) -> bool:
     return len(c) > 0 and c.isascii() and c.isdigit()

@@ -1,36 +1,35 @@
 #!/usr/bin/env bash
-#source libziyy.sh
-[[ -f ../lib/ziyy/libziyy.sh ]] && source ../lib/ziyy/libziyy.sh
-[[ -f libziyy.sh ]] && source libziyy.sh
+
+source $ZIYY_ROOT/libziyy.sh
+out="builtin printf"
 
 function usage {
-    style "Convenient Terminal Output Styler.
+    __z_compile "Convenient Terminal Output Styler.
 
-[c:green][b]Usage: [c:cyan]ziyy[/b] [c:cyan][OPTION] [TEXT]
+<green><b><u>Usage:</u></b> <cyan><b>ziyy</b> <i>[OPTION] [TEXT]</i></cyan>
 
-[b][c:green]Options:[/0]
-  [c:cyan][b]-V[/0], [c:cyan][b]--version[/0]
+<b><u>Options:</u></b></green>
+  <cyan><b>-V</b></cyan>, <cyan><b>--version</b></cyan>
           Print version info and exit
-  [c:cyan][b]-f[/0], [c:cyan][b]--file[/b] <FILENAME>[/c]
+  <cyan><b>-f</b></cyan>, <cyan><b>--file</b> \<FILENAME\></cyan>
           Read input from file.
-  [c:cyan][b]-n[/0], [c:cyan][b]--no-newline[/0]
+  <cyan><b>-n</b></cyan>, <cyan><b>--no-newline</b></cyan>
           Do not print newline after text.
-  [c:cyan][b]-h[/0], [c:cyan][b]--help[/0]
+  <cyan><b>-h</b></cyan>, <cyan><b>--help</b></cyan>
           Print help
-"
+" "$out"
 }
 
 function main {
+    # shellcheck disable=SC2206
     args=(${@:1})
     if [[ ${#args} -lt 1 ]]; then
         usage
-        builtin printf "$return"
-        exit 1
+        exit 0
     fi
     first=$1
     if [[ $first == "-n" ]] || [[ $first == "--no-newline" ]]; then
-        style "$2"
-        builtin printf "$return"
+        __z_compile "$2" "$out"
     elif [[ $first == "-f" ]] || [[ $first == "--filename" ]]; then
         if [[ ${#args} -eq 1 ]]; then
             exit 1
@@ -39,14 +38,12 @@ function main {
             exit 1
         fi
         file=$(<$2)
-        style "$file"
-        builtin printf "$return"
+        __z_compile "$file" "$out"
     elif [[ $first == "-V" ]] || [[ $first == "--version" ]]; then
         builtin printf "ziyy 1.0.6\n"
     elif [[ $first == "-h" ]] || [[ $first == "--help" ]]; then
         usage
-        builtin printf "$return"
         exit 0
     fi
 }
-main $@
+main "$@"

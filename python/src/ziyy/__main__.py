@@ -24,7 +24,7 @@ def usage():
 args = sys.argv[1:]
 if len(args) < 1:
     usage()
-    sys.exit(1)
+    sys.exit(0)
 first = args[0]
 if first == "-n" or first == "--no-newline":
     _compile(args[1], out)

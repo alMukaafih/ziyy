@@ -13,7 +13,7 @@ def debug(source: str, out: TextIO):
         else:
             content = "Unexpected character."
         if token.line != line:
-            out.write("{:4} ".format(token.line));
+            out.write("{:4} ".format(token.line))
             line = token.line
         else:
             out.write("   | ")

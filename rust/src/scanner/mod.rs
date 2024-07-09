@@ -3,6 +3,14 @@ pub mod token;
 use crate::scanner::token::*;
 use std::str;
 
+fn is_alpha(c: char) -> bool {
+    c.is_ascii_alphabetic() || c == '_'
+}
+
+fn is_digit(c: char) -> bool {
+    c.is_ascii_digit()
+}
+
 pub struct Scanner<'a> {
     source: &'a [u8],
     start: i32,
@@ -11,14 +19,6 @@ pub struct Scanner<'a> {
     text_line: i32,
     text_mode: bool,
     escape: u8,
-}
-
-fn is_alpha(c: char) -> bool {
-    c.is_ascii_alphabetic() || c == '_'
-}
-
-fn is_digit(c: char) -> bool {
-    c.is_ascii_digit()
 }
 
 impl<'a> Scanner<'a> {
