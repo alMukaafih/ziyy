@@ -84,12 +84,14 @@ impl<'a> Scanner<'a> {
     pub fn text_token(&mut self) -> Token<'_> {
         let sl = &self.source[(self.start as usize)..(self.current as usize)];
         let s = unsafe { str::from_utf8_unchecked(sl) };
-        Token {
+        let token = Token {
             kind: TokenKind::Text,
             content: s,
             err_code: 0,
             line: self.text_line,
-        }
+        };
+        self.text_line = self.line;
+        token
     }
 
     pub fn skip_whitespace(&mut self) {
@@ -238,8 +240,7 @@ impl<'a> Scanner<'a> {
         if self.text_mode {
             while !self.is_at_end() {
                 if self.peek() == '\n' {
-                    self.line += 1;
-                    self.text_line += 1;
+                    self.line += 1
                 }
                 if self.peek() == '\\' {
                     self.escape = 2;

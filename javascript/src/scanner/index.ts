@@ -2,13 +2,13 @@ import { Token, TokenKind } from "./token"
 
 function isAlpha(c: string): boolean {
     const m = c.match(/[a-zA-Z_]/)
-    if (m.length > 0) return true
+    if (m) return true
     else return false
 }
 
 function isDigit(c: string): boolean {
     const m = c.match(/[0-9]/)
-    if (m.length > 0) return true
+    if (m) return true
     else return false
 }
 
@@ -24,7 +24,8 @@ export class Scanner {
     constructor(source: string) {
         this.source = source
         this.start = 0
-        this.current = 1
+        this.current = 0
+        this.line = 1
         this.textLine = 1
         this.textMode = true
         this.escape = 0
@@ -67,7 +68,9 @@ export class Scanner {
 
     textToken(): Token {
         const s = this.source.slice(this.start, this.current)
-        return new Token(TokenKind.Text, s, 0, this.textLine)
+        const token = new Token(TokenKind.Text, s, 0, this.textLine)
+        this.textLine = this.line
+        return token
     }
 
     skipWhitespace() {
@@ -77,12 +80,14 @@ export class Scanner {
             }
             const c = this.peek()
             switch(c) {
-                case ' ' || '\r' || '\t':
+                case ' ':
+                case '\r':
+                case '\t':
                     this.advance();
                     continue
                 case '\n':
-                    this.line ++
-                    this.textLine ++
+                    this.line += 1
+                    this.textLine += 1
                     this.advance()
                     continue
                 default:
@@ -98,7 +103,7 @@ export class Scanner {
         kind: TokenKind
     ): TokenKind {
         const s = this.source.slice(this.start + start, this.current)
-        if (this.current - this.start == start + length && s == rest) {
+        if (this.current - this.start === start + length && s === rest) {
             return kind
         } else {
             return TokenKind.Identifier
@@ -106,7 +111,7 @@ export class Scanner {
     }
 
     identifierKind(): TokenKind {
-        if (this.current - this.start == 1) {
+        if (this.current - this.start === 1) {
             switch(this.source[this.start]) {
                 case 'b': return TokenKind.B
                 case 'c': return TokenKind.C
@@ -159,16 +164,16 @@ export class Scanner {
     }
 
     scanToken(): Token {
-        if (this.escape == 0) {
+        if (this.escape === 0) {
             this.skipWhitespace()
         }
         this.start = this.current
-        if (this.escape == 2 && this.peek() == '\\') {
+        if (this.escape === 2 && this.peek() === '\\') {
             this.escape = 1
             this.advance()
             return this.makeToken(TokenKind.BackSlash)
         }
-        if (this.escape == 1) {
+        if (this.escape === 1) {
             this.escape = 0
             this.advance()
             return this.textToken()
@@ -178,21 +183,20 @@ export class Scanner {
         }
 
         const c = this.advance()
-        if (c == '<') {
+        if (c === '<') {
             this.textMode = false
             return this.makeToken(TokenKind.OpenTag)
-        } else if (c == '>') {
+        } else if (c === '>') {
             this.textMode = true
             return this.makeToken(TokenKind.CloseTag)
         }
 
         if (this.textMode) {
             while (!this.isAtEnd()) {
-                if (this.peek() == '\n') {
-                    this.line ++
-                    this.textLine ++
+                if (this.peek() === '\n') {
+                    this.line += 1
                 }
-                if (this.peek() == '\\') {
+                if (this.peek() === '\\') {
                     this.escape = 2
                     return this.textToken()
                 }

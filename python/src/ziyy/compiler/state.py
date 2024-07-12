@@ -16,7 +16,7 @@ class State:
         return a, b
 
     def current_tag(self) -> str:
-        l = len(self.tags) - 1;
+        l = len(self.tags) - 1
         return self.tags[l]
 
     def current_save(self) -> str:

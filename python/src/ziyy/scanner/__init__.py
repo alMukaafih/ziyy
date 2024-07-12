@@ -49,7 +49,10 @@ class Scanner:
 
     def text_token(self) -> Token:
         s = self.source[self.start:self.current]
-        return Token(TokenKind.Text, s, 0, self.line)
+        token = Token(TokenKind.Text, s, 0, self.line)
+        self.text_line = self.line
+        return token
+
 
     def skip_whitespace(self) -> None:
         if self.text_mode:
@@ -151,7 +154,6 @@ class Scanner:
             while not self.is_at_end():
                 if self.peek() == '\n':
                     self.line += 1
-                    self.text_line += 1
                 if self.peek() == '\\':
                     self.escape = 2
                     return self.text_token()

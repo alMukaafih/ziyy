@@ -14,7 +14,7 @@ fn main() {
     let mut out = stdout().lock();
     if args.len() - 1 < 1 {
         usage();
-        exit(1);
+        exit(0);
     }
     let first = args.nth(1);
     if first == Some("-n".to_string()) || first == Some("--no-newline".to_string()) {
