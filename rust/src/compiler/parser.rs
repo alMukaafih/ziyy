@@ -5,6 +5,24 @@ use crate::value::*;
 use std::collections::HashMap;
 use std::io::Write;
 
+#[derive(Default, Debug)]
+pub struct ParseError {
+    msg: String
+}
+
+impl ParseError {
+    fn new(msg: &str) -> Self {
+        Self { msg: msg.to_owned() }
+    }
+
+    pub fn get_message(&self) -> String {
+        self.msg.clone()
+    }
+}
+
+
+pub type Result = std::result::Result<(), ParseError>;
+
 pub struct Parser<'a, W: Write> {
     pub(super) scanner: Scanner<'a>,
     pub(super) out: &'a mut W,
@@ -26,7 +44,7 @@ impl<'a, W: Write> Parser<'a, W> {
         }
     }
 
-    pub fn parse_to_out(&mut self) {
+    pub fn parse_to_out(&mut self) -> Result {
         let _ = write!(self.out, "{}",  RESET);
         loop {
             let token = self.scanner.scan_token();
@@ -40,7 +58,7 @@ impl<'a, W: Write> Parser<'a, W> {
 
                     let token = self.scanner.scan_token();
                     if token.kind != TT::CloseTag {
-                        panic!()
+                        return Err(ParseError::default())
                     }
                 }
                 TT::I => {
@@ -49,7 +67,7 @@ impl<'a, W: Write> Parser<'a, W> {
 
                     let token = self.scanner.scan_token();
                     if token.kind != TT::CloseTag {
-                        panic!()
+                        return Err(ParseError::default())
                     }
                 }
                 TT::S => {
@@ -58,7 +76,7 @@ impl<'a, W: Write> Parser<'a, W> {
 
                     let token = self.scanner.scan_token();
                     if token.kind != TT::CloseTag {
-                        panic!()
+                        return Err(ParseError::default())
                     }
                 }
                 TT::U => {
@@ -67,7 +85,7 @@ impl<'a, W: Write> Parser<'a, W> {
 
                     let token = self.scanner.scan_token();
                     if token.kind != TT::CloseTag {
-                        panic!()
+                        return Err(ParseError::default())
                     }
                 }
                 TT::C => {
@@ -111,55 +129,55 @@ impl<'a, W: Write> Parser<'a, W> {
                                 TT::Rgb => {
                                     let token = self.scanner.scan_token();
                                     if token.kind != TT::LeftParen {
-                                        panic!()
+                                        return Err(ParseError::default())
                                     }
 
                                     let token = self.scanner.scan_token();
                                     if token.kind != TT::Number {
-                                        panic!()
+                                        return Err(ParseError::default())
                                     }
                                     let r: u8 = token.content.parse().unwrap();
 
                                     let token = self.scanner.scan_token();
                                     if token.kind != TT::Comma {
-                                        panic!()
+                                        return Err(ParseError::default())
                                     }
 
                                     let token = self.scanner.scan_token();
                                     if token.kind != TT::Number {
-                                        panic!()
+                                        return Err(ParseError::default())
                                     }
                                     let g: u8 = token.content.parse().unwrap();
 
                                     let token = self.scanner.scan_token();
                                     if token.kind != TT::Comma {
-                                        panic!()
+                                        return Err(ParseError::default())
                                     }
 
                                     let token = self.scanner.scan_token();
                                     if token.kind != TT::Number {
-                                        panic!()
+                                        return Err(ParseError::default())
                                     }
                                     let b: u8 = token.content.parse().unwrap();
 
                                     let token = self.scanner.scan_token();
                                     if token.kind != TT::RightParen {
-                                        panic!()
+                                        return Err(ParseError::default())
                                     }
 
                                     let rgb = C::rgb(r, g, b);
                                     self.state.push("c", &rgb);
                                     let _ = write!(self.out, "{}", &rgb);
                                 }
-                                _ => panic!(),
+                                _ => return Err(ParseError::default()),
                             }
                         }
-                        _ => panic!(),
+                        _ => return Err(ParseError::default()),
                     }
 
                     let token = self.scanner.scan_token();
                     if token.kind != TT::CloseTag {
-                        panic!()
+                        return Err(ParseError::default())
                     }
                 }
                 TT::X => {
@@ -203,55 +221,55 @@ impl<'a, W: Write> Parser<'a, W> {
                                 TT::Rgb => {
                                     let token = self.scanner.scan_token();
                                     if token.kind != TT::LeftParen {
-                                        panic!()
+                                        return Err(ParseError::default())
                                     }
 
                                     let token = self.scanner.scan_token();
                                     if token.kind != TT::Number {
-                                        panic!()
+                                        return Err(ParseError::default())
                                     }
                                     let r: u8 = token.content.parse().unwrap();
 
                                     let token = self.scanner.scan_token();
                                     if token.kind != TT::Comma {
-                                        panic!()
+                                        return Err(ParseError::default())
                                     }
 
                                     let token = self.scanner.scan_token();
                                     if token.kind != TT::Number {
-                                        panic!()
+                                        return Err(ParseError::default())
                                     }
                                     let g: u8 = token.content.parse().unwrap();
 
                                     let token = self.scanner.scan_token();
                                     if token.kind != TT::Comma {
-                                        panic!()
+                                        return Err(ParseError::default())
                                     }
 
                                     let token = self.scanner.scan_token();
                                     if token.kind != TT::Number {
-                                        panic!()
+                                        return Err(ParseError::default())
                                     }
                                     let b: u8 = token.content.parse().unwrap();
 
                                     let token = self.scanner.scan_token();
                                     if token.kind != TT::RightParen {
-                                        panic!()
+                                        return Err(ParseError::default())
                                     }
 
                                     let rgb = X::rgb(r, g, b);
                                     self.state.push("x", &rgb);
                                     let _ = write!(self.out, "{}", &rgb);
                                 }
-                                _ => panic!(),
+                                _ => return Err(ParseError::default()),
                             }
                         }
-                        _ => panic!(),
+                        _ => return Err(ParseError::default()),
                     }
 
                     let token = self.scanner.scan_token();
                     if token.kind != TT::CloseTag {
-                        panic!()
+                        return Err(ParseError::default())
                     }
                 }
                 TT::Slash => {
@@ -259,35 +277,35 @@ impl<'a, W: Write> Parser<'a, W> {
                     match token.kind {
                         TT::B => {
                             if self.state.current_tag() != "b" {
-                                panic!()
+                                return Err(ParseError::default())
                             }
                             self.state.pop();
                             let _ = write!(self.out, "{}", RESET_B);
                         }
                         TT::I => {
                             if self.state.current_tag() != "i" {
-                                panic!()
+                                return Err(ParseError::default())
                             }
                             self.state.pop();
                             let _ = write!(self.out, "{}", RESET_I);
                         }
                         TT::S => {
                             if self.state.current_tag() != "s" {
-                                panic!()
+                                return Err(ParseError::default())
                             }
                             self.state.pop();
                             let _ = write!(self.out, "{}", RESET_S);
                         }
                         TT::U => {
                             if self.state.current_tag() != "u" {
-                                panic!()
+                                return Err(ParseError::default())
                             }
                             self.state.pop();
                             let _ = write!(self.out, "{}", RESET_U);
                         }
                         TT::C => {
                             if self.state.current_tag() != "c" {
-                                panic!()
+                                return Err(ParseError::default())
                             }
                             self.state.pop();
                             let saved = self.state.current_save();
@@ -295,7 +313,7 @@ impl<'a, W: Write> Parser<'a, W> {
                         }
                         TT::X => {
                             if self.state.current_tag() != "x" {
-                                panic!()
+                                return Err(ParseError::default())
                             }
                             self.state.pop();
                             let saved = self.state.current_save();
@@ -312,18 +330,18 @@ impl<'a, W: Write> Parser<'a, W> {
                         | TT::White
                         | TT::Yellow => {
                             if self.state.current_tag() != token.content {
-                                panic!()
+                                return Err(ParseError::default())
                             }
                             self.state.pop();
                             let saved = self.state.current_save();
                             let _ = write!(self.out, "{}", saved);
                         }
-                        _ => panic!(),
+                        _ => return Err(ParseError::default()),
                     }
 
                     let token = self.scanner.scan_token();
                     if token.kind != TT::CloseTag {
-                        panic!()
+                        return Err(ParseError::default())
                     }
                 }
                 TT::Identifier
@@ -341,12 +359,15 @@ impl<'a, W: Write> Parser<'a, W> {
                         self.state.push(token.content, val);
                         let _ = write!(self.out, "{}", val);
                     } else {
-                        panic!()
+                        return Err(ParseError::default())
                     }
+                }
+                TT::Error => {
+                    return Err(ParseError { msg: format!("Unexpected character. {}", token.content) });
                 }
                 TT::Eof => {
                     let _ = write!(self.out, "{}", RESET);
-                    break
+                    return Ok(());
                 }
                 _ => continue,
             }

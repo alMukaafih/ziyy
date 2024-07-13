@@ -30,15 +30,18 @@ if first == "-n" or first == "--no-newline":
     _compile(args[1], out)
 elif first == "-f" or first == "--file":
     if len(args) == 1:
+        usage()
         sys.exit(1)
     if not os.path.isfile(args[1]):
+        usage()
         sys.exit(1)
     file = open(args[1], "r").read()
     _compile(file, out)
 elif first == "-V" or first == "--version":
-    print("ziyy 1.0.6")
+    print("ziyy 2.0.0-beta.0")
 elif first == "-h" or first == "--help":
     usage()
     sys.exit(0)
 else:
     _compile(first, out)
+    out.write("\n")

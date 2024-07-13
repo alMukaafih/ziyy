@@ -32,12 +32,14 @@ else if (first == "-f" || first == "--file") {
     if (args.length == 1)
         process.exit(1)
     let file = statSync(args[1])
-    if (!file.isFile())
-        process.exit()
+    if (!file.isFile()) {
+        usage()
+        process.exit(1)
+    }
     compile(readFileSync(args[1], "utf8"), out)
 }
 else if (first == "-V" || first == "--version") {
-    console.log("ziyy 1.0.6")
+    console.log("ziyy 2.0.0-beta.0")
 }
 else if (first == "-h" || first == "--help") {
     usage()
@@ -45,4 +47,5 @@ else if (first == "-h" || first == "--help") {
 }
 else {
     compile(first, out)
+    out.write('\n')
 }

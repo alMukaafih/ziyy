@@ -8,7 +8,7 @@ function debug(source: string, out: NodeJS.WriteStream) {
     for (;;) {
         let token = scanner.scanToken()
         let content
-        if (token.err_code == 0)
+        if (token.errCode == 0)
             content = token.content
         else
             content = "Unexpected character."

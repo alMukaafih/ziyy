@@ -1,11 +1,13 @@
-export enum TokenKind {
-    // Single-character tokens.
-    LeftParen = 0 /* ( */,
-    RightParen /* ) */,
+package ziyy.scanner;
+
+public enum TokenKind {
+     // Single-character tokens.
+    LeftParen,  /* ( */
+    RightParen, /* ) */
     //LeftBrace/* { */, RightBrace/* } */,
     //LeftSquare/* [ */, RightSquare/* ] */,
     //Colon/* : */, Equal/* = */,
-    Comma /* , */,
+    Comma, /* , */
     //SemiColon/* ; */,
     OpenTag,
     CloseTag,
@@ -36,23 +38,4 @@ export enum TokenKind {
     // Keywords.
     Eof,
     Error,
-}
-
-export class Token {
-    kind: TokenKind;
-    content: string;
-    errCode: number;
-    line: number;
-
-    constructor(
-        kind: TokenKind,
-        content: string,
-        err_code: number,
-        line: number
-    ) {
-        this.kind = kind;
-        this.content = content;
-        this.errCode = err_code;
-        this.line = line;
-    }
 }

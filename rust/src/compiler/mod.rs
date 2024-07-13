@@ -20,6 +20,12 @@ impl<'a, W: Write> Compiler<'a, W> {
     }
 
     pub fn compile(&mut self) {
-        self.parser.parse_to_out();
+        let result = self.parser.parse_to_out();
+        match result {
+            Ok(_) => {},
+            Err(err) => {
+                panic!("{}", err.get_message())
+            },
+        }
     }
 }

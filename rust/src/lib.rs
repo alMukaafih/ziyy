@@ -10,7 +10,8 @@
 //!
 
 mod compiler;
-mod scanner;
+#[doc(hidden)]
+pub mod scanner;
 pub mod value;
 
 use std::{collections::HashMap, io::Write};

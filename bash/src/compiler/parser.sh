@@ -18,8 +18,14 @@ function __z_parser_new {
     __z_parser_variables=$3
 }
 
+function __z_cleanup() {
+    tput cnorm
+}
+
 function __z_parser_parse_to_out {
     local out=${__z_parser[out]}
+    trap __z_cleanup EXIT
+    tput civis
     # shellcheck disable=SC2154
     $out "%b" "$__z_RESET"
     while true; do
@@ -308,12 +314,15 @@ function __z_parser_parse_to_out {
             local token_content=${__z_token[content]}
             local key="${__z_parser_variables}[$token_content]"
             local var=${!key}
-            #if [[ -z $var ]]; then
+            if [[ -z $var ]]; then
+                __z_panic 312
+            else
                 __z_state_push "${__z_token[content]}" "$var"
                 $out "%b" "$var"
-            #else
-            #     __z_panic 315
-            #fi
+            fi
+            ;;
+        Error)
+            __z_panic 319
             ;;
         Eof)
             $out "%b" "$__z_RESET"

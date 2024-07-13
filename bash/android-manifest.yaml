@@ -1,6 +1,6 @@
 control:
     Package: ziyy
-    Version: 1.0.6
+    Version: 2.0.0-beta.0
     Architecture: all
     Maintainer: alMukaafih <almukaafih@gmail.com>
     Depends: bash

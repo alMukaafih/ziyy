@@ -32,18 +32,22 @@ function main {
         __z_compile "$2" "$out"
     elif [[ $first == "-f" ]] || [[ $first == "--filename" ]]; then
         if [[ ${#args} -eq 1 ]]; then
+            usage
             exit 1
         fi
-        if ! [[ -f $2 ]]; then
+        if ! [[ -f "$2" ]]; then
+            usage
             exit 1
         fi
-        file=$(<$2)
+        file=$(<"$2")
         __z_compile "$file" "$out"
     elif [[ $first == "-V" ]] || [[ $first == "--version" ]]; then
-        builtin printf "ziyy 1.0.6\n"
+        $out "ziyy 2.0.0-beta.0\n"
     elif [[ $first == "-h" ]] || [[ $first == "--help" ]]; then
         usage
         exit 0
+    else
+        __z_compile "$1" "$out"
     fi
 }
 main "$@"

@@ -5,12 +5,13 @@ export class Compiler {
 
     constructor(
         source: string,
-        out: NodeJS.WriteStream, variables: Record<string, string>
+        out: NodeJS.WriteStream,
+        variables: Record<string, string>
     ) {
-        this.parser = new Parser(source, out, variables)
+        this.parser = new Parser(source, out, variables);
     }
 
     compile() {
-        this.parser.parseToOut()
+        this.parser.parseToOut();
     }
 }

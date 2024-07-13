@@ -4,7 +4,7 @@ from ..scanner import Scanner
 from ..value import *
 from typing import TextIO
 
-class ParseError(Exception):
+class ParseException(Exception):
     pass
 
 class Parser:
@@ -27,28 +27,28 @@ class Parser:
 
                     token = self.scanner.scan_token()
                     if token.kind != TT.CloseTag:
-                        raise ParseError
+                        raise ParseException
                 case TT.I:
                     self.state.push(token.content, I)
                     self.out.write(I)
 
                     token = self.scanner.scan_token()
                     if token.kind != TT.CloseTag:
-                        raise ParseError
+                        raise ParseException
                 case TT.S:
                     self.state.push(token.content, S)
                     self.out.write(S)
 
                     token = self.scanner.scan_token()
                     if token.kind != TT.CloseTag:
-                        raise ParseError
+                        raise ParseException
                 case TT.U:
                     self.state.push(token.content, U)
                     self.out.write(U)
 
                     token = self.scanner.scan_token()
                     if token.kind != TT.CloseTag:
-                        raise ParseError
+                        raise ParseException
                 case TT.C:
                     token = self.scanner.scan_token()
                     match token.kind:
@@ -82,44 +82,44 @@ class Parser:
                                 case TT.Rgb:
                                     token = self.scanner.scan_token()
                                     if token.kind != TT.LeftParen:
-                                        raise ParseError
+                                        raise ParseException
 
                                     token = self.scanner.scan_token()
                                     if token.kind != TT.Number:
-                                        raise ParseError
+                                        raise ParseException
                                     r: int = int(token.content)
 
                                     token = self.scanner.scan_token()
                                     if token.kind != TT.Comma:
-                                        raise ParseError
+                                        raise ParseException
 
                                     token = self.scanner.scan_token()
                                     if token.kind != TT.Number:
-                                        raise ParseError
+                                        raise ParseException
                                     g: int = int(token.content)
 
                                     token = self.scanner.scan_token()
                                     if token.kind != TT.Comma:
-                                        raise ParseError
+                                        raise ParseException
 
                                     token = self.scanner.scan_token()
                                     if token.kind != TT.Number:
-                                        raise ParseError
+                                        raise ParseException
                                     b: int = int(token.content)
 
                                     token = self.scanner.scan_token()
                                     if token.kind != TT.RightParen:
-                                        raise ParseError
+                                        raise ParseException
 
                                     rgb = C.rgb(r, g, b)
                                     self.state.push("c", rgb)
                                     self.out.write(rgb)
-                                case _: raise ParseError
-                        case _: raise ParseError
+                                case _: raise ParseException
+                        case _: raise ParseException
 
                     token = self.scanner.scan_token()
                     if token.kind != TT.CloseTag:
-                        raise ParseError
+                        raise ParseException
                 case TT.X:
                     token = self.scanner.scan_token()
                     match token.kind:
@@ -153,96 +153,96 @@ class Parser:
                                 case TT.Rgb:
                                     token = self.scanner.scan_token()
                                     if token.kind != TT.LeftParen:
-                                        raise ParseError
+                                        raise ParseException
 
                                     token = self.scanner.scan_token()
                                     if token.kind != TT.Number:
-                                        raise ParseError
+                                        raise ParseException
                                     r: int = int(token.content)
 
                                     token = self.scanner.scan_token()
                                     if token.kind != TT.Comma:
-                                        raise ParseError
+                                        raise ParseException
 
                                     token = self.scanner.scan_token()
                                     if token.kind != TT.Number:
-                                        raise ParseError
+                                        raise ParseException
                                     g: int = int(token.content)
 
                                     token = self.scanner.scan_token()
                                     if token.kind != TT.Comma:
-                                        raise ParseError
+                                        raise ParseException
 
                                     token = self.scanner.scan_token()
                                     if token.kind != TT.Number:
-                                        raise ParseError
+                                        raise ParseException
                                     b: int = int(token.content)
 
                                     token = self.scanner.scan_token()
                                     if token.kind != TT.RightParen:
-                                        raise ParseError
+                                        raise ParseException
 
                                     rgb = X.rgb(r, g, b)
                                     self.state.push("x", rgb)
                                     self.out.write(rgb)
-                                case _: raise ParseError
-                        case _: raise ParseError
+                                case _: raise ParseException
+                        case _: raise ParseException
 
                     token = self.scanner.scan_token()
                     if token.kind != TT.CloseTag:
-                        raise ParseError
+                        raise ParseException
                 case TT.Slash:
                     token = self.scanner.scan_token()
                     match token.kind:
                         case TT.B:
                             if self.state.current_tag() != "b":
-                                raise ParseError
+                                raise ParseException
                             self.state.pop()
                             self.out.write(RESET_B)
                         case TT.I:
                             if self.state.current_tag() != "i":
-                                raise ParseError
+                                raise ParseException
                             self.state.pop()
                             self.out.write(RESET_I)
                         case TT.S:
                             if self.state.current_tag() != "s":
-                                raise ParseError
+                                raise ParseException
                             self.state.pop()
                             self.out.write(RESET_S)
                         case TT.U:
                             if self.state.current_tag() != "u":
-                                raise ParseError
+                                raise ParseException
                             self.state.pop()
                             self.out.write(RESET_U)
                         case TT.C:
                             if self.state.current_tag() != "c":
-                                raise ParseError
+                                raise ParseException
                             self.state.pop()
                             saved = self.state.current_save()
                             self.out.write(saved)
                         case TT.X:
                             if self.state.current_tag() != "x":
-                                raise ParseError
+                                raise ParseException
                             self.state.pop()
                             saved = self.state.current_save()
                             self.out.write(saved)
                         case TT.Identifier | TT.Black | TT.Blue | TT.Cyan | TT.Green | TT.Magenta | TT.Red | TT.Rgb | TT.White | TT.Yellow:
                             if self.state.current_tag() != token.content:
-                                raise ParseError
+                                raise ParseException
                             self.state.pop()
                             saved = self.state.current_save()
                             self.out.write(saved)
-                        case _: raise ParseError
+                        case _: raise ParseException
                     token = self.scanner.scan_token()
                     if token.kind != TT.CloseTag:
-                        raise ParseError
+                        raise ParseException
                 case TT.Identifier | TT.Black | TT.Blue | TT.Cyan | TT.Green | TT.Magenta | TT.Red | TT.Rgb | TT.White | TT.Yellow:
                     var = self.variables.get(token.content)
                     if var is not None:
                         self.state.push(token.content, var)
                         self.out.write(var)
                     else:
-                        raise ParseError
+                        raise ParseException
 
                 case TT.Eof:
                     self.out.write(RESET)

@@ -1,6 +1,7 @@
 use std::env;
 use std::fs::File;
 use std::io::{BufReader, Read, stdout, Write};
+use std::path::Path;
 use std::process::exit;
 use ziyy::compile;
 
@@ -20,18 +21,27 @@ fn main() {
     if first == Some("-n".to_string()) || first == Some("--no-newline".to_string()) {
         compile(args.next().unwrap().as_str(), &mut out)
     } else if first == Some("-f".to_string()) || first == Some("--file".to_string()) {
-        let f = File::open(args.next().unwrap()).unwrap();
+        if args.len() == 0 {
+            usage();
+            exit(1);
+        }
+        let file = args.next().unwrap();
+        if !Path::new(&file).is_file() {
+            usage();
+            exit(1);
+        }
+        let f = File::open(file).unwrap();
         let mut reader = BufReader::new(f);
         let mut file = String::new();
         let _ = reader.read_to_string(&mut file);
         compile(file.as_str(), &mut out)
     } else if first == Some("-V".to_string()) || first == Some("--version".to_string()) {
-        println!("ziyy 2.0.0-beta-0")
+        println!("ziyy 2.0.0-beta.0")
     } else if first == Some("-h".to_string()) || first == Some("--help".to_string()) {
         usage();
         exit(0);
     } else {
         compile(first.unwrap().as_str(), &mut out);
-        let _ = write!(out, "\n");
+        let _ = writeln!(out);
     }
 }
