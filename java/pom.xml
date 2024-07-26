@@ -6,10 +6,10 @@
 
   <groupId>ziyy</groupId>
   <artifactId>ziyy</artifactId>
-  <version>2.0.0-beta.0</version>
+  <version>2.0.0-beta.1</version>
 
   <name>ziyy</name>
-  <!-- FIXME change it to the project's website -->
+  <description>Convenient Terminal Output Styler.</description>
   <url>https://github.com/alMukaafih/ziyy</url>
 
   <properties>

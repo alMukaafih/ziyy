@@ -1,7 +1,7 @@
 package ziyy.scanner;
 
 public class Scanner {
-    String source;
+    public String source;
     int start = 0;
     int current = 0;
     int line = 1;

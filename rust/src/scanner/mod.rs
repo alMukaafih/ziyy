@@ -12,7 +12,7 @@ fn is_digit(c: char) -> bool {
 }
 
 pub struct Scanner<'a> {
-    source: &'a [u8],
+    pub(crate) source: &'a [u8],
     start: i32,
     current: i32,
     line: i32,

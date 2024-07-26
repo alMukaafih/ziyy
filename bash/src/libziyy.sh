@@ -16,13 +16,13 @@ function __z_compile {
     # shellcheck disable=SC2034
     vars[cyan]=$__z_return
 
-    __z_compiler_new "$1" "$2" vars
-    __z_compiler_compile
+    compiler_new "$1" "$2" vars
+    compiler_compile
 }
 
 function style {
-    __z_compiler_new "$1" __z_string vars
-    __z_compiler_compile
+    compiler_new "$1" __z_string vars
+    compiler_compile
     return=$__z_string_s
 }
 

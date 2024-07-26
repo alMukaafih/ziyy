@@ -1,5 +1,6 @@
 import { WriteStream } from "tty";
 import { Compiler } from "./compiler";
+export { Compiler } from "./compiler";
 import { C } from "./value";
 
 class String extends WriteStream {
@@ -43,3 +44,4 @@ export function template(save: string) {
 if (require.main === module) {
     console.log(style("[b]Hello[/b] World!"))
 }
+

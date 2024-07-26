@@ -7,3 +7,7 @@ class Compiler:
 
     def compile(self):
         self.parser.parse_to_out()
+
+    def compile_source(self, source: str):
+        self.parser.scanner.source = source
+        self.compile()

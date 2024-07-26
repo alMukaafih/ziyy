@@ -14,4 +14,9 @@ export class Compiler {
     compile() {
         this.parser.parseToOut();
     }
+
+    compileSource(source: string) {
+        this.parser.scanner.source = source;
+        this.compile();
+    }
 }

@@ -16,4 +16,9 @@ public class Compiler {
     public void compile() throws ParseException {
         parser.parseToOut();
     }
+
+    public void compileSource(String source) throws ParseException {
+        parser.scanner.source = source;
+        compile();
+    }
 }

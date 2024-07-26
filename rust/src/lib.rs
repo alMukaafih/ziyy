@@ -14,10 +14,11 @@ mod compiler;
 pub mod scanner;
 pub mod value;
 
+
 use std::{collections::HashMap, io::Write};
 
 use value::C;
-use crate::compiler::Compiler;
+pub use crate::compiler::Compiler;
 
 #[doc(hidden)]
 pub fn compile(source: &str, out: &mut impl Write) {

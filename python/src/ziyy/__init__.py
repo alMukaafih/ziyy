@@ -6,7 +6,7 @@ from typing import TextIO
 from .value import C
 from .compiler import Compiler
 
-__all__ = ["style", "template"]
+__all__ = ["style", "template", "Compiler"]
 
 class String(TextIO):
     def __init__(self):
