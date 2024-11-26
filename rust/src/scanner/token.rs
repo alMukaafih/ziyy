@@ -5,18 +5,22 @@ pub enum TokenKind {
     RightParen, /* ) */
     //LeftBrace/* { */, RightBrace/* } */,
     //LeftSquare/* [ */, RightSquare/* ] */,
-    //Colon/* : */, Equal/* = */,
+    //Colon/* : */,
+    Equal/* = */,
     Comma, /* , */
     //SemiColon/* ; */,
     OpenTag,
+    OpenTagAndSlash,
     CloseTag,
+    SlashAndCloseTag,
     //Plus,
     Dot,
     Slash,
     BackSlash,
     // Literals.
     Identifier,
-    /* String, */ Number,
+    String, Number,
+    WhiteSpace,
     Text,
     // Builtin Variables.
     Black,
@@ -28,10 +32,13 @@ pub enum TokenKind {
     Cyan,
     White,
     Rgb,
+    Hex/* #ffffff */,
+    Byte,
     B,
     C,
     I,
     S,
+    T,
     U,
     X,
     // Keywords.
@@ -45,7 +52,7 @@ impl TokenKind {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token<'a> {
     pub kind: TokenKind,
     pub content: &'a str,

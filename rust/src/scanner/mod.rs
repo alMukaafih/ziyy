@@ -1,50 +1,74 @@
 pub mod token;
 
-use crate::scanner::token::*;
+use crate::{scanner::token::*, Result};
 use std::str;
 
 fn is_alpha(c: char) -> bool {
     c.is_ascii_alphabetic() || c == '_'
 }
 
+fn is_valid(c: char) -> bool {
+    c == ':' || c == '-'
+}
+
 fn is_digit(c: char) -> bool {
     c.is_ascii_digit()
 }
 
-pub struct Scanner<'a> {
-    pub(crate) source: &'a [u8],
+fn is_hex(c: char) -> bool {
+    c.is_ascii_digit()
+        || c == 'a'
+        || c == 'b'
+        || c == 'c'
+        || c == 'd'
+        || c == 'e'
+        || c == 'f'
+        || c == 'A'
+        || c == 'B'
+        || c == 'C'
+        || c == 'D'
+        || c == 'E'
+        || c == 'F'
+}
+
+pub struct Scanner<B: AsRef<[u8]>> {
+    pub(crate) source: B,
     start: i32,
     current: i32,
     line: i32,
     text_line: i32,
-    text_mode: bool,
+    pub(crate) text_mode: bool,
     escape: u8,
+    pub(crate) parse_colors: bool,
+    pub(crate) parse_styles: bool,
 }
 
-impl<'a> Scanner<'a> {
-    pub fn new(source: &str) -> Scanner<'_> {
+impl<B: AsRef<[u8]>> Scanner<B> {
+    pub fn new(source: B) -> Scanner<B> {
         Scanner {
-            source: source.as_bytes(),
+            source,
             start: 0,
             current: 0,
             line: 1,
             text_line: 1,
             text_mode: true,
             escape: 0,
+            parse_colors: false,
+            parse_styles: false,
         }
     }
 
     pub fn is_at_end(&mut self) -> bool {
-        self.current as usize + 1 > self.source.len()
+        self.current as usize + 1 > self.source.as_ref().len()
     }
 
     pub fn advance(&mut self) -> char {
         self.current += 1;
-        self.source[self.current as usize - 1] as char
+        self.source.as_ref()[self.current as usize - 1] as char
     }
 
     pub fn peek(&mut self) -> char {
-        if let Some(c) = self.source.get(self.current as usize) {
+        if let Some(c) = self.source.as_ref().get(self.current as usize) {
             *c as char
         } else {
             '\0'
@@ -52,38 +76,38 @@ impl<'a> Scanner<'a> {
     }
 
     pub fn peek_next(&mut self) -> char {
-        if let Some(c) = self.source.get(self.current as usize + 1) {
+        if let Some(c) = self.source.as_ref().get(self.current as usize + 1) {
             *c as char
         } else {
             '\0'
         }
     }
 
-    pub fn make_token(&mut self, kind: TokenKind) -> Token<'_> {
-        let sl = &self.source[(self.start as usize)..(self.current as usize)];
-        let s = unsafe { str::from_utf8_unchecked(sl) };
-        Token {
+    pub fn make_token(&mut self, kind: TokenKind) -> Result<Token<'_>> {
+        let sl = &self.source.as_ref()[(self.start as usize)..(self.current as usize)];
+        let s = str::from_utf8(sl)?;
+        Ok(Token {
             kind,
             content: s,
             err_code: 0,
             line: self.line,
-        }
+        })
     }
 
-    pub fn error_token(&self, code: u8) -> Token<'_> {
-        let sl = &self.source[(self.start as usize)..(self.current as usize)];
-        let s = unsafe { str::from_utf8_unchecked(sl) };
-        Token {
+    pub fn error_token(&self, code: u8) -> Result<Token<'_>> {
+        let sl = &self.source.as_ref()[(self.start as usize)..(self.current as usize)];
+        let s = str::from_utf8(sl)?;
+        Ok(Token {
             kind: TokenKind::Error,
             content: s,
             err_code: code,
             line: self.line,
-        }
+        })
     }
 
-    pub fn text_token(&mut self) -> Token<'_> {
-        let sl = &self.source[(self.start as usize)..(self.current as usize)];
-        let s = unsafe { str::from_utf8_unchecked(sl) };
+    pub fn text_token(&mut self) -> Result<Token<'_>> {
+        let sl = &self.source.as_ref()[(self.start as usize)..(self.current as usize)];
+        let s = str::from_utf8(sl)?;
         let token = Token {
             kind: TokenKind::Text,
             content: s,
@@ -91,7 +115,7 @@ impl<'a> Scanner<'a> {
             line: self.text_line,
         };
         self.text_line = self.line;
-        token
+        Ok(token)
     }
 
     pub fn skip_whitespace(&mut self) {
@@ -100,18 +124,18 @@ impl<'a> Scanner<'a> {
                 return;
             }
             let c = self.peek();
-            match c {
-                ' ' | '\r' | '\t' => {
-                    self.advance();
-                    continue;
-                }
-                '\n' => {
+            if c.is_whitespace() {
+                if c == '\n' {
                     self.line += 1;
                     self.text_line += 1;
                     self.advance();
                     continue;
+                } else {
+                    self.advance();
+                    continue;
                 }
-                _ => return,
+            } else {
+                return;
             }
         }
     }
@@ -123,8 +147,8 @@ impl<'a> Scanner<'a> {
         rest: &str,
         kind: TokenKind,
     ) -> TokenKind {
-        let sl = &self.source[((self.start + start) as usize)..(self.current as usize)];
-        let s = unsafe { str::from_utf8_unchecked(sl) };
+        let sl = &self.source.as_ref()[((self.start + start) as usize)..(self.current as usize)];
+        let s = str::from_utf8(sl).unwrap();
         if self.current - self.start == start + length && s == rest {
             kind
         } else {
@@ -134,30 +158,32 @@ impl<'a> Scanner<'a> {
 
     pub fn identifier_kind(&mut self) -> TokenKind {
         use TokenKind::*;
-        if self.current - self.start == 1 {
-            match self.source[self.start as usize] as char {
+        if self.parse_styles && self.current - self.start == 1 {
+            match self.source.as_ref()[self.start as usize] as char {
                 'b' => B,
                 'c' => C,
                 'i' => I,
                 's' => S,
+                't' => T,
                 'u' => U,
                 'x' => X,
                 _ => Identifier,
             }
-        } else {
-            match self.source[self.start as usize] as char {
-                'b' => match self.source[self.start as usize + 1] as char {
-                    'l' => match self.source[self.start as usize + 2] as char {
+        } else if self.parse_colors {
+            match self.source.as_ref()[self.start as usize] as char {
+                'b' => match self.source.as_ref()[self.start as usize + 1] as char {
+                    'l' => match self.source.as_ref()[self.start as usize + 2] as char {
                         'a' => self.check_keyword(3, 2, "ck", TokenKind::Black),
                         'u' => self.check_keyword(3, 1, "e", TokenKind::Blue),
                         _ => Identifier,
                     },
+                    'y' => self.check_keyword(2, 2, "te", TokenKind::Byte),
                     _ => Identifier,
                 },
                 'c' => self.check_keyword(1, 3, "yan", TokenKind::Cyan),
                 'g' => self.check_keyword(1, 4, "reen", TokenKind::Green),
                 'm' => self.check_keyword(1, 6, "agenta", TokenKind::Magenta),
-                'r' => match self.source[self.start as usize + 1] as char {
+                'r' => match self.source.as_ref()[self.start as usize + 1] as char {
                     'e' => self.check_keyword(2, 1, "d", TokenKind::Red),
                     'g' => self.check_keyword(2, 1, "b", TokenKind::Rgb),
                     _ => Identifier,
@@ -166,11 +192,13 @@ impl<'a> Scanner<'a> {
                 'y' => self.check_keyword(1, 5, "ellow", TokenKind::Yellow),
                 _ => Identifier,
             }
+        } else {
+            Identifier
         }
     }
 
-    pub fn identifier(&mut self) -> Token<'_> {
-        while is_alpha(self.peek()) || is_digit(self.peek()) {
+    pub fn identifier(&mut self) -> Result<Token<'_>> {
+        while is_alpha(self.peek()) || is_digit(self.peek()) || is_valid(self.peek()) {
             self.advance();
         }
 
@@ -178,7 +206,17 @@ impl<'a> Scanner<'a> {
         self.make_token(kind)
     }
 
-    pub fn number(&mut self) -> Token<'_> {
+
+    pub fn hex<>(&mut self) -> Result<Token<'_>> {
+        while is_hex(self.peek()) {
+            self.advance();
+        }
+
+        self.make_token(TokenKind::Hex)
+    }
+
+
+    pub fn number(&mut self) -> Result<Token<'_>> {
         while is_digit(self.peek()) {
             self.advance();
         }
@@ -192,24 +230,24 @@ impl<'a> Scanner<'a> {
         self.make_token(TokenKind::Number)
     }
 
-    // pub fn string(&mut self) -> Token<'_> {
-    //     while self.peek() != ']' && self.peek() != '"' && !self.is_at_end() {
-    //         if self.peek() != '\n' {
-    //             self.line += 1;
-    //             self.text_line += 1;
-    //         }
-    //         self.advance();
-    //     }
+    pub fn string(&mut self, ch: char) -> Result<Token<'_>> {
+        while self.peek() != ch && !self.is_at_end() {
+            if self.peek() != '\n' {
+                self.line += 1;
+                self.text_line += 1;
+            }
+            self.advance();
+        }
 
-    //     if self.peek() == '%' && self.peek_next() == '>' || self.is_at_end() {
-    //         return self.error_token("Unterminated string.");
-    //     }
+        if self.is_at_end() {
+            return self.error_token(2);
+        }
 
-    //     self.advance();
-    //     self.make_token(TokenKind::String)
-    // }
+        self.advance();
+        self.make_token(TokenKind::String)
+    }
 
-    pub fn scan_token(&mut self) -> Token<'_> {
+    pub fn scan_token(&mut self) -> Result<Token<'_>> {
         if self.escape == 0 {
             self.skip_whitespace();
         }
@@ -231,7 +269,12 @@ impl<'a> Scanner<'a> {
         let c = self.advance();
         if c == '<' {
             self.text_mode = false;
-            return self.make_token(TokenKind::OpenTag);
+            if self.peek() == '/' {
+                self.advance();
+                return self.make_token(TokenKind::OpenTagAndSlash);
+            } else {
+                return self.make_token(TokenKind::OpenTag);
+            }
         } else if c == '>' {
             self.text_mode = true;
             return self.make_token(TokenKind::CloseTag);
@@ -274,10 +317,33 @@ impl<'a> Scanner<'a> {
             ',' => self.make_token(TokenKind::Comma),
             '.' => self.make_token(TokenKind::Dot),
             // '+' => self.make_token(TokenKind::Plus),
-            // '=' => self.make_token(TokenKind::Equal),
-            //'"' => self.string(),
-            '/' => self.make_token(TokenKind::Slash),
-            _ => self.error_token(1),
+            '=' => self.make_token(TokenKind::Equal),
+            '"' => self.string('"'),
+            '\'' => self.string('\''),
+            '/' => match self.peek() {
+                '>' => {
+                    self.advance();
+                    self.make_token(TokenKind::SlashAndCloseTag)
+                }
+                _ => self.make_token(TokenKind::Slash),
+            },
+            _ => {
+                if self.parse_colors && c == '#' {
+                    self.hex()
+                } else {
+                    self.error_token(1)
+                }
+            },
         }
+    }
+
+    pub(crate) fn set_source(&mut self, source: B) {
+        self.source = source;
+        self.start = 0;
+        self.current = 0;
+        self.line = 1;
+        self.text_line = 1;
+        self.text_mode = true;
+        self.escape = 0;
     }
 }

@@ -3,24 +3,26 @@ pub struct X;
 
 impl X {
     /// Black Color.
-    pub const BLACK: &'static str   = "\x1b[40m";
+    pub const BLACK: [u8; 1]   = [40];
     /// Red Color.
-    pub const RED: &'static str     = "\x1b[41m";
+    pub const RED: [u8; 1]     = [41];
     /// Green Color.
-    pub const GREEN: &'static str   = "\x1b[42m";
+    pub const GREEN: [u8; 1]   = [42];
     /// Yellow Color.
-    pub const YELLOW: &'static str  = "\x1b[43m";
+    pub const YELLOW: [u8; 1]  = [43];
     /// Blue Color.
-    pub const BLUE: &'static str    = "\x1b[44m";
+    pub const BLUE: [u8; 1]    = [44];
     /// Magenta Color.
-    pub const MAGENTA: &'static str = "\x1b[45m";
+    pub const MAGENTA: [u8; 1] = [45];
     /// Cyan Color.
-    pub const CYAN: &'static str    = "\x1b[46m";
+    pub const CYAN: [u8; 1]    = [46];
     /// White Color.
-    pub const WHITE: &'static str   = "\x1b[47m";
+    pub const WHITE: [u8; 1]   = [47];
+    /// Default Color.
+    pub const DEFAULT: [u8; 1] = [49];
 
     /// RGB Color.
-    pub fn rgb(r: u8, g: u8, b: u8) -> String {
-        format!("\x1b[48;2;{r};{g};{b}m")
+    pub fn rgb(r: u8, g: u8, b: u8) -> [u8; 5] {
+        [48, 2, r, g, b]
     }
 }

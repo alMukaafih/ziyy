@@ -1,9 +1,8 @@
-use std::{ffi::OsStr, path::PathBuf};
+use proc_macro::{TokenStream, TokenTree};
 
-use proc_macro::{Literal, TokenStream, TokenTree};
-
+/// Include source from file.
 #[proc_macro]
-pub fn import(item: TokenStream) -> TokenStream {
+pub fn source(item: TokenStream) -> TokenStream {
     let token = item.into_iter().next().unwrap();
     let s;
     match token {
@@ -15,22 +14,10 @@ pub fn import(item: TokenStream) -> TokenStream {
 
     let s = s.strip_prefix('"').unwrap();
     let s = s.strip_suffix('"').unwrap();
+    let mut s = s.to_owned();
 
-    let paths = s.split('/');
-    let mut p = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    for path in paths {
-        p.push(path);
+    if !s.ends_with(".zi") {
+        s = format!("{s}.zi");
     }
-    p.set_extension("z");
-    let os_s: &OsStr = p.as_ref();
-    let s = os_s.to_str().unwrap();
-    let token = TokenTree::Literal(Literal::string(s));
-
-    token.into()
+    format!("include_str!(\"{s}\")").parse().unwrap()
 }
-
-// #[test]
-// fn test_resolve() {
-//     let i = resolve!("");
-
-// }

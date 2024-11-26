@@ -7,7 +7,7 @@ fn debug(source: &str, out: &mut impl Write) {
     let mut scanner = Scanner::new(source);
     let mut line = -1;
     loop {
-        let token = scanner.scan_token();
+        let token = scanner.scan_token().unwrap();
         let content = if token.err_code == 0 {
             token.content
         } else {
@@ -26,5 +26,5 @@ fn debug(source: &str, out: &mut impl Write) {
 
 fn main() {
     let mut out = stdout();
-    debug(include_str!("./help.z"), &mut out)
+    debug(include_str!("../../.././help.zi"), &mut out)
 }

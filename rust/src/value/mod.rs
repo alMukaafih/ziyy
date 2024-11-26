@@ -6,18 +6,16 @@ pub use c::C;
 pub use x::X;
 
 /// Bold Value.
-pub const B: &str = "\x1b[1m";
+pub const B: [u8; 1] = [1];
 /// Italics Value.
-pub const I: &str = "\x1b[3m";
+pub const I: [u8; 1] = [3];
 /// Underline Value.
-pub const U: &str = "\x1b[4m";
+pub const U: [u8; 1] = [4];
 /// Strike through Value.
-pub const S: &str = "\x1b[9m";
+pub const S: [u8; 1] = [9];
 
-pub(crate) const RESET: &str   = "\x1b[0m";
+pub(crate) const RESET: [u8; 1] = [0];
 pub(crate) const RESET_B: &str = "\x1b[22m";
 pub(crate) const RESET_I: &str = "\x1b[23m";
 pub(crate) const RESET_U: &str = "\x1b[24m";
 pub(crate) const RESET_S: &str = "\x1b[29m";
-pub(crate) const RESET_C: &str = "\x1b[39m";
-pub(crate) const RESET_X: &str = "\x1b[49m";

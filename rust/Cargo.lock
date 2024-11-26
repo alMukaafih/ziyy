@@ -4,7 +4,7 @@ version = 3
 
 [[package]]
 name = "ziyy"
-version = "2.0.0-beta.1"
+version = "2.0.0-beta.2"
 dependencies = [
  "ziyy-proc",
 ]

@@ -1,53 +1,59 @@
 #![warn(missing_docs)]
+#![forbid(unsafe_code)]
 #![allow(dead_code)]
-//! A Convenient Library for Styling Terminal Output.
-//! # Example
+#![doc = include_str!("../../README.md")]
+//! # Examples
 //! ```
-//! use ziyy::style;
-//! let text = style("[b][c:yellow]Hello World!");
-//! assert_eq!(text, "\x1b[1m\x1b[33mHello World!\x1b[0m")
-//!```
+//! use std::collections::HashMap;
+//! use std::io::stdout;
 //!
+//! use ziyy::Compiler;
+//! use ziyy::value::C;
+//!
+//! let mut out = stdout();
+//! let mut vars = HashMap::new();
+//! vars.insert("green".to_string(), C::rgb(0, 150, 75));
+//! vars.insert("cyan".to_string(), C::rgb(0, 150, 150));
+//!
+//! let mut compiler = Compiler::new(include_str!("../../help.zi"), &mut out, Some(vars));
+//! assert!(compiler.compile().is_ok());
+//!```
+//! # Output
 
+
+mod color;
 mod compiler;
 #[doc(hidden)]
 pub mod scanner;
+mod parser;
 pub mod value;
+#[cfg(feature = "source")]
+#[cfg_attr(docsrs, doc(cfg(feature = "source")))]
+pub use ziyy_proc::source;
 
-
-use std::{collections::HashMap, io::Write};
-
-use value::C;
-pub use crate::compiler::Compiler;
-
-#[doc(hidden)]
-pub fn compile(source: &str, out: &mut impl Write) {
-    let mut vars = HashMap::new();
-    vars.insert("green".to_string(), C::rgb(0, 150, 75));
-    vars.insert("cyan".to_string(), C::rgb(0, 150, 150));
-    let mut compiler = Compiler::new(source, out, vars);
-    compiler.compile();
-}
+pub use crate::parser::{Tag, TagKind, TagType};
+pub use crate::compiler::{Compiler, Error};
 
 /// Styles your text using escape sequence.
 ///
 /// It takes in text that has been styled using recognised tags and returns the equivalent that it styles using escape sequences.
-/// It is a one to one relationship
 ///
 /// # Example
 /// ```
 /// use ziyy::style;
-/// let text = style("<s><c.black>Black Text");
-/// assert_eq!(text, "\u{1b}[9m\u{1b}[30mBlack Text\u{1b}[0m")
+/// let text = style("<s><c.black>Black Text</c></s>");
+/// assert!(text.is_ok());
+/// println!("{}", text.unwrap());
 /// ```
+/// # Output
+/// <pre style="color: black;"><del>Black Text</del></pre>
 ///
-pub fn style(text: &str) -> String {
-    let vars = HashMap::new();
+pub fn style<R: AsRef<str>>(text: R) -> Result<String> {
     let mut out: Vec<u8> = vec![];
-    let mut compiler = Compiler::new(text, &mut out, vars);
-    compiler.compile();
+    let mut compiler = Compiler::new(text.as_ref(), &mut out, None);
+    compiler.compile()?;
 
-    unsafe {String::from_utf8_unchecked(out)}
+    Ok(String::from_utf8(out)?)
 }
 
 /// Creates a new Template for styling text.
@@ -59,19 +65,25 @@ pub fn style(text: &str) -> String {
 /// # Example
 /// ```
 /// use ziyy::template;
-/// let bred = template("<b><c.red>");
+/// let mut bred = template("<b><c.red>");
 /// let text = bred("Bold Red Text");
-/// assert_eq!(text, "\x1b[1m\x1b[31mBold Red Text\x1b[0m")
+/// assert!(text.is_ok());
+/// println!("{}", text.unwrap());
 /// ```
+/// # Output
+/// <pre style="color: red;"><del>Bold Red Text</del></pre>
 ///
-pub fn template(save: &str) -> impl for<'a> Fn(&'a str) -> String + '_ {
-    move |text: &str| -> String { style(format!("{save}{text}").as_str()) }
+pub fn template<R: AsRef<str>>(save: &str) -> impl for<'a> FnMut(R) -> Result<String> + '_ {
+    let out: Vec<u8> = vec![];
+    let mut compiler = Compiler::new(save.to_owned(), out, None);
+    compiler.compile_template().unwrap();
+
+    move |text: R| -> Result<String> {
+        compiler.compile_rest(text)?;
+        let out_copy = compiler.parser.out.clone();
+        Ok(String::from_utf8(out_copy)?)
+    }
 }
 
-#[test]
-fn print() {
-    //let r = template("[c:green] ");
-    //let t: String = r("text");
-    //assert_eq!("\x1b[32m text\u{1b}[0m", style("[c : green] text"));
-    assert_eq!("\x1b[1m text\u{1b}[0m", style("[b] text"))
-}
+/// Result
+pub type Result<T> = std::result::Result<T, Error>;
