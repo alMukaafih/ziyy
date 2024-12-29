@@ -3,7 +3,7 @@ use channel::Channel;
 use rgb::Rgb;
 
 use crate::{
-    compiler::ErrorKind,
+    error::{ErrorKind, FromError},
     scanner::{
         token::{Token, TokenKind},
         Scanner,
@@ -35,12 +35,12 @@ impl Color {
     }
 }
 
-impl Into<Vec<u8>> for Color {
-    fn into(self) -> Vec<u8> {
-        match self.kind {
-            ColorKind::Bit4(bit4) => vec![self.channel as u8 + bit4 as u8],
-            ColorKind::Byte(bit256) => vec![self.channel as u8 + 8, 5, bit256],
-            ColorKind::Rgb(rgb) => vec![self.channel as u8 + 8, 2, rgb.0, rgb.1, rgb.2],
+impl From<Color> for Vec<u8> {
+    fn from(val: Color) -> Self {
+        match val.kind {
+            ColorKind::Bit4(bit4) => vec![val.channel as u8 + bit4 as u8],
+            ColorKind::Byte(bit256) => vec![val.channel as u8 + 8, 5, bit256],
+            ColorKind::Rgb(rgb) => vec![val.channel as u8 + 8, 2, rgb.0, rgb.1, rgb.2],
         }
     }
 }
@@ -65,14 +65,16 @@ impl TryFrom<(&str, Channel)> for Color {
             TokenKind::White => ColorKind::Bit4(Bit4::White),
             TokenKind::Byte => {
                 let token = scanner.scan_token()?;
-                expect(&token, TokenKind::LeftParen, ErrorKind::UnexpectedToken)?;
+                expect(&token, TokenKind::LeftParen)?;
 
                 let token = scanner.scan_token()?;
-                expect(&token, TokenKind::Number, ErrorKind::UnexpectedToken)?;
-                let i: u8 = token.content.parse()?;
+                expect(&token, TokenKind::Number)?;
+                let i: u8 =
+                    Error::convert(token.content.parse::<f64>(), token.start_pos, token.end_pos)?
+                        .round() as u8;
 
                 let token = scanner.scan_token()?;
-                expect(&token, TokenKind::RightParen, ErrorKind::UnexpectedToken)?;
+                expect(&token, TokenKind::RightParen)?;
 
                 ColorKind::Byte(i)
             }
@@ -80,7 +82,7 @@ impl TryFrom<(&str, Channel)> for Color {
                 let mut rgb_string = String::with_capacity(32);
 
                 let token = scanner.scan_token()?;
-                expect(&token, TokenKind::LeftParen, ErrorKind::UnexpectedToken)?;
+                expect(&token, TokenKind::LeftParen)?;
 
                 let mut token = scanner.scan_token()?;
                 while token.kind != TokenKind::RightParen {
@@ -110,9 +112,15 @@ impl From<(Rgb, Channel)> for Color {
     }
 }
 
-fn expect(token: &Token, tt: TokenKind, err: ErrorKind) -> Result<(), Error> {
+fn expect(token: &Token, tt: TokenKind) -> Result<(), Error> {
     if token.kind != tt {
-        return Err(Error::new(err, token.clone()));
+        return Err(Error::new(
+            ErrorKind::UnexpectedToken {
+                expected: tt,
+                found: token.kind,
+            },
+            token.clone(),
+        ));
     }
     Ok(())
 }

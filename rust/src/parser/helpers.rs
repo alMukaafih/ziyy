@@ -7,7 +7,7 @@ macro_rules! assign_attrib {
         $token = $scanner.scan_token()?;
         if $token.kind == TokenKind::Equal {
             $token = $scanner.scan_token()?;
-            Self::expect_token(&$token, TokenKind::String, ErrorKind::UnexpectedToken)?;
+            expect_token(&$token, TokenKind::String)?;
             let end = $token.content.len() - 1;
             $tag.$attrib = Some(Some(own!($token.content[1..end])));
             $token = $scanner.scan_token()?;

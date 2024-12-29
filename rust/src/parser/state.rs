@@ -38,4 +38,9 @@ impl State {
         let l = self.saves.len() - 1;
         self.saves.get(l)
     }
+
+    pub fn previous_save(&self) -> Option<&AnsiStyle> {
+        let l = self.saves.len() - 2;
+        self.saves.get(l)
+    }
 }

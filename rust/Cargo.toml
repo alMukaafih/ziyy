@@ -16,7 +16,6 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [[bin]]
 name = "debug"
-required-features = ["debug"]
 doc = false
 
 [workspace]
@@ -26,5 +25,4 @@ members = ["ziyy-proc"]
 ziyy-proc = { path = "ziyy-proc", optional = true }
 
 [features]
-debug = []
 source = ["dep:ziyy-proc"]

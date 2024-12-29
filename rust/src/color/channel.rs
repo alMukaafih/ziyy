@@ -2,5 +2,5 @@
 #[derive(PartialEq, Debug)]
 pub enum Channel {
     Foreground = 30,
-    Background = 40, 
+    Background = 40,
 }

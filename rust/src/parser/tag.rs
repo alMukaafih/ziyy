@@ -1,4 +1,6 @@
 #![allow(missing_docs)]
+
+use crate::scanner::position::Position;
 pub type Value<T> = Option<Option<T>>;
 
 #[derive(PartialEq, Debug, Clone)]
@@ -29,6 +31,9 @@ pub struct Tag {
     pub tab: Value<String>,
     /* Value */
     pub val: Value<String>,
+
+    pub(crate) start: Position,
+    pub(crate) end: Position,
 }
 
 impl Tag {
@@ -50,6 +55,9 @@ impl Tag {
             name: None,
             tab: None,
             val: None,
+
+            start: Position::new(0, 0),
+            end: Position::new(0, 0),
         }
     }
 }
@@ -57,7 +65,7 @@ impl Tag {
 #[derive(PartialEq, Debug, Clone)]
 pub enum TagType {
     Open,
-    Closed,
+    Close,
     OpenAndClose,
 }
 
@@ -68,12 +76,16 @@ pub enum TagKind {
     B,
     Br,
     C,
+    E,
+    Eof,
     I,
     Let,
+    None,
     P,
     S,
     Text,
     U,
     X,
+    WhiteSpace,
     Ziyy,
 }

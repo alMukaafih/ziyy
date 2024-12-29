@@ -1,3 +1,6 @@
+use std::io::Write as _;
+
+#[cfg(test)]
 use std::fmt::{Display, Write};
 
 use super::Color;
@@ -19,6 +22,29 @@ impl AnsiStyle {
     pub fn push(&mut self, style: &AnsiStyle) {
         self.inner.extend_from_slice(&style.inner);
     }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let mut bytes = vec![];
+        if self.inner.len() == 0 {
+            return bytes;
+        }
+
+        let _ = bytes.write("\x1b[".as_bytes());
+        let len = self.inner.len();
+        let mut i = 0;
+        while i < len {
+            let _ = bytes.write(self.inner[i].to_string().as_bytes());
+
+            if i == len - 1 {
+                break;
+            }
+            let _ = bytes.push(';' as u8);
+            i += 1;
+        }
+        let _ = bytes.push('m' as u8);
+
+        bytes
+    }
 }
 
 impl From<Color> for AnsiStyle {
@@ -29,14 +55,19 @@ impl From<Color> for AnsiStyle {
     }
 }
 
+#[cfg(test)]
 impl Display for AnsiStyle {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.inner.len() == 0 {
+            return Ok(());
+        }
+
         f.write_str("\x1b[")?;
         let len = self.inner.len();
         let mut i = 0;
         while i < len {
             f.write_str(&self.inner[i].to_string())?;
-            if i == len -1 {
+            if i == len - 1 {
                 break;
             }
             f.write_char(';')?;

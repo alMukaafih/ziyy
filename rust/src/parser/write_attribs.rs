@@ -2,12 +2,14 @@ use std::io::Write;
 
 use crate::{
     color::{ansi_style::AnsiStyle, channel::Channel, Color},
+    error::FromError,
     value::{B, I, S, U},
+    Error,
 };
 
 use super::{inherit, tag::Tag, Parser};
 
-impl<B: AsRef<[u8]>, W: Write> Parser<B, W> {
+impl<B: AsRef<[u8]>> Parser<B> {
     pub(super) fn write_attribs(
         &mut self,
         tag: &mut Tag,
@@ -23,12 +25,10 @@ impl<B: AsRef<[u8]>, W: Write> Parser<B, W> {
                 }
 
                 Attrib::C => {
-                    if let Some(ref val) = tag.c {
-                        if let Some(c) = val {
-                            let buf: Vec<u8> =
-                                Color::try_from((c.as_str(), Channel::Foreground))?.into();
-                            ansi.add_style(buf);
-                        }
+                    if let Some(Some(ref c)) = tag.c {
+                        let buf: Vec<u8> =
+                            Color::try_from((c.as_str(), Channel::Foreground))?.into();
+                        ansi.add_style(buf);
                     }
                 }
 
@@ -51,33 +51,30 @@ impl<B: AsRef<[u8]>, W: Write> Parser<B, W> {
                 }
 
                 Attrib::X => {
-                    if let Some(ref val) = tag.x {
-                        if let Some(x) = val {
-                            let buf: Vec<u8> =
-                                Color::try_from((x.as_str(), Channel::Background))?.into();
-                            ansi.add_style(buf);
-                        }
+                    if let Some(Some(ref x)) = tag.x {
+                        let buf: Vec<u8> =
+                            Color::try_from((x.as_str(), Channel::Background))?.into();
+                        ansi.add_style(buf);
                     }
                 }
 
                 Attrib::Tab => {
                     if let Some(ref tab) = tag.tab {
                         if let Some(val) = tab {
-                            let n: usize = val.parse()?;
-                            let _ = write!(self.out, "{}", " ".repeat(n));
+                            let n: usize =
+                                Error::convert(val.parse(), tag.start.clone(), tag.end.clone())?;
+                            let _ = self.buf.write(" ".repeat(n).as_bytes());
                         } else {
-                            let _ = write!(self.out, "\t");
+                            let _ = self.buf.write("\t".as_bytes());
                         }
                     }
                 }
 
                 Attrib::Val => {
-                    if let Some(ref val) = tag.val {
-                        if let Some(v) = val {
-                            let val = self.bindings.as_ref().unwrap().get(v);
-                            if let Some(btag) = val {
-                                inherit(&btag, tag);
-                            }
+                    if let Some(Some(ref v)) = tag.val {
+                        let val = self.bindings.as_ref().unwrap().get(v);
+                        if let Some(btag) = val {
+                            inherit(btag, tag);
                         }
                     }
                 }
@@ -90,15 +87,14 @@ impl<B: AsRef<[u8]>, W: Write> Parser<B, W> {
     pub(super) fn write_nl(&mut self, tag: Tag) -> crate::Result<()> {
         if let Some(ref n) = tag.n {
             if let Some(val) = n {
-                let n: usize = val.parse()?;
-                let _ = write!(self.out, "{}", "\n".repeat(n));
+                let n: usize = Error::convert(val.parse(), tag.start, tag.end)?;
+                let _ = self.buf.write("\n".repeat(n).as_bytes());
             }
         } else {
-            let _ = write!(self.out, "\n");
+            let _ = self.buf.write("\n".as_bytes());
         }
 
         Ok(())
-
     }
 }
 

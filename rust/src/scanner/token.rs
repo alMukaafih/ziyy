@@ -1,3 +1,5 @@
+use super::position::Position;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TokenKind {
     // Single-character tokens.
@@ -6,7 +8,7 @@ pub enum TokenKind {
     //LeftBrace/* { */, RightBrace/* } */,
     //LeftSquare/* [ */, RightSquare/* ] */,
     //Colon/* : */,
-    Equal/* = */,
+    Equal, /* = */
     Comma, /* , */
     //SemiColon/* ; */,
     OpenTag,
@@ -16,10 +18,29 @@ pub enum TokenKind {
     //Plus,
     Dot,
     Slash,
-    BackSlash,
+
+    TemplateLiteral,
+
+    // C-Escapes
+    EscA,
+    EscB,
+    EscT,
+    EscN,
+    EscV,
+    EscF,
+    EscR,
+    EscE,
+
+    Esc0, // Octal Escape \0XXX
+    EscX, // Hex Escape \xHHH
+    EscU, // Unicode Escape \uHHHH
+
+    Escape,
+
     // Literals.
     Identifier,
-    String, Number,
+    String,
+    Number,
     WhiteSpace,
     Text,
     // Builtin Variables.
@@ -32,7 +53,7 @@ pub enum TokenKind {
     Cyan,
     White,
     Rgb,
-    Hex/* #ffffff */,
+    Hex, /* #ffffff */
     Byte,
     B,
     C,
@@ -57,5 +78,6 @@ pub struct Token<'a> {
     pub kind: TokenKind,
     pub content: &'a str,
     pub err_code: u8,
-    pub line: i32,
+    pub start_pos: Position,
+    pub end_pos: Position,
 }

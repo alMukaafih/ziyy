@@ -1,7 +1,6 @@
 use std::io::{stdout, Write};
 
-use ziyy::scanner::{Scanner, token::*};
-
+use ziyy::scanner::{token::*, Scanner};
 
 fn debug(source: &str, out: &mut impl Write) {
     let mut scanner = Scanner::new(source);
@@ -13,14 +12,16 @@ fn debug(source: &str, out: &mut impl Write) {
         } else {
             "Unexpected character."
         };
-        if token.line != line {
-            let _ = write!(out, "{:4} ", token.line);
-            line = token.line;
+        if token.start_pos.line != line {
+            let _ = write!(out, "{:4} ", token.start_pos.line);
+            line = token.start_pos.line;
         } else {
             let _ = write!(out, "   | ");
         }
         let _ = writeln!(out, "{:?} '{}'", token.kind, content);
-        if token.kind == TokenKind::Eof { break };
+        if token.kind == TokenKind::Eof {
+            break;
+        };
     }
 }
 
