@@ -10,8 +10,8 @@ mod arg;
 
 pub fn parse(source: &str, out: &mut impl Write) -> ziyy::Result<()> {
     let mut parser = Parser::new(source, None);
-    let result = parser.parse_as_slice()?;
-    let _ = out.write(result);
+    let result = parser.parse_to_bytes()?;
+    let _ = out.write(&result);
     Ok(())
 }
 

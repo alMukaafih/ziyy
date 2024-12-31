@@ -1,5 +1,6 @@
 use crate::{
-    error::{ErrorKind, FromError},
+    error::ErrorKind,
+    num::str_to_i32,
     scanner::{token::TokenKind, Scanner},
     Error,
 };
@@ -24,61 +25,34 @@ impl TryFrom<&str> for Rgb {
 
         match token.kind {
             TokenKind::Number => {
-                r = Error::convert(token.content.parse::<f64>(), token.start_pos, token.end_pos)?
-                    .round() as u8;
+                r = str_to_i32(token.content, 10) as u8;
 
                 let token = scanner.scan_token()?;
                 expect(&token, TokenKind::Comma)?;
 
                 let token = scanner.scan_token()?;
                 expect(&token, TokenKind::Number)?;
-                g = Error::convert(token.content.parse::<f64>(), token.start_pos, token.end_pos)?
-                    .round() as u8;
+                g = str_to_i32(token.content, 10) as u8;
 
                 let token = scanner.scan_token()?;
                 expect(&token, TokenKind::Comma)?;
 
                 let token = scanner.scan_token()?;
                 expect(&token, TokenKind::Number)?;
-                b = Error::convert(token.content.parse::<f64>(), token.start_pos, token.end_pos)?
-                    .round() as u8;
+                b = str_to_i32(token.content, 10) as u8;
             }
 
             TokenKind::Hex => match token.content.len() {
                 4 => {
-                    r = Error::convert(
-                        u8::from_str_radix(&token.content[1..2].repeat(2), 16),
-                        token.start_pos.clone(),
-                        token.end_pos.clone(),
-                    )?;
-                    g = Error::convert(
-                        u8::from_str_radix(&token.content[2..3].repeat(2), 16),
-                        token.start_pos.clone(),
-                        token.end_pos.clone(),
-                    )?;
-                    b = Error::convert(
-                        u8::from_str_radix(&token.content[3..4].repeat(2), 16),
-                        token.start_pos,
-                        token.end_pos,
-                    )?;
+                    r = str_to_i32(&token.content[1..2].repeat(2), 16) as u8;
+                    g = str_to_i32(&token.content[2..3].repeat(2), 16) as u8;
+                    b = str_to_i32(&token.content[3..4].repeat(2), 16) as u8;
                 }
 
                 7 => {
-                    r = Error::convert(
-                        u8::from_str_radix(&token.content[1..3], 16),
-                        token.start_pos.clone(),
-                        token.end_pos.clone(),
-                    )?;
-                    g = Error::convert(
-                        u8::from_str_radix(&token.content[3..5], 16),
-                        token.start_pos.clone(),
-                        token.end_pos.clone(),
-                    )?;
-                    b = Error::convert(
-                        u8::from_str_radix(&token.content[5..7], 16),
-                        token.start_pos,
-                        token.end_pos,
-                    )?;
+                    r = str_to_i32(&token.content[1..3], 16) as u8;
+                    g = str_to_i32(&token.content[3..5], 16) as u8;
+                    b = str_to_i32(&token.content[5..7], 16) as u8;
                 }
 
                 _ => {}

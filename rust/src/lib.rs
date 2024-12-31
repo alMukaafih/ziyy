@@ -18,6 +18,7 @@
 
 mod color;
 mod error;
+mod num;
 mod parser;
 #[doc(hidden)]
 pub mod scanner;
@@ -44,7 +45,7 @@ pub use crate::scanner::token::TokenKind;
 ///
 pub fn style<T: AsRef<str>>(text: T) -> String {
     let mut parser = Parser::new(text.as_ref(), None);
-    parser.parse().unwrap().into_owned()
+    parser.parse().unwrap()
 }
 
 /// Creates a new Template for styling text.

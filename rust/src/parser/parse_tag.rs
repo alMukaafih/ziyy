@@ -1,4 +1,8 @@
-use crate::{assign_attrib, error::ErrorKind, own, scanner::token::TokenKind, Error};
+use std::io::Write;
+
+use crate::{
+    assign_attrib, error::ErrorKind, num::str_to_i32, own, scanner::token::TokenKind, Error,
+};
 
 use super::{
     expect_token,
@@ -13,44 +17,71 @@ impl<T: AsRef<[u8]>> Parser<T> {
             return Ok(tag);
         }
 
-        let token = self.scanner.scan_token()?;
+        let mut token;
+        let r#type = loop {
+            token = self.scanner.scan_token()?;
+            match token.kind {
+                TokenKind::OpenTag => break TagType::Open,
+                TokenKind::OpenTagAndSlash => break TagType::Close,
 
-        let r#type = match token.kind {
-            TokenKind::OpenTag => TagType::Open,
-            TokenKind::OpenTagAndSlash => TagType::Close,
+                TokenKind::Text => {
+                    let mut tag = Tag::new(TagKind::Text, TagType::OpenAndClose);
+                    tag.text = Some(own!(token.content));
+                    return Ok(tag);
+                }
 
-            TokenKind::Text => {
-                let mut tag = Tag::new(TagKind::Text, TagType::OpenAndClose);
-                tag.text = Some(own!(token.content));
-                return Ok(tag);
-            }
+                TokenKind::WhiteSpace => {
+                    let mut tag = Tag::new(TagKind::WhiteSpace, TagType::OpenAndClose);
+                    tag.text = Some(own!(token.content));
+                    return Ok(tag);
+                }
 
-            TokenKind::WhiteSpace => {
-                let mut tag = Tag::new(TagKind::WhiteSpace, TagType::OpenAndClose);
-                tag.text = Some(own!(token.content));
-                return Ok(tag);
-            }
+                TokenKind::Eof => {
+                    let tag = Tag::new(TagKind::Eof, TagType::OpenAndClose);
+                    return Ok(tag);
+                }
 
-            TokenKind::Eof => {
-                let tag = Tag::new(TagKind::Eof, TagType::OpenAndClose);
-                return Ok(tag);
-            }
+                TokenKind::Esc0 => {
+                    let oct = str_to_i32(&token.content[2..], 8) as u8;
+                    self.buf.push(oct);
+                    continue;
+                }
 
-            /* TokenKind::Esc0 => {
-                let oct = u8::from_str_radix(&token.content[2..].repeat(2), 16)?;
-                let mut tag = Tag::new(TagKind::Text, TagType::OpenAndClose);
-                tag.text = Some(char::from_digit(num, radix));
-                return Ok(tag);
-            } */
-            _ => {
-                return Err(Error::new(
-                    ErrorKind::UnexpectedToken {
-                        expected: TokenKind::Text,
-                        found: token.kind,
-                    },
-                    token.clone(),
-                ));
-            }
+                TokenKind::EscX => {
+                    let hex = str_to_i32(&token.content[2..], 16) as u8;
+                    self.buf.push(hex);
+                    continue;
+                }
+
+                TokenKind::EscU => {
+                    let i = str_to_i32(&token.content[2..], 16) as u32;
+                    let unicode = char::from_u32(i);
+                    if let Some(ch) = unicode {
+                        let _ = self.buf.write(ch.to_string().as_bytes());
+                    }
+
+                    continue;
+                }
+
+                TokenKind::EscA => self.buf.push(7),
+                TokenKind::EscB => self.buf.push(8),
+                TokenKind::EscT => self.buf.push(9),
+                TokenKind::EscN => self.buf.push(10),
+                TokenKind::EscV => self.buf.push(11),
+                TokenKind::EscF => self.buf.push(12),
+                TokenKind::EscR => self.buf.push(13),
+                TokenKind::EscE => self.buf.push(27),
+
+                _ => {
+                    return Err(Error::new(
+                        ErrorKind::UnexpectedToken {
+                            expected: TokenKind::Text,
+                            found: token.kind,
+                        },
+                        token.clone(),
+                    ));
+                }
+            };
         };
 
         let start = token.start_pos;

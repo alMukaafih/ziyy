@@ -7,7 +7,6 @@ use crate::error::FromError;
 use crate::scanner::token::{Token, TokenKind};
 use crate::scanner::Scanner;
 use crate::Error;
-use std::borrow::Cow;
 use std::collections::HashMap;
 use std::io::Write;
 
@@ -47,15 +46,15 @@ impl<T: AsRef<[u8]>> Parser<T> {
         }
     }
 
-    /// Parses Ziyy source and Returns a `&[u8]`.
-    pub fn parse_as_slice(&mut self) -> Result<&[u8], Error> {
+    /// Parses Ziyy source and Returns a [Vec<u8>].
+    pub fn parse_to_bytes(&mut self) -> Result<Vec<u8>, Error> {
         let _ = write!(self.buf, "\x1b[m");
 
         loop {
             let tag = self.parse_tag()?;
             if tag.kind == TagKind::Eof {
                 let _ = write!(self.buf, "\x1b[m");
-                return Ok(self.buf.as_slice());
+                return Ok(self.buf.drain(..).collect::<Vec<_>>());
             }
             match tag.r#type {
                 TagType::Open => self.parse_open_tag(tag)?,
@@ -67,9 +66,10 @@ impl<T: AsRef<[u8]>> Parser<T> {
         }
     }
 
-    /// Parses Ziyy source and Returns a [Cow<'_, str>].
-    pub fn parse(&mut self) -> Result<Cow<'_, str>, Error> {
-        Ok(String::from_utf8_lossy(self.parse_as_slice()?))
+    /// Parses Ziyy source and Returns a [String].
+    pub fn parse(&mut self) -> Result<String, Error> {
+        let s = String::from_utf8(self.parse_to_bytes()?);
+        Ok(s?)
     }
 
     fn expect_tag(tag: &Tag, to_be: TagKind, err: ErrorKind) -> Result<(), Error> {
