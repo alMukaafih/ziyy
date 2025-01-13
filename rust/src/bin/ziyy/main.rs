@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::{stdout, BufReader, Read, Write};
 use std::path::Path;
 use std::process::exit;
-use ziyy::Parser;
+use ziyy::{style, Parser};
 
 mod arg;
 
@@ -17,7 +17,35 @@ pub fn parse(source: &str, out: &mut impl Write) -> ziyy::Result<()> {
 
 fn usage() {
     let mut out = stdout().lock();
-    parse(include_str!("../../../../help.zi"), &mut out).unwrap();
+    let title = "Terminal Markup Language";
+    let help = style!(
+        r#"<ziyy>
+            <let name="bold:green" c="rgb(0,150,75)" b u />
+            <let name="cyan" c="rgb(0,150,150)" />
+
+            <p>{}</p>
+            <br />
+            <p>
+                <u src="bold:green">Usage:</u>
+                <cyan>
+                    <b>ziyy</b>
+                    <i>[OPTION]</i>
+                    FILE
+                </cyan>
+            </p>
+            <br />
+
+            <p src="bold:green">Options:</p>
+            <p tab="2" src="cyan" b>-V<e>,</e> --version</p>
+            <p tab="10">Print version info and exit</p>
+            <p tab="2" src="cyan" b>-h<e>,</e> --help</p>
+            <p tab="10">Print help</p>
+            <br />
+        </ziyy>"#,
+        title
+    );
+
+    let _ = out.write(help.as_bytes());
 }
 
 fn main() {

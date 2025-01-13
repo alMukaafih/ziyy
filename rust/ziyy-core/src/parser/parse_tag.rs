@@ -10,7 +10,7 @@ use super::{
     Parser,
 };
 
-impl<T: AsRef<[u8]>> Parser<T> {
+impl<T: AsRef<str>> Parser<T> {
     pub(super) fn parse_tag(&mut self) -> Result<Tag, Error> {
         if let Some(tag) = self.next_tag.clone() {
             self.next_tag = None;
@@ -42,13 +42,13 @@ impl<T: AsRef<[u8]>> Parser<T> {
                 }
 
                 TokenKind::Esc0 => {
-                    let oct = str_to_i32(&token.content[2..], 8) as u8;
+                    let oct = str_to_i32(&token.content[2..], 8) as i8 as u8;
                     self.buf.push(oct);
                     continue;
                 }
 
                 TokenKind::EscX => {
-                    let hex = str_to_i32(&token.content[2..], 16) as u8;
+                    let hex = str_to_i32(&token.content[2..], 16) as i8 as u8;
                     self.buf.push(hex);
                     continue;
                 }
@@ -114,18 +114,18 @@ impl<T: AsRef<[u8]>> Parser<T> {
         tag.end = token.end_pos.clone();
         while token.kind == TokenKind::Identifier {
             match token.content {
-                "b" => assign_attrib!(tag, b, self.scanner, token),
-                "c" => assign_attrib!(tag, c, self.scanner, token),
-                "i" => assign_attrib!(tag, i, self.scanner, token),
-                "n" => assign_attrib!(tag, n, self.scanner, token),
-                "s" => assign_attrib!(tag, s, self.scanner, token),
-                "u" => assign_attrib!(tag, u, self.scanner, token),
-                "x" => assign_attrib!(tag, x, self.scanner, token),
+                "b" => assign_attrib!(tag, b, self.scanner, token, Value),
+                "c" => assign_attrib!(tag, c, self.scanner, token, Value),
+                "i" => assign_attrib!(tag, i, self.scanner, token, Value),
+                "n" => assign_attrib!(tag, n, self.scanner, token, Value),
+                "s" => assign_attrib!(tag, s, self.scanner, token, Value),
+                "u" => assign_attrib!(tag, u, self.scanner, token, Value),
+                "x" => assign_attrib!(tag, x, self.scanner, token, Value),
 
-                "href" => assign_attrib!(tag, href, self.scanner, token),
-                "name" => assign_attrib!(tag, name, self.scanner, token),
-                "tab" => assign_attrib!(tag, tab, self.scanner, token),
-                "val" => assign_attrib!(tag, val, self.scanner, token),
+                "href" => assign_attrib!(tag, href, self.scanner, token, Value),
+                "name" => assign_attrib!(tag, name, self.scanner, token, Value),
+                "tab" => assign_attrib!(tag, tab, self.scanner, token, Value),
+                "src" => assign_attrib!(tag, src, self.scanner, token, Value),
 
                 _ => match token.content {
                     "black" | "blue" | "byte" | "cyan" | "green" | "magenta" | "red" | "rgb"

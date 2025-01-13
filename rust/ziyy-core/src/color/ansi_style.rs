@@ -25,7 +25,7 @@ impl AnsiStyle {
 
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut bytes = vec![];
-        if self.inner.len() == 0 {
+        if self.inner.is_empty() {
             return bytes;
         }
 
@@ -38,10 +38,10 @@ impl AnsiStyle {
             if i == len - 1 {
                 break;
             }
-            let _ = bytes.push(';' as u8);
+            let () = bytes.push(b';');
             i += 1;
         }
-        let _ = bytes.push('m' as u8);
+        let () = bytes.push(b'm');
 
         bytes
     }

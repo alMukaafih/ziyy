@@ -29,11 +29,9 @@ fn parse_num(s: &str, radix: i32) -> i32 {
 
         let digit = char_to_digit(ch);
 
-        if digit >= radix {
-            panic!("invalid digit")
-        }
+        assert!(digit < radix, "invalid digit");
 
-        num += digit * radix.pow(n as u32);
+        num += digit * radix.pow(n);
     }
 
     num
@@ -47,11 +45,9 @@ fn parse_decimal(s: &str, radix: i32) -> f64 {
 
         let digit = char_to_digit(ch);
 
-        if digit >= radix {
-            panic!("invalid digit")
-        }
+        assert!(digit < radix, "invalid digit");
 
-        float += digit as f64 / (radix as f64).powi(n);
+        float += f64::from(digit) / f64::from(radix).powi(n);
 
         n += 1;
     }
@@ -59,6 +55,8 @@ fn parse_decimal(s: &str, radix: i32) -> f64 {
     float
 }
 
+/// # Panics
+/// Does not panic
 pub fn str_to_i32(s: &str, radix: i32) -> i32 {
     let mut parts = s.split('.');
 

@@ -30,7 +30,7 @@ pub struct Tag {
     /* Tab */
     pub tab: Value<String>,
     /* Value */
-    pub val: Value<String>,
+    pub src: Value<String>,
 
     pub(crate) start: Position,
     pub(crate) end: Position,
@@ -38,7 +38,7 @@ pub struct Tag {
 
 impl Tag {
     /// Creates new Tag
-    pub fn new(kind: TagKind, r#type: TagType) -> Self {
+    #[must_use] pub fn new(kind: TagKind, r#type: TagType) -> Self {
         Self {
             r#type,
             kind,
@@ -54,7 +54,7 @@ impl Tag {
             color: None,
             name: None,
             tab: None,
-            val: None,
+            src: None,
 
             start: Position::new(0, 0),
             end: Position::new(0, 0),

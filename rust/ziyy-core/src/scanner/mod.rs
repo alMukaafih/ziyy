@@ -3,8 +3,12 @@ pub mod token;
 
 use position::Position;
 
-use crate::{error::FromError, scanner::token::*, Error, Result};
+use crate::{
+    scanner::token::{Token, TokenKind},
+    Result,
+};
 use core::str;
+use std::ops::Index;
 
 fn is_alpha(c: char) -> bool {
     c.is_ascii_alphabetic() || c == '_'
@@ -33,16 +37,16 @@ fn is_whitespace(c: char) -> bool {
     c.is_ascii_whitespace()
 }
 
-pub struct Scanner<T: AsRef<[u8]>> {
+pub struct Scanner<T: AsRef<str>> {
     pub(crate) source: T,
-    start: i32,
-    current: i32,
+    start: u16,
+    current: u16,
 
-    start_line: i32,
-    current_line: i32,
+    start_line: u16,
+    current_line: u16,
 
-    start_column: i32,
-    current_column: i32,
+    start_column: u16,
+    current_column: u16,
 
     pub(crate) text_mode: bool,
 
@@ -50,7 +54,7 @@ pub struct Scanner<T: AsRef<[u8]>> {
     pub(crate) parse_styles: bool,
 }
 
-impl<T: AsRef<[u8]>> Scanner<T> {
+impl<T: AsRef<str>> Scanner<T> {
     pub fn new(source: T) -> Scanner<T> {
         Scanner {
             source,
@@ -76,7 +80,7 @@ impl<T: AsRef<[u8]>> Scanner<T> {
     pub fn advance(&mut self) -> char {
         self.current += 1;
         self.current_column += 1;
-        let ch = self.source.as_ref()[self.current as usize - 1] as char;
+        let ch = self.source.as_ref().as_bytes()[self.current as usize - 1] as char;
 
         if ch == '\n' {
             self.current_line += 1;
@@ -87,7 +91,7 @@ impl<T: AsRef<[u8]>> Scanner<T> {
     }
 
     pub fn peek(&mut self) -> char {
-        if let Some(c) = self.source.as_ref().get(self.current as usize) {
+        if let Some(c) = self.source.as_ref().as_bytes().get(self.current as usize) {
             *c as char
         } else {
             '\0'
@@ -95,7 +99,12 @@ impl<T: AsRef<[u8]>> Scanner<T> {
     }
 
     pub fn peek_next(&mut self) -> char {
-        if let Some(c) = self.source.as_ref().get(self.current as usize + 1) {
+        if let Some(c) = self
+            .source
+            .as_ref()
+            .as_bytes()
+            .get(self.current as usize + 1)
+        {
             *c as char
         } else {
             '\0'
@@ -103,11 +112,10 @@ impl<T: AsRef<[u8]>> Scanner<T> {
     }
 
     pub fn make_token(&mut self, kind: TokenKind) -> Result<Token<'_>> {
-        let sl = &self.source.as_ref()[(self.start as usize)..(self.current as usize)];
+        let s = &self.source.as_ref()[(self.start as usize)..(self.current as usize)];
         let start_pos = Position::new(self.start_line, self.start_column);
         let end_pos = Position::new(self.current_line, self.current_column);
 
-        let s = Error::convert(str::from_utf8(sl), start_pos.clone(), end_pos.clone())?;
         Ok(Token {
             kind,
             content: s,
@@ -118,11 +126,10 @@ impl<T: AsRef<[u8]>> Scanner<T> {
     }
 
     pub fn error_token(&self, code: u8) -> Result<Token<'_>> {
-        let sl = &self.source.as_ref()[(self.start as usize)..(self.current as usize)];
+        let s = &self.source.as_ref()[(self.start as usize)..(self.current as usize)];
         let start_pos = Position::new(self.start_line, self.start_column);
         let end_pos = Position::new(self.current_line, self.current_column);
 
-        let s = Error::convert(str::from_utf8(sl), start_pos.clone(), end_pos.clone())?;
         Ok(Token {
             kind: TokenKind::Error,
             content: s,
@@ -133,19 +140,7 @@ impl<T: AsRef<[u8]>> Scanner<T> {
     }
 
     pub fn text_token(&mut self) -> Result<Token<'_>> {
-        let sl = &self.source.as_ref()[(self.start as usize)..(self.current as usize)];
-        let start_pos = Position::new(self.start_line, self.start_column);
-        let end_pos = Position::new(self.current_line, self.current_column);
-
-        let s = Error::convert(str::from_utf8(sl), start_pos.clone(), end_pos.clone())?;
-        let token = Token {
-            kind: TokenKind::Text,
-            content: s,
-            err_code: 0,
-            start_pos,
-            end_pos,
-        };
-        Ok(token)
+        self.make_token(TokenKind::Text)
     }
 
     pub fn skip_whitespace(&mut self) {
@@ -157,21 +152,20 @@ impl<T: AsRef<[u8]>> Scanner<T> {
             if is_whitespace(c) {
                 self.advance();
                 continue;
-            } else {
-                return;
             }
+
+            return;
         }
     }
 
     pub fn check_keyword(
         &mut self,
-        start: i32,
-        length: i32,
+        start: u16,
+        length: u16,
         rest: &str,
         kind: TokenKind,
     ) -> TokenKind {
-        let sl = &self.source.as_ref()[((self.start + start) as usize)..(self.current as usize)];
-        let s = str::from_utf8(sl).unwrap();
+        let s = &self.source.as_ref()[((self.start + start) as usize)..(self.current as usize)];
         if self.current - self.start == start + length && s == rest {
             kind
         } else {
@@ -180,9 +174,9 @@ impl<T: AsRef<[u8]>> Scanner<T> {
     }
 
     pub fn identifier_kind(&mut self) -> TokenKind {
-        use TokenKind::*;
+        use TokenKind::{Identifier, B, C, I, S, T, U, X};
         if self.parse_styles && self.current - self.start == 1 {
-            match self.source.as_ref()[self.start as usize] as char {
+            match self.source.as_ref().as_bytes()[self.start as usize] as char {
                 'b' => B,
                 'c' => C,
                 'i' => I,
@@ -193,9 +187,9 @@ impl<T: AsRef<[u8]>> Scanner<T> {
                 _ => Identifier,
             }
         } else if self.parse_colors {
-            match self.source.as_ref()[self.start as usize] as char {
-                'b' => match self.source.as_ref()[self.start as usize + 1] as char {
-                    'l' => match self.source.as_ref()[self.start as usize + 2] as char {
+            match self.source.as_ref().as_bytes()[self.start as usize] as char {
+                'b' => match self.source.as_ref().as_bytes()[self.start as usize + 1] as char {
+                    'l' => match self.source.as_ref().as_bytes()[self.start as usize + 2] as char {
                         'a' => self.check_keyword(3, 2, "ck", TokenKind::Black),
                         'u' => self.check_keyword(3, 1, "e", TokenKind::Blue),
                         _ => Identifier,
@@ -206,7 +200,7 @@ impl<T: AsRef<[u8]>> Scanner<T> {
                 'c' => self.check_keyword(1, 3, "yan", TokenKind::Cyan),
                 'g' => self.check_keyword(1, 4, "reen", TokenKind::Green),
                 'm' => self.check_keyword(1, 6, "agenta", TokenKind::Magenta),
-                'r' => match self.source.as_ref()[self.start as usize + 1] as char {
+                'r' => match self.source.as_ref().as_bytes()[self.start as usize + 1] as char {
                     'e' => self.check_keyword(2, 1, "d", TokenKind::Red),
                     'g' => self.check_keyword(2, 1, "b", TokenKind::Rgb),
                     _ => Identifier,
@@ -335,9 +329,9 @@ impl<T: AsRef<[u8]>> Scanner<T> {
             if self.peek() == '/' {
                 self.advance();
                 return self.make_token(TokenKind::OpenTagAndSlash);
-            } else {
-                return self.make_token(TokenKind::OpenTag);
             }
+
+            return self.make_token(TokenKind::OpenTag);
         }
 
         if c == '>' {

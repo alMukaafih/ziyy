@@ -1,10 +1,10 @@
 use std::io::{stdout, Write};
 
-use ziyy::scanner::{token::*, Scanner};
+use ziyy_core::scanner::{token::*, Scanner};
 
 fn debug(source: &str, out: &mut impl Write) {
     let mut scanner = Scanner::new(source);
-    let mut line = -1;
+    let mut line = 0;
     loop {
         let token = scanner.scan_token().unwrap();
         let content = if token.err_code == 0 {

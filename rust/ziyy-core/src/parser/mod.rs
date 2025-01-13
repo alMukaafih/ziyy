@@ -20,7 +20,7 @@ mod tag;
 mod write_attribs;
 
 /// Ziyy Parser
-pub struct Parser<T: AsRef<[u8]>> {
+pub struct Parser<T: AsRef<str>> {
     pub(super) scanner: Scanner<T>,
     pub(crate) buf: Vec<u8>,
     pub(crate) bindings: Option<HashMap<String, Tag>>,
@@ -31,7 +31,7 @@ pub struct Parser<T: AsRef<[u8]>> {
     next_tag: Option<Tag>,
 }
 
-impl<T: AsRef<[u8]>> Parser<T> {
+impl<T: AsRef<str>> Parser<T> {
     /// Creates a new Ziyy Parser.
     pub fn new(source: T, bindings: Option<HashMap<String, Tag>>) -> Parser<T> {
         Parser {
@@ -103,39 +103,39 @@ fn expect_token(token: &Token, tt: TokenKind) -> Result<(), Error> {
 
 fn inherit(src: &Tag, dst: &mut Tag) {
     if src.b.is_some() && dst.b.is_none() {
-        dst.b = Some(None)
+        dst.b = Some(None);
     }
 
     if let Some(ref val) = src.c {
         if dst.c.is_some() {
         } else if let Some(c) = val {
-            if !dst.c.as_ref().is_some_and(|x| x.is_some()) {
-                dst.c = Some(Some(c.clone()))
+            if !dst.c.as_ref().is_some_and(Option::is_some) {
+                dst.c = Some(Some(c.clone()));
             }
         }
     }
 
     if src.i.is_some() && dst.i.is_none() {
-        dst.i = Some(None)
+        dst.i = Some(None);
     }
 
     if src.n.is_some() && dst.n.is_none() {
-        dst.n = Some(None)
+        dst.n = Some(None);
     }
 
     if src.s.is_some() && dst.s.is_none() {
-        dst.s = Some(None)
+        dst.s = Some(None);
     }
 
     if src.u.is_some() && dst.u.is_none() {
-        dst.u = Some(None)
+        dst.u = Some(None);
     }
 
     if let Some(ref val) = src.x {
         if dst.x.is_some() {
         } else if let Some(c) = val {
-            if !dst.x.as_ref().is_some_and(|x| x.is_some()) {
-                dst.x = Some(Some(c.clone()))
+            if !dst.x.as_ref().is_some_and(Option::is_some) {
+                dst.x = Some(Some(c.clone()));
             }
         }
     }
@@ -143,11 +143,11 @@ fn inherit(src: &Tag, dst: &mut Tag) {
     if let Some(ref tab) = src.tab {
         if dst.tab.is_some() {
         } else if let Some(val) = tab {
-            if !dst.tab.as_ref().is_some_and(|x| x.is_some()) {
-                dst.tab = Some(Some(val.clone()))
+            if !dst.tab.as_ref().is_some_and(Option::is_some) {
+                dst.tab = Some(Some(val.clone()));
             }
         } else {
-            dst.tab = Some(None)
+            dst.tab = Some(None);
         }
     }
 }

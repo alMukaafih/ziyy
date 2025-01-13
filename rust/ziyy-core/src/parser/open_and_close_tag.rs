@@ -4,7 +4,7 @@ use crate::{error::FromError, Error};
 
 use super::{Parser, Tag, TagKind, TagType};
 
-impl<T: AsRef<[u8]>> Parser<T> {
+impl<T: AsRef<str>> Parser<T> {
     pub(crate) fn parse_open_and_close_tag(&mut self, tag: Tag) -> Result<(), Error> {
         match tag.kind {
             TagKind::Br => {

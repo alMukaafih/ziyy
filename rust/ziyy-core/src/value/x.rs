@@ -22,7 +22,7 @@ impl X {
     pub const DEFAULT: [u8; 1] = [49];
 
     /// RGB Color.
-    pub fn rgb(r: u8, g: u8, b: u8) -> [u8; 5] {
+    #[must_use] pub fn rgb(r: u8, g: u8, b: u8) -> [u8; 5] {
         [48, 2, r, g, b]
     }
 }

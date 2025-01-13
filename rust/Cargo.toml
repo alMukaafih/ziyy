@@ -7,7 +7,7 @@ edition = "2021"
 description = "Terminal Markup Language."
 license = "MIT OR Apache-2.0"
 keywords = ["terminal", "html", "style", "rgb", "cli"]
-categories = ["command-line-interface", "command-line-utilities", ]
+categories = ["command-line-interface", "command-line-utilities"]
 resolver = "2"
 
 [package.metadata.docs.rs]
@@ -19,10 +19,8 @@ name = "debug"
 doc = false
 
 [workspace]
-members = ["ziyy-proc"]
+members = ["ziyy-core", "ziyy-proc"]
 
 [dependencies]
-ziyy-proc = { path = "ziyy-proc", optional = true }
-
-[features]
-source = ["dep:ziyy-proc"]
+ziyy-core = { path = "ziyy-core" }
+ziyy-proc = { path = "ziyy-proc" }

@@ -2,12 +2,13 @@ use core::fmt::Debug;
 
 #[derive(Clone)]
 pub struct Position {
-    pub line: i32,
-    pub column: i32,
+    pub line: u16,
+    pub column: u16,
 }
 
 impl Position {
-    pub fn new(line: i32, column: i32) -> Self {
+    #[must_use]
+    pub fn new(line: u16, column: u16) -> Self {
         Self { line, column }
     }
 }

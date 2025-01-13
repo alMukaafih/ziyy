@@ -8,14 +8,14 @@ use crate::{own, Error};
 
 use super::{inherit, write_attribs::Attrib, Parser, Tag, TagKind};
 
-impl<T: AsRef<[u8]>> Parser<T> {
+impl<T: AsRef<str>> Parser<T> {
     pub(crate) fn parse_open_tag(&mut self, mut tag: Tag) -> Result<(), Error> {
         match tag.kind {
             TagKind::A => {
                 let tag2 = self.parse_tag()?;
                 Self::expect_tag(&tag2, TagKind::Text, ErrorKind::UnexpectedTag)?;
 
-                let _ = self.buf.write("\x1b]8;;".as_bytes());
+                let _ = self.buf.write(b"\x1b]8;;");
                 let _ = self.buf.write(
                     tag.href
                         .as_ref()
@@ -24,9 +24,9 @@ impl<T: AsRef<[u8]>> Parser<T> {
                         .unwrap()
                         .as_bytes(),
                 );
-                let _ = self.buf.write("\x1b\\".as_bytes());
+                let _ = self.buf.write(b"\x1b\\");
                 let _ = self.buf.write(tag2.text.unwrap_or_default().as_bytes());
-                let _ = self.buf.write("\x1b]8;;\x1b\\".as_bytes());
+                let _ = self.buf.write(b"\x1b]8;;\x1b\\");
 
                 let tag2 = self.parse_tag()?;
                 Self::expect_tag(&tag2, TagKind::A, ErrorKind::UnexpectedTag)?;
@@ -62,7 +62,7 @@ impl<T: AsRef<[u8]>> Parser<T> {
                     &mut tag,
                     &mut ansi,
                     &[
-                        Attrib::Val,
+                        Attrib::Src,
                         Attrib::C,
                         Attrib::I,
                         Attrib::S,
@@ -122,7 +122,7 @@ impl<T: AsRef<[u8]>> Parser<T> {
                     &mut tag,
                     &mut ansi,
                     &[
-                        Attrib::Val,
+                        Attrib::Src,
                         Attrib::B,
                         Attrib::C,
                         Attrib::S,
@@ -149,7 +149,7 @@ impl<T: AsRef<[u8]>> Parser<T> {
                     &mut tag,
                     &mut ansi,
                     &[
-                        Attrib::Val,
+                        Attrib::Src,
                         Attrib::Tab,
                         Attrib::B,
                         Attrib::C,
@@ -179,7 +179,7 @@ impl<T: AsRef<[u8]>> Parser<T> {
                     &mut tag,
                     &mut ansi,
                     &[
-                        Attrib::Val,
+                        Attrib::Src,
                         Attrib::B,
                         Attrib::C,
                         Attrib::I,
@@ -201,7 +201,7 @@ impl<T: AsRef<[u8]>> Parser<T> {
                     &mut tag,
                     &mut ansi,
                     &[
-                        Attrib::Val,
+                        Attrib::Src,
                         Attrib::B,
                         Attrib::C,
                         Attrib::I,

@@ -9,7 +9,7 @@ use crate::{
 
 use super::{inherit, tag::Tag, Parser};
 
-impl<B: AsRef<[u8]>> Parser<B> {
+impl<T: AsRef<str>> Parser<T> {
     pub(super) fn write_attribs(
         &mut self,
         tag: &mut Tag,
@@ -70,8 +70,8 @@ impl<B: AsRef<[u8]>> Parser<B> {
                     }
                 }
 
-                Attrib::Val => {
-                    if let Some(Some(ref v)) = tag.val {
+                Attrib::Src => {
+                    if let Some(Some(ref v)) = tag.src {
                         let val = self.bindings.as_ref().unwrap().get(v);
                         if let Some(btag) = val {
                             inherit(btag, tag);
@@ -106,5 +106,5 @@ pub enum Attrib {
     U,
     X,
     Tab,
-    Val,
+    Src,
 }
