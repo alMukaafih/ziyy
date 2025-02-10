@@ -12,9 +12,9 @@ fn debug(source: &str, out: &mut impl Write) {
         } else {
             "Unexpected character."
         };
-        if token.start_pos.line != line {
-            let _ = write!(out, "{:4} ", token.start_pos.line);
-            line = token.start_pos.line;
+        if token.span[0].0 != line {
+            let _ = write!(out, "{:4} ", token.span[0].0);
+            line = token.span[0].0;
         } else {
             let _ = write!(out, "   | ");
         }

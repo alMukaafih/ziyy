@@ -1,134 +1,111 @@
-    Checking ziyy v2.0.0-beta.2 (/home/mube/Projects/ziyy/rust)
-warning: fields `kind`, `start`, and `end` are never read
-  --> src/error/mod.rs:19:5
+warning: unused import: `std::io::Write`
+ --> ziyy-core/src/parser/close_tag.rs:1:5
+  |
+1 | use std::io::Write;
+  |     ^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `builder::StyleBuilder`
+ --> ziyy-core/src/style/mod.rs:3:9
+  |
+3 | pub use builder::StyleBuilder;
+  |         ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused variable: `style`
+  --> ziyy-core/src/parser/close_tag.rs:19:21
    |
-18 | pub struct Error {
-   |            ----- fields in this struct
-19 |     kind: ErrorKind,
-   |     ^^^^
-20 |     start: Position,
-   |     ^^^^^
-21 |     end: Position,
-   |     ^^^
+19 |         if let Some(style) = self.state.current_save() {
+   |                     ^^^^^ help: if this is intentional, prefix it with an underscore: `_style`
    |
-   = note: `Error` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
-   = note: `#[warn(dead_code)]` on by default
+   = note: `#[warn(unused_variables)]` on by default
+
+warning: method `parse_next_tag` is never used
+   --> ziyy-core/src/parser/parse_chunk.rs:279:19
+    |
+31  | impl<T: AsRef<str>> Parser<T> {
+    | ----------------------------- method in this implementation
+...
+279 |     pub(super) fn parse_next_tag(&mut self) -> Result<Option<Tag>, Error> {
+    |                   ^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` on by default
 
 warning: method `set_source` is never used
-   --> src/scanner/mod.rs:415:19
+   --> ziyy-core/src/scanner/mod.rs:408:19
     |
-53  | impl<T: AsRef<[u8]>> Scanner<T> {
-    | ------------------------------- method in this implementation
+56  | impl<T: AsRef<str>> Scanner<T> {
+    | ------------------------------ method in this implementation
 ...
-415 |     pub(crate) fn set_source(&mut self, source: T) {
+408 |     pub(crate) fn set_source(&mut self, source: T) {
     |                   ^^^^^^^^^^
 
-warning: casting `i32` to `u8` may lose the sign of the value
-  --> src/color/rgb.rs:28:21
+warning: consider adding a `;` to the last statement for consistent formatting
+  --> ziyy-core/src/error/mod.rs:26:21
    |
-28 |                 r = str_to_i32(token.content, 10) as u8;
-   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+26 | /                     f.write_fmt(format_args!(
+27 | |                         "Unexpected Token: {found:?}, expected {expected:?} at {:?}..{:?}",
+28 | |                         self.start, self.end
+29 | |                     ))?
+   | |_______________________^
    |
-   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#semicolon_if_nothing_returned
 note: the lint level is defined here
-  --> src/lib.rs:4:9
+  --> ziyy-core/src/lib.rs:4:9
    |
 4  | #![warn(clippy::pedantic)]
    |         ^^^^^^^^^^^^^^^^
+   = note: `#[warn(clippy::semicolon_if_nothing_returned)]` implied by `#[warn(clippy::pedantic)]`
+help: add a `;` here
+   |
+26 ~                     f.write_fmt(format_args!(
+27 +                         "Unexpected Token: {found:?}, expected {expected:?} at {:?}..{:?}",
+28 +                         self.start, self.end
+29 +                     ))?;
+   |
+
+warning: consider adding a `;` to the last statement for consistent formatting
+  --> ziyy-core/src/error/mod.rs:31:21
+   |
+31 | /                     f.write_fmt(format_args!(
+32 | |                         "Unexpected Token: {found:?} at {:?}..{:?}",
+33 | |                         self.start, self.end
+34 | |                     ))?
+   | |_______________________^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#semicolon_if_nothing_returned
+help: add a `;` here
+   |
+31 ~                     f.write_fmt(format_args!(
+32 +                         "Unexpected Token: {found:?} at {:?}..{:?}",
+33 +                         self.start, self.end
+34 +                     ))?;
+   |
+
+warning: unneeded `return` statement
+  --> ziyy-core/src/num/mod.rs:19:14
+   |
+19 |         _ => return 0,
+   |              ^^^^^^^^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_return
+   = note: `#[warn(clippy::needless_return)]` on by default
+help: remove `return`
+   |
+19 |         _ => 0,
+   |              ~
+
+warning: casting `f64` to `u32` may lose the sign of the value
+  --> ziyy-core/src/num/mod.rs:66:16
+   |
+66 |         num += parse_decimal(decimal, radix).round() as u32;
+   |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
    = note: `#[warn(clippy::cast_sign_loss)]` implied by `#[warn(clippy::pedantic)]`
 
-warning: casting `i32` to `u8` may lose the sign of the value
-  --> src/color/rgb.rs:35:21
-   |
-35 |                 g = str_to_i32(token.content, 10) as u8;
-   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   |
-   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
-
-warning: casting `i32` to `u8` may lose the sign of the value
-  --> src/color/rgb.rs:42:21
-   |
-42 |                 b = str_to_i32(token.content, 10) as u8;
-   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   |
-   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
-
-warning: casting `i32` to `u8` may lose the sign of the value
-  --> src/color/rgb.rs:47:25
-   |
-47 |                     r = str_to_i32(&token.content[1..2].repeat(2), 16) as u8;
-   |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   |
-   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
-
-warning: casting `i32` to `u8` may lose the sign of the value
-  --> src/color/rgb.rs:48:25
-   |
-48 |                     g = str_to_i32(&token.content[2..3].repeat(2), 16) as u8;
-   |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   |
-   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
-
-warning: casting `i32` to `u8` may lose the sign of the value
-  --> src/color/rgb.rs:49:25
-   |
-49 |                     b = str_to_i32(&token.content[3..4].repeat(2), 16) as u8;
-   |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   |
-   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
-
-warning: casting `i32` to `u8` may lose the sign of the value
-  --> src/color/rgb.rs:53:25
-   |
-53 |                     r = str_to_i32(&token.content[1..3], 16) as u8;
-   |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   |
-   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
-
-warning: casting `i32` to `u8` may lose the sign of the value
-  --> src/color/rgb.rs:54:25
-   |
-54 |                     g = str_to_i32(&token.content[3..5], 16) as u8;
-   |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   |
-   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
-
-warning: casting `i32` to `u8` may lose the sign of the value
-  --> src/color/rgb.rs:55:25
-   |
-55 |                     b = str_to_i32(&token.content[5..7], 16) as u8;
-   |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   |
-   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
-
-warning: item name starts with its containing module's name
-  --> src/color/mod.rs:20:10
-   |
-20 | pub enum ColorKind {
-   |          ^^^^^^^^^
-   |
-   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#module_name_repetitions
-   = note: `#[warn(clippy::module_name_repetitions)]` implied by `#[warn(clippy::pedantic)]`
-
-warning: casting `f64` to `u8` may lose the sign of the value
-  --> src/color/mod.rs:73:21
-   |
-73 | /                     Error::convert(token.content.parse::<f64>(), token.start_pos, token.end_pos)?
-74 | |                         .round() as u8;
-   | |______________________________________^
-   |
-   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
-
-warning: item name starts with its containing module's name
-   --> src/error/mod.rs:117:10
-    |
-117 | pub enum ErrorKind {
-    |          ^^^^^^^^^
-    |
-    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#module_name_repetitions
-
 warning: this argument is passed by value, but not consumed in the function body
- --> src/parser/close_tag.rs:8:51
+ --> ziyy-core/src/parser/close_tag.rs:8:51
   |
 8 |     pub(crate) fn parse_close_tag(&mut self, tag: Tag) -> Result<(), Error> {
   |                                                   ^^^ help: consider taking a reference instead: `&Tag`
@@ -136,425 +113,390 @@ warning: this argument is passed by value, but not consumed in the function body
   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_pass_by_value
   = note: `#[warn(clippy::needless_pass_by_value)]` implied by `#[warn(clippy::pedantic)]`
 
-warning: this match arm has an identical body to the `_` wildcard arm
-  --> src/parser/open_and_close_tag.rs:56:13
+warning: this function's return value is unnecessary
+  --> ziyy-core/src/parser/open_and_close_tag.rs:8:5
    |
-56 | /             TagKind::Ziyy => {}
-57 | |             _ => {}
+8  | /     pub(crate) fn parse_open_and_close_tag(&mut self, tag: Tag) -> Result<(), Error> {
+9  | |         match tag.name {
+10 | |             TagName::Br => {
+11 | |                 if let Value::Some(val) = tag.custom {
+...  |
+32 | |         Ok(())
+33 | |     }
+   | |_____^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#unnecessary_wraps
+   = note: `#[warn(clippy::unnecessary_wraps)]` implied by `#[warn(clippy::pedantic)]`
+help: remove the return type...
+   |
+8  |     pub(crate) fn parse_open_and_close_tag(&mut self, tag: Tag) -> () {
+   |                                                                    ~~
+help: ...and then remove returned values
+   |
+32 -         Ok(())
+   |
+
+warning: this match arm has an identical body to the `_` wildcard arm
+  --> ziyy-core/src/parser/open_and_close_tag.rs:29:13
+   |
+29 | /             TagName::Ziyy => {}
+30 | |             _ => {}
    | |____________^ help: try removing the arm
    |
    = help: or try changing either arm body
 note: `_` wildcard arm here
-  --> src/parser/open_and_close_tag.rs:57:13
+  --> ziyy-core/src/parser/open_and_close_tag.rs:30:13
    |
-57 |             _ => {}
+30 |             _ => {}
    |             ^^^^^^^
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#match_same_arms
    = note: `#[warn(clippy::match_same_arms)]` implied by `#[warn(clippy::pedantic)]`
 
-warning: this function has too many lines (210/100)
-   --> src/parser/open_tag.rs:12:5
+warning: this function's return value is unnecessary
+   --> ziyy-core/src/parser/open_tag.rs:8:5
     |
-12  | /     pub(crate) fn parse_open_tag(&mut self, mut tag: Tag) -> Result<(), Error> {
-13  | |         match tag.kind {
-14  | |             TagKind::A => {
-15  | |                 let tag2 = self.parse_tag()?;
+8   | /     pub(crate) fn parse_open_tag(&mut self, mut tag: Tag) -> Result<(), Error> {
+9   | |         match tag.name {
+10  | |             TagName::A => {
+11  | |                 /* let tag2 = self.parse_tag()?;
 ...   |
-263 | |         Ok(())
-264 | |     }
+109 | |         Ok(())
+110 | |     }
+    | |_____^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#unnecessary_wraps
+help: remove the return type...
+    |
+8   |     pub(crate) fn parse_open_tag(&mut self, mut tag: Tag) -> () {
+    |                                                              ~~
+help: ...and then remove returned values
+    |
+109 -         Ok(())
+    |
+
+warning: this match arm has an identical body to another arm
+  --> ziyy-core/src/parser/open_tag.rs:77:13
+   |
+77 |             TagName::Let => {}
+   |             ^^^^^^^^^^^^^^^^^^
+   |
+   = help: try changing either arm body
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#match_same_arms
+help: or try merging the arm patterns
+   |
+77 |             TagName::Let | TagName::A => {}
+   |             ~~~~~~~~~~~~~~~~~~~~~~~~~
+help: and remove this obsolete arm
+   |
+10 -             TagName::A => {
+11 -                 /* let tag2 = self.parse_tag()?;
+12 -                 Self::expect_tag(&tag2, TagName::Text, ErrorKind::UnexpectedTag)?;
+13 - 
+14 -                 let _ = self.buf.write(b"\x1b]8;;");
+15 -                 let _ = self.buf.write(
+16 -                     tag.href
+17 -                         .as_ref()
+18 -                         .unwrap_or(&Some(String::new()))
+19 -                         .as_ref()
+20 -                         .unwrap()
+21 -                         .as_bytes(),
+22 -                 );
+23 -                 let _ = self.buf.write(b"\x1b\\");
+24 -                 let _ = self.buf.write(tag2.custom.unwrap_or_default().as_bytes());
+25 -                 let _ = self.buf.write(b"\x1b]8;;\x1b\\");
+26 - 
+27 -                 let tag2 = self.parse_tag()?;
+28 -                 Self::expect_tag(&tag2, TagName::A, ErrorKind::UnexpectedTag)?; */
+29 -             }
+30 - 
+   |
+
+warning: this match arm has an identical body to the `_` wildcard arm
+   --> ziyy-core/src/parser/open_tag.rs:10:13
+    |
+10  | /             TagName::A => {
+11  | |                 /* let tag2 = self.parse_tag()?;
+12  | |                 Self::expect_tag(&tag2, TagName::Text, ErrorKind::UnexpectedTag)?;
+...   |
+30  | |
+31  | |             TagName::Any(ref s) => {
+    | |____________^ help: try removing the arm
+    |
+    = help: or try changing either arm body
+note: `_` wildcard arm here
+   --> ziyy-core/src/parser/open_tag.rs:106:13
+    |
+106 |             _ => {}
+    |             ^^^^^^^
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#match_same_arms
+
+warning: this match arm has an identical body to the `_` wildcard arm
+   --> ziyy-core/src/parser/open_tag.rs:77:13
+    |
+77  | /             TagName::Let => {}
+78  | |
+79  | |             TagName::P => {
+    | |____________^ help: try removing the arm
+    |
+    = help: or try changing either arm body
+note: `_` wildcard arm here
+   --> ziyy-core/src/parser/open_tag.rs:106:13
+    |
+106 |             _ => {}
+    |             ^^^^^^^
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#match_same_arms
+
+warning: this function has too many lines (210/100)
+   --> ziyy-core/src/parser/parse_chunk.rs:32:5
+    |
+32  | /     pub(super) fn parse_chunk(&mut self) -> Result<Chunk, Error> {
+33  | |         if let Some(tag) = self.next_tag.clone() {
+34  | |             self.next_tag = None;
+35  | |             return Ok(Chunk::Tag(tag));
+...   |
+276 | |         Ok(Chunk::Tag(tag))
+277 | |     }
     | |_____^
     |
     = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#too_many_lines
     = note: `#[warn(clippy::too_many_lines)]` implied by `#[warn(clippy::pedantic)]`
 
-warning: this match arm has an identical body to another arm
-   --> src/parser/open_tag.rs:115:13
-    |
-115 |             TagKind::Eof => {}
-    |             ^^^^^^^^^^^^^^^^^^
-    |
-    = help: try changing either arm body
-    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#match_same_arms
-help: or try merging the arm patterns
-    |
-115 |             TagKind::Eof | TagKind::Let => {}
-    |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-help: and remove this obsolete arm
-    |
-137 -             TagKind::Let => {}
-138 - 
-    |
-
-warning: this match arm has an identical body to another arm
-   --> src/parser/open_tag.rs:115:13
-    |
-115 |             TagKind::Eof => {}
-    |             ^^^^^^^^^^^^^^^^^^
-    |
-    = help: try changing either arm body
-    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#match_same_arms
-help: or try merging the arm patterns
-    |
-115 |             TagKind::Eof | TagKind::Text => {}
-    |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-help: and remove this obsolete arm
-    |
-194 -             TagKind::Text => {}
-195 - 
-    |
-
-warning: this match arm has an identical body to another arm
-   --> src/parser/open_tag.rs:137:13
-    |
-137 |             TagKind::Let => {}
-    |             ^^^^^^^^^^^^^^^^^^
-    |
-    = help: try changing either arm body
-    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#match_same_arms
-help: or try merging the arm patterns
-    |
-137 |             TagKind::Let | TagKind::Text => {}
-    |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-help: and remove this obsolete arm
-    |
-194 -             TagKind::Text => {}
-195 - 
-    |
-
-warning: this match arm has an identical body to the `_` wildcard arm
-   --> src/parser/open_tag.rs:115:13
-    |
-115 | /             TagKind::Eof => {}
-116 | |
-117 | |             TagKind::I => {
-    | |____________^ help: try removing the arm
-    |
-    = help: or try changing either arm body
-note: `_` wildcard arm here
-   --> src/parser/open_tag.rs:260:13
-    |
-260 |             _ => {}
-    |             ^^^^^^^
-    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#match_same_arms
-
-warning: this match arm has an identical body to the `_` wildcard arm
-   --> src/parser/open_tag.rs:137:13
-    |
-137 | /             TagKind::Let => {}
-138 | |
-139 | |             TagKind::P => {
-    | |____________^ help: try removing the arm
-    |
-    = help: or try changing either arm body
-note: `_` wildcard arm here
-   --> src/parser/open_tag.rs:260:13
-    |
-260 |             _ => {}
-    |             ^^^^^^^
-    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#match_same_arms
-
-warning: this match arm has an identical body to the `_` wildcard arm
-   --> src/parser/open_tag.rs:194:13
-    |
-194 | /             TagKind::Text => {}
-195 | |
-196 | |             TagKind::U => {
-    | |____________^ help: try removing the arm
-    |
-    = help: or try changing either arm body
-note: `_` wildcard arm here
-   --> src/parser/open_tag.rs:260:13
-    |
-260 |             _ => {}
-    |             ^^^^^^^
-    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#match_same_arms
-
-warning: unnecessary `!=` operation
-   --> src/parser/open_tag.rs:219:33
-    |
-219 |                       let color = if color_info.0 != "rgb" {
-    |  _________________________________^
-220 | |                         let rgb = Rgb::try_from(color_info.0.as_str())?;
-221 | |                         Color::from((rgb, Channel::Background))
-222 | |                     } else {
-...   |
-226 | |                         Color::try_from((color_info.0.as_str(), Channel::Background))?
-227 | |                     };
-    | |_____________________^
-    |
-    = help: change to `==` and swap the blocks of the `if`/`else`
-    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#if_not_else
-    = note: `#[warn(clippy::if_not_else)]` implied by `#[warn(clippy::pedantic)]`
-
-warning: this function has too many lines (144/100)
-   --> src/parser/parse_tag.rs:14:5
-    |
-14  | /     pub(super) fn parse_tag(&mut self) -> Result<Tag, Error> {
-15  | |         if let Some(tag) = self.next_tag.clone() {
-16  | |             self.next_tag = None;
-17  | |             return Ok(tag);
-...   |
-182 | |         Ok(tag)
-183 | |     }
-    | |_____^
-    |
-    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#too_many_lines
+warning: consider adding a `;` to the last statement for consistent formatting
+  --> ziyy-core/src/parser/parse_chunk.rs:50:21
+   |
+50 |                     handle_white_space!(self, token.content)
+   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: add a `;` here: `handle_white_space!(self, token.content);`
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#semicolon_if_nothing_returned
 
 warning: casting `i8` to `u8` may lose the sign of the value
-  --> src/parser/parse_tag.rs:45:31
+  --> ziyy-core/src/parser/parse_chunk.rs:58:31
    |
-45 |                     let oct = str_to_i32(&token.content[2..], 8) as i8 as u8;
+58 |                     let oct = str_to_u32(&token.content[2..], 8) as i8 as u8;
    |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
 
 warning: casting `i8` to `u8` may lose the sign of the value
-  --> src/parser/parse_tag.rs:51:31
+  --> ziyy-core/src/parser/parse_chunk.rs:64:31
    |
-51 |                     let hex = str_to_i32(&token.content[2..], 16) as i8 as u8;
+64 |                     let hex = str_to_u32(&token.content[2..], 16) as i8 as u8;
    |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
 
-warning: casting `i32` to `u32` may lose the sign of the value
-  --> src/parser/parse_tag.rs:57:29
+warning: casting to the same type is unnecessary (`u32` -> `u32`)
+  --> ziyy-core/src/parser/parse_chunk.rs:70:29
    |
-57 |                     let i = str_to_i32(&token.content[2..], 16) as u32;
-   |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+70 |                     let i = str_to_u32(&token.content[2..], 16) as u32;
+   |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: try: `str_to_u32(&token.content[2..], 16)`
    |
-   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#unnecessary_cast
+   = note: `#[warn(clippy::unnecessary_cast)]` on by default
 
-warning: this argument is passed by value, but not consumed in the function body
-  --> src/parser/state.rs:18:49
-   |
-18 |     pub fn push(&mut self, tag: TagKind, style: AnsiStyle) {
-   |                                                 ^^^^^^^^^ help: consider taking a reference instead: `&AnsiStyle`
-   |
-   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_pass_by_value
+warning: this match arm has an identical body to another arm
+   --> ziyy-core/src/parser/parse_chunk.rs:214:17
+    |
+214 |                 "byte" => {}
+    |                 ^^^^^^^^^^^^
+    |
+    = help: try changing either arm body
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#match_same_arms
+help: or try merging the arm patterns
+    |
+214 |                 "byte" | "rgb" => {}
+    |                 ~~~~~~~~~~~~~~
+help: and remove this obsolete arm
+    |
+215 -                 "rgb" => {}
+216 - 
+    |
 
-warning: item name starts with its containing module's name
-  --> src/parser/tag.rs:66:10
+warning: unnecessary boolean `not` operation
+  --> ziyy-core/src/parser/state.rs:35:9
    |
-66 | pub enum TagType {
-   |          ^^^^^^^
+35 | /         if !over_flow {
+36 | |             self.0.get(l).map(|x| &x.1)
+37 | |         } else {
+38 | |             None
+39 | |         }
+   | |_________^
    |
-   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#module_name_repetitions
+   = help: remove the `!` and swap the blocks of the `if`/`else`
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#if_not_else
+   = note: `#[warn(clippy::if_not_else)]` implied by `#[warn(clippy::pedantic)]`
 
-warning: item name starts with its containing module's name
-  --> src/parser/tag.rs:73:10
+warning: usage of wildcard import for enum variants
+  --> ziyy-core/src/parser/tag.rs:34:13
    |
-73 | pub enum TagKind {
-   |          ^^^^^^^
+34 |         use Value::*;
+   |             ^^^^^^^^ help: try: `Value::None`
    |
-   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#module_name_repetitions
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#enum_glob_use
+   = note: `#[warn(clippy::enum_glob_use)]` implied by `#[warn(clippy::pedantic)]`
 
 warning: docs for function returning `Result` missing `# Errors` section
-  --> src/parser/mod.rs:50:5
+  --> ziyy-core/src/parser/mod.rs:52:5
    |
-50 |     pub fn parse_to_bytes(&mut self) -> Result<Vec<u8>, Error> {
+52 |     pub fn parse_to_bytes(&mut self) -> Result<Vec<u8>, Error> {
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#missing_errors_doc
    = note: `#[warn(clippy::missing_errors_doc)]` implied by `#[warn(clippy::pedantic)]`
 
-warning: docs for function returning `Result` missing `# Errors` section
-  --> src/parser/mod.rs:70:5
+warning: docs for function which may panic missing `# Panics` section
+  --> ziyy-core/src/parser/mod.rs:75:5
    |
-70 |     pub fn parse(&mut self) -> Result<String, Error> {
+75 |     pub fn parse(&mut self) -> Result<String, Error> {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+note: first possible panic found here
+  --> ziyy-core/src/parser/mod.rs:77:12
+   |
+77 |         Ok(s.unwrap())
+   |            ^^^^^^^^^^
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#missing_panics_doc
+   = note: `#[warn(clippy::missing_panics_doc)]` implied by `#[warn(clippy::pedantic)]`
+
+warning: docs for function returning `Result` missing `# Errors` section
+  --> ziyy-core/src/parser/mod.rs:75:5
+   |
+75 |     pub fn parse(&mut self) -> Result<String, Error> {
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#missing_errors_doc
 
 warning: this argument is passed by value, but not consumed in the function body
-  --> src/parser/mod.rs:75:37
+  --> ziyy-core/src/parser/mod.rs:80:37
    |
-75 |     fn expect_tag(tag: &Tag, to_be: TagKind, err: ErrorKind) -> Result<(), Error> {
-   |                                     ^^^^^^^ help: consider taking a reference instead: `&TagKind`
+80 |     fn expect_tag(tag: &Tag, to_be: TagName, err: ErrorKind) -> Result<(), Error> {
+   |                                     ^^^^^^^ help: consider taking a reference instead: `&TagName`
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_pass_by_value
 
-warning: item name starts with its containing module's name
- --> src/scanner/token.rs:4:10
-  |
-4 | pub enum TokenKind {
-  |          ^^^^^^^^^
-  |
-  = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#module_name_repetitions
+warning: unnecessary `!=` operation
+  --> ziyy-core/src/parser/mod.rs:81:9
+   |
+81 | /         if tag.name != to_be {
+82 | |             Err(Error {
+83 | |                 kind: err,
+84 | |                 start: tag.start.clone(),
+...  |
+88 | |             Ok(())
+89 | |         }
+   | |_________^
+   |
+   = help: change to `==` and swap the blocks of the `if`/`else`
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#if_not_else
 
 warning: match expression looks like `matches!` macro
-  --> src/scanner/mod.rs:26:5
+  --> ziyy-core/src/scanner/mod.rs:29:5
    |
-26 | /     match c {
-27 | |         '0'..'8' => true,
-28 | |         _ => false,
-29 | |     }
+29 | /     match c {
+30 | |         '0'..'8' => true,
+31 | |         _ => false,
+32 | |     }
    | |_____^ help: try: `matches!(c, '0'..'8')`
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#match_like_matches_macro
    = note: `#[warn(clippy::match_like_matches_macro)]` on by default
 
-warning: casting `i32` to `usize` may lose the sign of the value
-  --> src/scanner/mod.rs:73:9
-   |
-73 |         self.current as usize + 1 > self.source.as_ref().len()
-   |         ^^^^^^^^^^^^^^^^^^^^^
-   |
-   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
-
-warning: casting `i32` to `usize` may lose the sign of the value
-  --> src/scanner/mod.rs:79:39
-   |
-79 |         let ch = self.source.as_ref()[self.current as usize - 1] as char;
-   |                                       ^^^^^^^^^^^^^^^^^^^^^
-   |
-   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
-
-warning: casting `i32` to `usize` may lose the sign of the value
-  --> src/scanner/mod.rs:90:51
-   |
-90 |         if let Some(c) = self.source.as_ref().get(self.current as usize) {
-   |                                                   ^^^^^^^^^^^^^^^^^^^^^
-   |
-   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
-
-warning: casting `i32` to `usize` may lose the sign of the value
-  --> src/scanner/mod.rs:98:51
-   |
-98 |         if let Some(c) = self.source.as_ref().get(self.current as usize + 1) {
-   |                                                   ^^^^^^^^^^^^^^^^^^^^^
-   |
-   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
-
-warning: casting `i32` to `usize` may lose the sign of the value
-   --> src/scanner/mod.rs:106:40
-    |
-106 |         let sl = &self.source.as_ref()[(self.start as usize)..(self.current as usize)];
-    |                                        ^^^^^^^^^^^^^^^^^^^^^
-    |
-    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
-
-warning: casting `i32` to `usize` may lose the sign of the value
-   --> src/scanner/mod.rs:106:63
-    |
-106 |         let sl = &self.source.as_ref()[(self.start as usize)..(self.current as usize)];
-    |                                                               ^^^^^^^^^^^^^^^^^^^^^^^
-    |
-    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
-
-warning: casting `i32` to `usize` may lose the sign of the value
-   --> src/scanner/mod.rs:121:40
-    |
-121 |         let sl = &self.source.as_ref()[(self.start as usize)..(self.current as usize)];
-    |                                        ^^^^^^^^^^^^^^^^^^^^^
-    |
-    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
-
-warning: casting `i32` to `usize` may lose the sign of the value
-   --> src/scanner/mod.rs:121:63
-    |
-121 |         let sl = &self.source.as_ref()[(self.start as usize)..(self.current as usize)];
-    |                                                               ^^^^^^^^^^^^^^^^^^^^^^^
-    |
-    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
-
-warning: casting `i32` to `usize` may lose the sign of the value
-   --> src/scanner/mod.rs:136:40
-    |
-136 |         let sl = &self.source.as_ref()[(self.start as usize)..(self.current as usize)];
-    |                                        ^^^^^^^^^^^^^^^^^^^^^
-    |
-    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
-
-warning: casting `i32` to `usize` may lose the sign of the value
-   --> src/scanner/mod.rs:136:63
-    |
-136 |         let sl = &self.source.as_ref()[(self.start as usize)..(self.current as usize)];
-    |                                                               ^^^^^^^^^^^^^^^^^^^^^^^
-    |
-    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
-
-warning: casting `i32` to `usize` may lose the sign of the value
-   --> src/scanner/mod.rs:173:40
-    |
-173 |         let sl = &self.source.as_ref()[((self.start + start) as usize)..(self.current as usize)];
-    |                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |
-    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
-
-warning: casting `i32` to `usize` may lose the sign of the value
-   --> src/scanner/mod.rs:173:73
-    |
-173 |         let sl = &self.source.as_ref()[((self.start + start) as usize)..(self.current as usize)];
-    |                                                                         ^^^^^^^^^^^^^^^^^^^^^^^
-    |
-    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
-
-warning: casting `i32` to `usize` may lose the sign of the value
-   --> src/scanner/mod.rs:185:40
-    |
-185 |             match self.source.as_ref()[self.start as usize] as char {
-    |                                        ^^^^^^^^^^^^^^^^^^^
-    |
-    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
-
-warning: casting `i32` to `usize` may lose the sign of the value
-   --> src/scanner/mod.rs:196:40
-    |
-196 |             match self.source.as_ref()[self.start as usize] as char {
-    |                                        ^^^^^^^^^^^^^^^^^^^
-    |
-    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
-
-warning: casting `i32` to `usize` may lose the sign of the value
-   --> src/scanner/mod.rs:197:51
-    |
-197 |                 'b' => match self.source.as_ref()[self.start as usize + 1] as char {
-    |                                                   ^^^^^^^^^^^^^^^^^^^
-    |
-    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
-
-warning: casting `i32` to `usize` may lose the sign of the value
-   --> src/scanner/mod.rs:198:55
-    |
-198 |                     'l' => match self.source.as_ref()[self.start as usize + 2] as char {
-    |                                                       ^^^^^^^^^^^^^^^^^^^
-    |
-    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
-
-warning: casting `i32` to `usize` may lose the sign of the value
-   --> src/scanner/mod.rs:209:51
-    |
-209 |                 'r' => match self.source.as_ref()[self.start as usize + 1] as char {
-    |                                                   ^^^^^^^^^^^^^^^^^^^
-    |
-    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss
-
 warning: unnecessary `!=` operation
-   --> src/scanner/mod.rs:366:17
+   --> ziyy-core/src/scanner/mod.rs:359:17
     |
-366 | /                 if self.peek() != '<' {
-367 | |                     self.advance();
-368 | |                 } else {
-369 | |                     break;
-370 | |                 }
+359 | /                 if self.peek() != '<' {
+360 | |                     self.advance();
+361 | |                 } else {
+362 | |                     break;
+363 | |                 }
     | |_________________^
     |
     = help: change to `==` and swap the blocks of the `if`/`else`
     = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#if_not_else
 
-warning: docs for function which may panic missing `# Panics` section
-  --> src/lib.rs:45:1
+warning: more than 3 bools in a struct
+  --> ziyy-core/src/style/mod.rs:50:1
    |
-45 | pub fn style<T: AsRef<str>>(text: T) -> String {
+50 | / pub struct Style {
+51 | |     pub(crate) bold: bool,         // 1,22
+52 | |     pub(crate) dim: bool,          // 2,22
+53 | |     pub(crate) italics: bool,      // 3,23
+...  |
+62 | |     pub(crate) bg_color: Option<Color>,
+63 | | }
+   | |_^
+   |
+   = help: consider using a state machine or refactoring bools into two-variant enums
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#struct_excessive_bools
+   = note: `#[warn(clippy::struct_excessive_bools)]` implied by `#[warn(clippy::pedantic)]`
+
+warning: consider adding a `;` to the last statement for consistent formatting
+   --> ziyy-core/src/style/mod.rs:130:9
+    |
+130 |         *self = Self::add(self.clone(), rhs)
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: add a `;` here: `*self = Self::add(self.clone(), rhs);`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#semicolon_if_nothing_returned
+
+warning: consider adding a `;` to the last statement for consistent formatting
+   --> ziyy-core/src/style/mod.rs:157:9
+    |
+157 |         *self = Self::sub(self.clone(), rhs)
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: add a `;` here: `*self = Self::sub(self.clone(), rhs);`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#semicolon_if_nothing_returned
+
+warning: docs for function which may panic missing `# Panics` section
+  --> ziyy-core/src/lib.rs:46:1
+   |
+46 | pub fn style<T: AsRef<str>>(text: T) -> String {
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
 note: first possible panic found here
-  --> src/lib.rs:47:5
+  --> ziyy-core/src/lib.rs:50:19
    |
-47 |     parser.parse().unwrap()
-   |     ^^^^^^^^^^^^^^^^^^^^^^^
+50 |         Err(e) => panic!("{e}"),
+   |                   ^^^^^^^^^^^^^
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#missing_panics_doc
-   = note: `#[warn(clippy::missing_panics_doc)]` implied by `#[warn(clippy::pedantic)]`
 
-warning: `ziyy` (lib) generated 55 warnings
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.06s
+warning: `ziyy-core` (lib) generated 35 warnings (run `cargo clippy --fix --lib -p ziyy-core` to apply 10 suggestions)
+warning: length comparison to zero
+ --> ziyy-proc/src/lib.rs:7:8
+  |
+7 |     if tokens.len() > 0 {
+  |        ^^^^^^^^^^^^^^^^ help: using `!is_empty` is clearer and more explicit: `!tokens.is_empty()`
+  |
+  = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#len_zero
+  = note: `#[warn(clippy::len_zero)]` on by default
+
+warning: you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
+  --> ziyy-proc/src/lib.rs:10:9
+   |
+10 | /         match token {
+11 | |             TokenTree::Literal(literal) => {
+12 | |                 let s: String = literal.to_string();
+13 | |                 let strings: Vec<_> = s.split('"').collect();
+...  |
+21 | |             _ => {}
+22 | |         }
+   | |_________^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#single_match
+   = note: `#[warn(clippy::single_match)]` on by default
+help: try
+   |
+10 ~         if let TokenTree::Literal(literal) = token {
+11 +             let s: String = literal.to_string();
+12 +             let strings: Vec<_> = s.split('"').collect();
+13 +             let end = strings.len() - 1;
+14 +             let s = strings[1..end].join("\"");
+15 +             let parsed = styler(s);
+16 + 
+17 +             let literal = Literal::string(&parsed);
+18 +             *token = TokenTree::Literal(literal)
+19 +         }
+   |
+
+warning: `ziyy-proc` (lib) generated 2 warnings (run `cargo clippy --fix --lib -p ziyy-proc` to apply 2 suggestions)
+warning: `ziyy-core` (lib) generated 35 warnings (35 duplicates)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.02s

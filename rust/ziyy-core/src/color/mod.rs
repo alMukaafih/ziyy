@@ -1,29 +1,33 @@
+use std::fmt::Display;
+
 use bit_4::Bit4;
 use channel::Channel;
 use rgb::Rgb;
 
 use crate::{
-    error::{ErrorKind, FromError},
+    error::ErrorKind,
+    get_num,
+    num::str_to_u32,
     scanner::{
+        span::Span,
         token::{Token, TokenKind},
         Scanner,
     },
     Error,
 };
 
-pub mod ansi_style;
 pub mod bit_4;
 pub mod channel;
 pub mod rgb;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum ColorKind {
     Bit4(Bit4),
     Byte(u8),
     Rgb(Rgb),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Color {
     kind: ColorKind,
     channel: Channel,
@@ -45,13 +49,24 @@ impl From<Color> for Vec<u8> {
     }
 }
 
-impl TryFrom<(&str, Channel)> for Color {
+impl Display for Color {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self.kind {
+            ColorKind::Bit4(bit4) => f.write_fmt(format_args!("{}{bit4};", self.channel)),
+            ColorKind::Byte(byte) => f.write_fmt(format_args!("{}8;5;{byte};", self.channel)),
+            ColorKind::Rgb(rgb) => f.write_fmt(format_args!("{}8;2;{rgb};", self.channel)),
+        }
+    }
+}
+
+impl TryFrom<(&str, Channel, Span)> for Color {
     type Error = Error;
 
-    fn try_from(value: (&str, Channel)) -> Result<Self, Self::Error> {
+    fn try_from(value: (&str, Channel, Span)) -> Result<Self, Self::Error> {
         let mut scanner = Scanner::new(value.0);
         scanner.text_mode = false;
         scanner.parse_colors = true;
+        scanner.span = value.2.clone();
 
         let token = scanner.scan_token()?;
         let kind = match token.kind {
@@ -69,9 +84,7 @@ impl TryFrom<(&str, Channel)> for Color {
 
                 let token = scanner.scan_token()?;
                 expect(&token, TokenKind::Number)?;
-                let i: u8 =
-                    Error::convert(token.content.parse::<f64>(), token.start_pos, token.end_pos)?
-                        .round() as u8;
+                let i: u8 = get_num!(str_to_u32(token.content, 10), &token) as u8;
 
                 let token = scanner.scan_token()?;
                 expect(&token, TokenKind::RightParen)?;
@@ -79,7 +92,7 @@ impl TryFrom<(&str, Channel)> for Color {
                 ColorKind::Byte(i)
             }
             TokenKind::Rgb => {
-                let mut rgb_string = String::with_capacity(32);
+                let mut rgb_string = String::with_capacity(16);
 
                 let token = scanner.scan_token()?;
                 expect(&token, TokenKind::LeftParen)?;
@@ -87,14 +100,14 @@ impl TryFrom<(&str, Channel)> for Color {
                 let mut token = scanner.scan_token()?;
                 while token.kind != TokenKind::RightParen {
                     if token.kind == TokenKind::Eof {
-                        return Err(Error::new(ErrorKind::UnexpectedEof, token.clone()));
+                        return Err(Error::new(ErrorKind::UnexpectedEof, &token));
                     }
                     rgb_string.push_str(token.content);
 
                     token = scanner.scan_token()?;
                 }
 
-                ColorKind::Rgb(Rgb::try_from(rgb_string.as_str())?)
+                ColorKind::Rgb(Rgb::try_from((rgb_string.as_str(), value.2))?)
             }
             _ => ColorKind::Bit4(Bit4::default()),
         };
@@ -115,11 +128,8 @@ impl From<(Rgb, Channel)> for Color {
 fn expect(token: &Token, tt: TokenKind) -> Result<(), Error> {
     if token.kind != tt {
         return Err(Error::new(
-            ErrorKind::UnexpectedToken {
-                expected: tt,
-                found: token.kind,
-            },
-            token.clone(),
+            ErrorKind::UnexpectedToken(token.kind, Some(tt)),
+            &token,
         ));
     }
     Ok(())
@@ -127,28 +137,28 @@ fn expect(token: &Token, tt: TokenKind) -> Result<(), Error> {
 
 #[test]
 fn test_color_from_str() {
-    let color = Color::try_from(("red", Channel::Foreground));
+    let color = Color::try_from(("red", Channel::Foreground, Span::default()));
     assert!(color.is_ok());
     assert_eq!(
         color.unwrap(),
         Color::new(ColorKind::Bit4(Bit4::Red), Channel::Foreground)
     );
 
-    let color = Color::try_from(("rgb(0,10,100)", Channel::Background));
+    let color = Color::try_from(("rgb(0,10,100)", Channel::Background, Span::default()));
     assert!(color.is_ok());
     assert_eq!(
         color.unwrap(),
         Color::new(ColorKind::Rgb(Rgb(0, 10, 100)), Channel::Background)
     );
 
-    let color = Color::try_from(("rgb(#B0B0B0)", Channel::Background));
+    let color = Color::try_from(("rgb(#B0B0B0)", Channel::Background, Span::default()));
     assert!(color.is_ok());
     assert_eq!(
         color.unwrap(),
         Color::new(ColorKind::Rgb(Rgb(176, 176, 176)), Channel::Background)
     );
 
-    let color = Color::try_from(("byte(1)", Channel::Background));
+    let color = Color::try_from(("byte(1)", Channel::Background, Span::default()));
     assert!(color.is_ok());
     assert_eq!(
         color.unwrap(),

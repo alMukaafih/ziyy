@@ -1,14 +1,15 @@
 pub mod position;
+pub mod span;
 pub mod token;
 
 use position::Position;
+use span::Span;
 
 use crate::{
     scanner::token::{Token, TokenKind},
     Result,
 };
 use core::str;
-use std::ops::Index;
 
 fn is_alpha(c: char) -> bool {
     c.is_ascii_alphabetic() || c == '_'
@@ -42,16 +43,15 @@ pub struct Scanner<T: AsRef<str>> {
     start: u16,
     current: u16,
 
-    start_line: u16,
-    current_line: u16,
-
-    start_column: u16,
-    current_column: u16,
+    pub(crate) line: u16,
+    pub(crate) column: u16,
 
     pub(crate) text_mode: bool,
 
     pub(crate) parse_colors: bool,
     pub(crate) parse_styles: bool,
+
+    pub span: Span,
 }
 
 impl<T: AsRef<str>> Scanner<T> {
@@ -61,15 +61,14 @@ impl<T: AsRef<str>> Scanner<T> {
             start: 0,
             current: 0,
 
-            start_line: 0,
-            current_line: 0,
-
-            start_column: 0,
-            current_column: 0,
+            line: 0,
+            column: 0,
 
             text_mode: true,
             parse_colors: false,
             parse_styles: false,
+
+            span: Span::default(),
         }
     }
 
@@ -79,12 +78,14 @@ impl<T: AsRef<str>> Scanner<T> {
 
     pub fn advance(&mut self) -> char {
         self.current += 1;
-        self.current_column += 1;
+        self.span.push(Position(self.line, self.column));
+
+        self.column += 1;
         let ch = self.source.as_ref().as_bytes()[self.current as usize - 1] as char;
 
         if ch == '\n' {
-            self.current_line += 1;
-            self.current_column = 0;
+            self.line += 1;
+            self.column = 0;
         }
 
         ch
@@ -113,29 +114,25 @@ impl<T: AsRef<str>> Scanner<T> {
 
     pub fn make_token(&mut self, kind: TokenKind) -> Result<Token<'_>> {
         let s = &self.source.as_ref()[(self.start as usize)..(self.current as usize)];
-        let start_pos = Position::new(self.start_line, self.start_column);
-        let end_pos = Position::new(self.current_line, self.current_column);
+        let span = Span::from(&self.span[(self.start as usize)..(self.current as usize)]);
 
         Ok(Token {
             kind,
             content: s,
             err_code: 0,
-            start_pos,
-            end_pos,
+            span,
         })
     }
 
     pub fn error_token(&self, code: u8) -> Result<Token<'_>> {
         let s = &self.source.as_ref()[(self.start as usize)..(self.current as usize)];
-        let start_pos = Position::new(self.start_line, self.start_column);
-        let end_pos = Position::new(self.current_line, self.current_column);
+        let span = Span::from(&self.span[(self.start as usize)..(self.current as usize)]);
 
         Ok(Token {
             kind: TokenKind::Error,
             content: s,
             err_code: code,
-            start_pos,
-            end_pos,
+            span,
         })
     }
 
@@ -286,6 +283,7 @@ impl<T: AsRef<str>> Scanner<T> {
             'r' => TokenKind::EscR,
             't' => TokenKind::EscT,
             'v' => TokenKind::EscV,
+            '\\' => TokenKind::EscBks,
 
             '0' => {
                 let mut i = 0;
@@ -305,7 +303,7 @@ impl<T: AsRef<str>> Scanner<T> {
                 TokenKind::EscU
             }
             _ => {
-                return self.error_token(0x1b);
+                return self.text_token();
             }
         };
 
@@ -316,8 +314,6 @@ impl<T: AsRef<str>> Scanner<T> {
         self.skip_whitespace();
 
         self.start = self.current;
-        self.start_line = self.current_line;
-        self.start_column = self.current_column;
 
         if self.is_at_end() {
             return self.make_token(TokenKind::Eof);
@@ -328,15 +324,15 @@ impl<T: AsRef<str>> Scanner<T> {
             self.text_mode = false;
             if self.peek() == '/' {
                 self.advance();
-                return self.make_token(TokenKind::OpenTagAndSlash);
+                return self.make_token(TokenKind::LessSlash);
             }
 
-            return self.make_token(TokenKind::OpenTag);
+            return self.make_token(TokenKind::Less);
         }
 
         if c == '>' {
             self.text_mode = true;
-            return self.make_token(TokenKind::CloseTag);
+            return self.make_token(TokenKind::Great);
         }
 
         if self.text_mode {
@@ -392,7 +388,7 @@ impl<T: AsRef<str>> Scanner<T> {
                 '>' => {
                     self.advance();
                     self.text_mode = true;
-                    self.make_token(TokenKind::SlashAndCloseTag)
+                    self.make_token(TokenKind::SlashGreat)
                 }
                 _ => self.make_token(TokenKind::Slash),
             },
@@ -411,11 +407,8 @@ impl<T: AsRef<str>> Scanner<T> {
         self.start = 0;
         self.current = 0;
 
-        self.start_line = 0;
-        self.current_line = 0;
-
-        self.start_column = 0;
-        self.current_column = 0;
+        self.line = 0;
+        self.column = 0;
 
         self.text_mode = true;
     }

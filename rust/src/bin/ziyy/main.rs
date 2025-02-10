@@ -26,12 +26,7 @@ fn usage() {
             <p>{}</p>
             <br />
             <p>
-                <u src="bold:green">Usage:</u>
-                <cyan>
-                    <b>ziyy</b>
-                    <i>[OPTION]</i>
-                    FILE
-                </cyan>
+                <u src="bold:green">Usage:</u> <cyan><b>ziyy</b> <i>[OPTION]</i> FILE</cyan>
             </p>
             <br />
 

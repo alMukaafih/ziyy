@@ -3,7 +3,6 @@
 #![warn(unconditional_panic)]
 #![warn(clippy::pedantic)]
 #![allow(clippy::cast_possible_truncation)]
-#![forbid(unsafe_code)]
 #![doc = include_str!("../../../README.md")]
 //! # Examples
 //! ```
@@ -19,8 +18,9 @@
 //!
 
 pub use crate::error::{Error, ErrorKind};
-pub use crate::parser::{Parser, Tag, TagKind, TagType};
+pub use crate::parser::{Parser, Tag, TagName, TagType};
 pub use crate::scanner::token::TokenKind;
+pub use crate::style::{Style, StyleBuilder};
 
 mod color;
 mod error;
@@ -28,6 +28,7 @@ mod num;
 mod parser;
 #[doc(hidden)]
 pub mod scanner;
+mod style;
 pub mod value;
 
 /// Styles your text
@@ -44,7 +45,10 @@ pub mod value;
 ///
 pub fn style<T: AsRef<str>>(text: T) -> String {
     let mut parser = Parser::new(text.as_ref(), None);
-    parser.parse().unwrap()
+    match parser.parse() {
+        Ok(s) => s,
+        Err(e) => panic!("{e}"),
+    }
 }
 
 /// Creates a new Template for styling text.

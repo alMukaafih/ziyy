@@ -1,25 +1,21 @@
-use super::position::Position;
+use super::span::Span;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TokenKind {
     // Single-character tokens.
-    LeftParen,  /* ( */
-    RightParen, /* ) */
-    //LeftBrace/* { */, RightBrace/* } */,
-    //LeftSquare/* [ */, RightSquare/* ] */,
-    //Colon/* : */,
-    Equal, /* = */
-    Comma, /* , */
-    //SemiColon/* ; */,
-    OpenTag,
-    OpenTagAndSlash,
-    CloseTag,
-    SlashAndCloseTag,
+    LeftParen,
+    RightParen,
+    Equal,
+    Comma,
+    Less,
+    LessSlash,
+    Great,
+    SlashGreat,
     //Plus,
     Dot,
     Slash,
 
-    TemplateLiteral,
+    PlaceHolder,
 
     // C-Escapes
     EscA,
@@ -30,12 +26,11 @@ pub enum TokenKind {
     EscF,
     EscR,
     EscE,
+    EscBks,
 
     Esc0, // Octal Escape \0XXX
     EscX, // Hex Escape \xHHH
     EscU, // Unicode Escape \uHHHH
-
-    Escape,
 
     // Literals.
     Identifier,
@@ -43,6 +38,7 @@ pub enum TokenKind {
     Number,
     WhiteSpace,
     Text,
+
     // Builtin Variables.
     Black,
     Red,
@@ -53,7 +49,7 @@ pub enum TokenKind {
     Cyan,
     White,
     Rgb,
-    Hex, /* #ffffff */
+    Hex, /* #HHHHHH | #HHH */
     Byte,
     B,
     C,
@@ -62,13 +58,13 @@ pub enum TokenKind {
     T,
     U,
     X,
-    // Keywords.
     Eof,
     Error,
 }
 
 impl TokenKind {
-    #[must_use] pub fn as_u8(&self) -> u8 {
+    #[must_use]
+    pub fn as_u8(&self) -> u8 {
         *self as u8
     }
 }
@@ -78,6 +74,5 @@ pub struct Token<'a> {
     pub kind: TokenKind,
     pub content: &'a str,
     pub err_code: u8,
-    pub start_pos: Position,
-    pub end_pos: Position,
+    pub span: Span,
 }
