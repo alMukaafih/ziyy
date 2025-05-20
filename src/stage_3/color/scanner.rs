@@ -1,0 +1,173 @@
+use crate::scanner::{is_alpha, is_alpha_numeric, is_digit, is_hexdigit, GenericScanner, Source};
+
+use super::token::Token;
+use super::token::TokenType::{self, *};
+use std::collections::HashMap;
+use std::str::FromStr;
+use std::sync::LazyLock;
+
+pub static COLORS: LazyLock<HashMap<&str, TokenType>> = LazyLock::new(|| {
+    [
+        ("bg_black", BG_BLACK),
+        ("bg_blue", BG_BLUE),
+        ("bg_byte", BG_BYTE),
+        ("bg_cyan", BG_CYAN),
+        ("bg_default", BG_DEFAULT),
+        ("bg_green", BG_GREEN),
+        ("bg_magenta", BG_MAGENTA),
+        ("bg_red", BG_RED),
+        ("bg_rgb", BG_RGB),
+        ("bg_white", BG_WHITE),
+        ("bg_yellow", BG_YELLOW),
+        ("fg_black", FG_BLACK),
+        ("fg_blue", FG_BLUE),
+        ("fg_byte", FG_BYTE),
+        ("fg_cyan", FG_CYAN),
+        ("fg_default", FG_DEFAULT),
+        ("fg_green", FG_GREEN),
+        ("fg_magenta", FG_MAGENTA),
+        ("fg_red", FG_RED),
+        ("fg_rgb", FG_RGB),
+        ("fg_white", FG_WHITE),
+        ("fg_yellow", FG_YELLOW),
+    ]
+    .into()
+});
+
+macro_rules! shrink {
+    ($num:expr) => {{
+        if $num > 255.0 {
+            255
+        } else if $num < 0.0 {
+            0
+        } else {
+            $num as u8
+        }
+    }};
+}
+
+pub struct Scanner {
+    source: Vec<char>,
+    tokens: Vec<Token>,
+    start: usize,
+    current: usize,
+    line: usize,
+}
+
+impl_generic_scanner!(|s: &mut Scanner| {
+    let c = s.advance();
+    match c {
+        '(' => s.add_token(LEFT_PAREN),
+        ')' => s.add_token(RIGHT_PAREN),
+        ',' => s.add_token(COMMA),
+        '{' => s.place_holder(),
+        '#' => s.hex(),
+        c => {
+            if is_digit(c) {
+                s.number();
+            } else if is_alpha(c) {
+                s.identifier();
+            } else {
+                // TODO: error
+            }
+        }
+    }
+});
+
+impl Scanner {
+    pub fn new(source: String) -> Self {
+        Self {
+            source: source.chars().collect(),
+            tokens: vec![],
+            start: 0,
+            current: 0,
+            line: 0,
+        }
+    }
+
+    fn identifier(&mut self) {
+        while is_alpha_numeric(self.peek()) {
+            self.advance();
+        }
+
+        let k = self.source[self.start..self.current].to_string();
+
+        if let Some(r#type) = COLORS.get(k.as_str()) {
+            self.add_token(*r#type);
+        } else {
+            self.add_token(IDENTIFIER);
+        }
+    }
+
+    fn number(&mut self) {
+        while is_digit(self.peek()) {
+            self.advance();
+        }
+
+        if self.peek() == '.' && is_digit(self.peek_next()) {
+            self.advance();
+            while is_digit(self.peek()) {
+                self.advance();
+            }
+        }
+
+        let value = self.source[self.start..self.current].to_string();
+        self.add_token2(
+            NUMBER,
+            Some(f64::from_str(value.as_str()).unwrap().round()).map(|x| shrink!(x)),
+        );
+    }
+
+    fn place_holder(&mut self) {
+        loop {
+            if self.peek() == '}' && self.peek_next() == '}' {
+                self.advance();
+            } else if self.peek() == '}' || self.is_at_end() {
+                break;
+            }
+            self.advance();
+        }
+
+        if self.is_at_end() {
+            // TODO: error
+            return;
+        }
+
+        self.advance();
+
+        self.add_token(PLACE_HOLDER);
+    }
+
+    fn hex(&mut self) {
+        while is_hexdigit(self.peek()) {
+            self.advance();
+        }
+        self.add_token(HEX);
+    }
+
+    fn add_token(&mut self, r#type: TokenType) {
+        self.add_token2(r#type, None);
+    }
+
+    fn add_token2(&mut self, r#type: TokenType, literal: Option<u8>) {
+        let text = self.source[self.start..self.current].to_string();
+        self.tokens
+            .push(Token::new(r#type, text, literal, self.line));
+    }
+}
+
+trait ToString {
+    fn to_string(&self) -> String;
+}
+
+impl ToString for [char] {
+    fn to_string(&self) -> String {
+        let mut text = String::with_capacity(self.len());
+
+        for ch in self {
+            text.push(*ch)
+        }
+
+        text
+    }
+}

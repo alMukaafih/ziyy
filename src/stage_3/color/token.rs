@@ -1,0 +1,55 @@
+#[allow(non_camel_case_types)]
+#[allow(clippy::upper_case_acronyms)]
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum TokenType {
+    FG_BLACK,
+    FG_RED,
+    FG_GREEN,
+    FG_YELLOW,
+    FG_BLUE,
+    FG_MAGENTA,
+    FG_CYAN,
+    FG_WHITE,
+    FG_RGB,
+    FG_BYTE,
+    FG_DEFAULT,
+
+    BG_BLACK,
+    BG_RED,
+    BG_GREEN,
+    BG_YELLOW,
+    BG_BLUE,
+    BG_MAGENTA,
+    BG_CYAN,
+    BG_WHITE,
+    BG_RGB,
+    BG_BYTE,
+    BG_DEFAULT,
+
+    HEX,
+    LEFT_PAREN,
+    RIGHT_PAREN,
+    PLACE_HOLDER,
+    COMMA,
+    NUMBER,
+    IDENTIFIER,
+}
+
+#[derive(Debug)]
+pub struct Token {
+    pub r#type: TokenType,
+    pub lexeme: String,
+    pub literal: Option<u8>,
+    pub line: usize,
+}
+
+impl Token {
+    pub fn new(r#type: TokenType, lexeme: String, literal: Option<u8>, line: usize) -> Self {
+        Token {
+            r#type,
+            literal,
+            lexeme,
+            line,
+        }
+    }
+}
