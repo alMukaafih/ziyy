@@ -109,6 +109,7 @@ impl TagParser {
         expect(&token, IDENTIFIER, ErrorType::InvalidTagName)?;
 
         let mut tag = Tag::default();
+        tag.r#type = tag_type;
         tag.set_name(token.lexeme.clone());
 
         match tag.name().as_str() {
@@ -229,7 +230,7 @@ impl TagParser {
                     }
                 }
 
-                "src" => assign_prop!(tag, set_custom, next, token),
+                "src" => assign_prop!(tag, set_src, next, token),
 
                 _ => {
                     consume_declaration!(tag, next, token);
@@ -237,7 +238,7 @@ impl TagParser {
             }
         }
 
-        match tag_type {
+        match tag.r#type {
             TagType::Open => {
                 self.stack.push(tag.clone());
             }
@@ -251,8 +252,6 @@ impl TagParser {
                             token.line,
                             0, // TODO: column
                         ));
-                    } else {
-                        tag = !last;
                     }
                 }
             }

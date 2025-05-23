@@ -40,22 +40,24 @@ impl WordParser {
         loop {
             let token = next();
             let c = match token.r#type {
-                ESCAPE => '\x1b',
+                ESCAPE => '\x1B',
                 ESCAPE_A => '\x07',
                 ESCAPE_B => '\x08',
-                ESCAPE_E => '\x1b',
-                ESCAPE_F => '\x0c',
-                ESCAPE_N => '\x0a',
-                ESCAPE_R => '\x0d',
+                ESCAPE_E => '\x1B',
+                ESCAPE_F => '\x0C',
+                ESCAPE_N => '\x0A',
+                ESCAPE_R => '\x0D',
                 ESCAPE_T => '\t',
-                ESCAPE_V => '\x0b',
+                ESCAPE_V => '\x0B',
                 ESCAPE_0 => {
                     let num = u32::from_str_radix(&token.lexeme[2..], 8).unwrap();
                     char::from_u32(num).unwrap_or(char::REPLACEMENT_CHARACTER)
                 }
                 ESCAPE_X => {
                     let num = u32::from_str_radix(&token.lexeme[2..], 16).unwrap();
-                    char::from_u32(num).unwrap_or(char::REPLACEMENT_CHARACTER)
+                    let c = char::from_u32(num).unwrap_or(char::REPLACEMENT_CHARACTER);
+                    eprintln!("{}: {}", token.lexeme, c);
+                    c
                 }
                 ESCAPE_U => {
                     let num = u32::from_str_radix(&token.lexeme[2..], 16).unwrap();
@@ -84,13 +86,13 @@ impl WordParser {
             }
 
             let c = chars[i];
-            if c == '\x1b' && chars[i + 1] == '[' {
+            if c == '\x1B' && chars[i + 1] == '[' {
                 i += 2;
                 // Handle escape
                 let j = i;
 
-                if !matches!(chars[i], '\x30'..='\x39' | '\x3b' | '\x40'..='\x7e') {
-                    while i < len && chars[i] != '\x1b' {
+                if !matches!(chars[i], '\x30'..='\x39' | '\x3B' | '\x40'..='\x7E') {
+                    while i < len && chars[i] != '\x1B' {
                         i += 1;
                     }
                     let word = chars[j..i].to_string();
@@ -98,7 +100,7 @@ impl WordParser {
                     break;
                 }
 
-                while i < len && !matches!(chars[i], '\x40'..='\x7e') {
+                while i < len && !matches!(chars[i], '\x40'..='\x7E') {
                     i += 1;
                 }
 
@@ -110,7 +112,7 @@ impl WordParser {
                         chunks.push(Chunk::new_tag(tag));
                     }
                 } else {
-                    while i < len && chars[i] != '\x1b' {
+                    while i < len && chars[i] != '\x1B' {
                         i += 1;
                     }
                     let word = chars[j..i].to_string();
@@ -121,7 +123,7 @@ impl WordParser {
                 continue;
             } else {
                 let j = i;
-                while i < len && chars[i] != '\x1b' {
+                while i < len && chars[i] != '\x1B' {
                     i += 1;
                 }
                 let word = chars[j..i].to_string();
@@ -145,6 +147,7 @@ impl WordParser {
         let mut next = || parts.pop_front().unwrap_or(Err(-1));
 
         let mut tag = Tag::default();
+        tag.set_name("$ansi".to_string());
         loop {
             let num = next();
 

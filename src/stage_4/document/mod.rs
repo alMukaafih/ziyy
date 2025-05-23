@@ -1,0 +1,140 @@
+use std::{
+    cell::RefCell,
+    fmt::{self, Debug, Display, Formatter},
+    rc::Rc,
+};
+
+use crate::stage_3::{
+    chunk::Chunk,
+    tag_parer::tag::{Tag, TagType},
+};
+pub use node::Node;
+
+mod display;
+mod iter;
+mod node;
+
+#[derive(Clone)]
+pub struct Document {
+    nodes: RefCell<Vec<Rc<Node>>>,
+}
+
+impl Document {
+    pub fn new() -> Rc<Self> {
+        let doc = Rc::new(Self {
+            nodes: RefCell::new(vec![]),
+        });
+
+        let mut tag = Tag::default();
+        tag.set_name("$root".to_string());
+        tag.r#type = TagType::Open;
+
+        let node = Rc::new(Node::new(
+            0,
+            Chunk::Tag(tag),
+            Rc::downgrade(&Rc::clone(&doc)),
+        ));
+
+        {
+            let mut nodes = doc.nodes.borrow_mut();
+            nodes.push(node)
+        }
+
+        doc
+    }
+
+    pub fn get(self: &Rc<Self>, id: u32) -> Rc<Node> {
+        self.nodes.borrow()[id as usize].clone()
+    }
+
+    pub fn node(self: &Rc<Self>, id: u32) -> Rc<Node> {
+        self.get(id)
+    }
+
+    pub fn root(self: &Rc<Document>) -> Rc<Node> {
+        self.get(0)
+    }
+
+    pub fn root2(&self) -> Rc<Node> {
+        self.nodes.borrow()[0].clone()
+    }
+
+    pub fn orphan(self: &Rc<Document>, chunk: Chunk) -> Rc<Node> {
+        let doc = Rc::downgrade(&Rc::clone(self));
+        let mut nodes = self.nodes.borrow_mut();
+        let id = nodes.len();
+
+        let node = Rc::new(Node::new(
+            id.try_into().expect("maximum nodes exceeded"),
+            chunk,
+            doc,
+        ));
+        nodes.push(node.clone());
+        node
+    }
+
+    pub fn len(self: &Rc<Self>) -> usize {
+        self.nodes.borrow().len()
+    }
+}
+
+impl Debug for Document {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
+        use iter::Edge;
+        if f.alternate() {
+            write!(f, "Tree {{")?;
+            for edge in self.root2().traverse() {
+                match edge {
+                    Edge::Open(node) if node.has_children() => {
+                        write!(f, " {:?} => {{", node.chunk())?;
+                    }
+                    Edge::Open(node) if node.next_sibling().is_some() => {
+                        write!(f, " {:?},", node.chunk())?;
+                    }
+                    Edge::Open(node) => {
+                        write!(f, " {:?}", node.chunk())?;
+                    }
+                    Edge::Close(node) if node.has_children() => {
+                        if node.next_sibling().is_some() {
+                            write!(f, " }},")?;
+                        } else {
+                            write!(f, " }}")?;
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            write!(f, " }}")
+        } else {
+            f.debug_struct("Tree").field("vec", &self.nodes).finish()
+        }
+    }
+}
+
+impl Display for Document {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
+        use display::Indentation;
+        use iter::Edge;
+
+        let mut indent: Indentation = Indentation::new(true);
+
+        for edge in self.root2().traverse() {
+            match edge {
+                Edge::Open(node) if node.has_children() => {
+                    indent.indent(node.next_sibling().is_some());
+                    writeln!(f, "{indent}{:#}", node.chunk().borrow())?;
+                }
+                Edge::Open(node) => {
+                    indent.indent(node.next_sibling().is_some());
+                    writeln!(f, "{indent}{:#}", node.chunk().borrow())?;
+                    indent.deindent();
+                }
+                Edge::Close(node) if node.has_children() => {
+                    indent.deindent();
+                }
+                _ => {}
+            }
+        }
+        Ok(())
+    }
+}

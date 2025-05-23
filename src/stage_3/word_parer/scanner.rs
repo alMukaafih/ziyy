@@ -100,7 +100,7 @@ impl_generic_scanner!(|s: &mut Scanner| {
     let c = s.advance();
     match c {
         '\\' => s.escape(),
-        '\x1b' => {
+        '\x1B' => {
             s.add_token(ESCAPE);
         }
         _ => s.text(),

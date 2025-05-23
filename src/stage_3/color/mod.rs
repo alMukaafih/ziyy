@@ -65,6 +65,7 @@ impl Color {
                 b = number!(token);
             }
             HEX => match token.lexeme.len() {
+                // TODO: support place holder
                 4 => {
                     r = hex!(&token.lexeme[1..2].repeat(2));
                     g = hex!(&token.lexeme[2..3].repeat(2));
