@@ -1,5 +1,5 @@
 use crate::error::Result;
-use crate::stage_2::fragment::{Fragment, FragmentType};
+use crate::splitter::fragment::{Fragment, FragmentType};
 use chunk::Chunk;
 use word_parer::WordParser;
 
@@ -8,9 +8,15 @@ pub mod color;
 pub mod tag_parer;
 pub mod word_parer;
 
-pub struct Stage3 {}
+pub struct Parser {}
 
-impl Stage3 {
+impl Default for Parser {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Parser {
     pub fn new() -> Self {
         Self {}
     }

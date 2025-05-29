@@ -1,6 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 
-use crate::stage_3::{
+use crate::parser::{
     chunk::Chunk,
     tag_parer::tag::{Tag, TagType},
 };
@@ -12,18 +12,24 @@ static BUILTIN_TAGS: &[&str] = &[
     "a", "b", "br", "d", "h", "i", "k", "p", "r", "s", "u", "ziyy",
 ];
 
-pub struct Stage4 {
+pub struct Resolver {
     bindings: HashMap<String, Tag>,
 }
 
-impl Stage4 {
+impl Default for Resolver {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Resolver {
     pub fn new() -> Self {
         Self {
             bindings: HashMap::new(),
         }
     }
 
-    pub fn parse(&mut self, chunks: Vec<Chunk>) -> Rc<Document> {
+    pub fn resolve(&mut self, chunks: Vec<Chunk>) -> Rc<Document> {
         let tree = Document::new();
         let mut node = tree.root();
 
@@ -35,6 +41,7 @@ impl Stage4 {
                     }
 
                     TagType::Close => {
+                        node.append(chunk.clone());
                         node = node.parent().unwrap();
                     }
 
@@ -58,18 +65,19 @@ impl Stage4 {
             node.detach();
         }
 
-        for _ in 0..3 {
-            let mut detachables = vec![];
-            self.optimize(&node, &mut detachables);
-            for node in &detachables {
-                node.detach();
-            }
+        //for _ in 0..1 {
+        let mut detachables = vec![];
+        self.optimize_ws(&node, &mut detachables);
+        for node in &detachables {
+            node.detach();
         }
-        self.resolve(&node, "$root");
+        //}
+        self._resolve(&node, "$root");
 
         tree
     }
 
+    /// Collect all declared bindings: <let />
     fn collect_bindings(&mut self, node: &Rc<Node>, detachables: &mut Vec<Rc<Node>>) {
         for child in node.children() {
             let child_chunk = child.chunk().borrow();
@@ -89,104 +97,115 @@ impl Stage4 {
         }
     }
 
-    fn optimize(&self, node: &Rc<Node>, detachables: &mut Vec<Rc<Node>>) {
+    /// Optimizes Excess Whitespace
+    fn optimize_ws(&self, node: &Rc<Node>, detachables: &mut Vec<Rc<Node>>) {
         for child in node.children() {
             let mut child_chunk = child.chunk().borrow_mut();
             if child_chunk.is_ws() {
                 if child.id() == 1 {
                     detachables.push(child.clone());
-                }
-
-                if child.id() as usize == child.doc().len() - 1
-                    && child_chunk.ws().unwrap().contains("\n")
+                } else if child.id() as usize == child.doc().len() - 1
+                    && child_chunk.ws().is_some_and(|s| s.contains("\n"))
                 {
                     *child_chunk = Chunk::WhiteSpace("\n".to_string());
                 } else {
                     *child_chunk = Chunk::WhiteSpace(" ".to_string());
                 }
 
-                if let Some(Some(first)) = child.next_sibling().map(|next| next.first_child()) {
+                if let Some(first) = child.next_sibling().and_then(|next| next.first_child()) {
                     if first.chunk().borrow().is_ws() {
-                        detachables.push(first.clone());
+                        detachables.push(first);
                     }
-                } else if child.next_sibling().is_none() {
+                } else if child.next_sibling().is_some_and(|node| {
+                    node.chunk()
+                        .borrow()
+                        .is_tag_and(|tag| tag.r#type == TagType::Close)
+                }) {
                     if let Some(next) = node.next_sibling() {
                         if next.chunk().borrow().is_ws() {
-                            detachables.push(next.clone());
+                            detachables.push(next);
                         }
                     }
                 } else if let Some(next) = child.next_sibling() {
                     if next.chunk().borrow().is_ws() {
-                        detachables.push(next.clone());
+                        detachables.push(next);
                     }
                 }
             } else if child_chunk.is_tag() {
                 let name = child_chunk.tag().unwrap().name();
-                if matches!(name.as_str(), "p" | "ziyy") {
+                if matches!(name.as_str(), "p" | "ziyy" | "$root") {
                     if let Some(first) = child.first_child() {
                         if first.chunk().borrow().is_ws() {
-                            detachables.push(first.clone());
+                            detachables.push(first);
                         }
                     }
                 } else if name == "br" {
                     if let Some(prev) = child.prev_sibling() {
                         if prev.chunk().borrow().is_ws() {
-                            detachables.push(prev.clone());
+                            detachables.push(prev);
                         }
                     }
 
                     if let Some(next) = child.next_sibling() {
                         if next.chunk().borrow().is_ws() {
-                            detachables.push(next.clone());
+                            detachables.push(next);
                         }
                     }
                 }
             }
 
-            self.optimize(&child, detachables);
+            self.optimize_ws(&child, detachables);
         }
     }
 
-    fn resolve(&self, node: &Rc<Node>, node_name: &str) {
+    fn _resolve(&self, node: &Rc<Node>, node_name: &str) {
         for child in node.children() {
             let mut child_chunk = child.chunk().borrow_mut();
             if child_chunk.is_tag() {
                 let tag = child_chunk.tag_mut().unwrap();
-                let name = tag.name();
-                if name == "p" {
-                    if matches!(node_name, "ziyy" | "$root" | "p")
-                        && node.first_child().unwrap().id() == child.id()
-                    {
-                    } else {
-                        child.insert_before(Chunk::WhiteSpace("\n".to_string()));
-                    }
-                }
-
-                if !BUILTIN_TAGS.contains(&name.as_str()) {
-                    for ansector in child.ancestors() {
-                        if let Some(binding) =
-                            self.bindings.get(&format!("{}/{}", ansector.id(), name))
+                if tag.r#type == TagType::Open {
+                    let name = tag.name();
+                    if name == "p" {
+                        if matches!(node_name, "ziyy" | "$root" | "p")
+                            && node
+                                .first_child()
+                                .is_some_and(|first| first.id() == child.id())
                         {
-                            tag.inherit(binding);
-                            break;
+                        } else {
+                            child.insert_before(Chunk::WhiteSpace("\n".to_string()));
                         }
                     }
-                }
 
-                if !tag.src().is_empty() {
-                    for ansector in child.ancestors() {
-                        if let Some(binding) =
-                            self.bindings
-                                .get(&format!("{}/{}", ansector.id(), tag.src()))
-                        {
-                            tag.inherit(binding);
-                            break;
+                    if !BUILTIN_TAGS.contains(&name.as_str()) {
+                        for ansector in child.ancestors() {
+                            if let Some(binding) =
+                                self.bindings.get(&format!("{}/{}", ansector.id(), name))
+                            {
+                                tag.inherit(binding);
+                                break;
+                            }
                         }
                     }
+
+                    if !tag.src().is_empty() {
+                        for ansector in child.ancestors() {
+                            if let Some(binding) =
+                                self.bindings
+                                    .get(&format!("{}/{}", ansector.id(), tag.src()))
+                            {
+                                tag.inherit(binding);
+                                break;
+                            }
+                        }
+                    }
+
+                    let last = child.last_child().unwrap();
+                    *last.chunk().borrow_mut().tag_mut().unwrap() = !tag.clone();
                 }
-                self.resolve(&child, &tag.name());
+
+                self._resolve(&child, tag.name());
             } else {
-                self.resolve(&child, node_name);
+                self._resolve(&child, node_name);
             }
         }
     }

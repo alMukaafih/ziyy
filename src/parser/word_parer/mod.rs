@@ -3,7 +3,7 @@ use super::color::Color;
 use super::tag_parer::tag::Tag;
 use crate::error::Error;
 use crate::scanner::GenericScanner;
-use crate::stage_2::fragment::Fragment;
+use crate::splitter::fragment::Fragment;
 use scanner::Scanner;
 use std::collections::VecDeque;
 use token::TokenType::*;
@@ -23,6 +23,12 @@ macro_rules! shrink {
 }
 
 pub struct WordParser;
+
+impl Default for WordParser {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl WordParser {
     pub fn new() -> Self {
@@ -141,7 +147,7 @@ impl WordParser {
         // This is a placeholder implementation
         let mut parts = ansi
             .split(';')
-            .map(|x| i32::from_str_radix(x, 10).map_err(|_| 0))
+            .map(|x| x.parse::<i32>().map_err(|_| 0))
             .collect::<VecDeque<_>>();
 
         let mut next = || parts.pop_front().unwrap_or(Err(-1));

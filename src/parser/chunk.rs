@@ -26,6 +26,17 @@ impl Chunk {
         matches!(self, Chunk::Tag(_))
     }
 
+    pub fn is_tag_and<F>(&self, f: F) -> bool
+    where
+        F: FnOnce(&Tag) -> bool,
+    {
+        match self {
+            Chunk::Tag(tag) => f(tag),
+            Chunk::WhiteSpace(_) => false,
+            Chunk::Word(_) => false,
+        }
+    }
+
     pub fn is_word(&self) -> bool {
         matches!(self, Chunk::Word(_))
     }

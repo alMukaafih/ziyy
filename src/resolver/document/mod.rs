@@ -4,7 +4,7 @@ use std::{
     rc::Rc,
 };
 
-use crate::stage_3::{
+use crate::parser::{
     chunk::Chunk,
     tag_parer::tag::{Tag, TagType},
 };

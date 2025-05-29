@@ -4,7 +4,7 @@ use std::{
 };
 
 use super::Document;
-use crate::stage_3::chunk::Chunk;
+use crate::parser::chunk::Chunk;
 
 #[derive(Debug, Clone)]
 struct Kin {
@@ -318,7 +318,7 @@ impl Node {
             for child in self.children() {
                 child.to_string(buf);
             }
-            buf.push_str((!tag.clone()).to_string().as_str());
+            //buf.push_str((!tag.clone()).to_string().as_str());
         } else {
             buf.push_str(self.chunk.borrow().to_string().as_str());
         }

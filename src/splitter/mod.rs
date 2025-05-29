@@ -5,7 +5,7 @@ use fragment::FragmentType::{self, *};
 
 pub mod fragment;
 
-pub struct Stage2 {
+pub struct Splitter {
     source: Vec<char>,
     fragments: Vec<Fragment>,
     start: usize,
@@ -13,13 +13,19 @@ pub struct Stage2 {
     line: usize,
 }
 
-impl Default for Stage2 {
+impl Default for Splitter {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl Stage2 {
+enum Quote {
+    Single,
+    Double,
+    None,
+}
+
+impl Splitter {
     pub fn new() -> Self {
         Self {
             source: vec![],
@@ -30,7 +36,7 @@ impl Stage2 {
         }
     }
 
-    pub fn parse(&mut self, source: String) -> Vec<Fragment> {
+    pub fn split(&mut self, source: String) -> Vec<Fragment> {
         self.source = source.chars().collect();
 
         while !self.is_at_end() {
@@ -99,11 +105,6 @@ impl Stage2 {
     }
 
     fn tag(&mut self) {
-        enum Quote {
-            Single,
-            Double,
-            None,
-        }
         let mut quote = Quote::None;
 
         loop {

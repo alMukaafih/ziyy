@@ -24,7 +24,7 @@ impl Default for Tag {
         Self {
             r#type: TagType::SelfClose,
             style: 0,
-            data: vec![String::new(); 5],
+            data: vec![String::new(); 6],
         }
     }
 }
@@ -81,7 +81,7 @@ macro_rules! get_style {
 }
 
 macro_rules! impl_tag {
-    ( $( ( $i:expr, $set_x:tt, $x:tt, $is_set:tt ) ),* ) => {
+    ( $( ( $i:expr, $set_x:tt, $x:tt, $is_set:tt ) ),*; $( ( $j:expr, $set_y:tt, $y:tt ) ),* ) => {
         impl Tag {
             const L: u32 = 31;
 
@@ -99,20 +99,14 @@ macro_rules! impl_tag {
                 get_style!(self.style, ($i * 2) + 1)
             }
         )*
-        }
-    };
-}
 
-macro_rules! impl_tag2 {
-    ( $( ( $i:expr, $set_x:tt, $x:tt ) ),* ) => {
-        impl Tag {
         $(
-            pub fn $set_x(&mut self, value: String) {
-                self.data[$i] = value;
+            pub fn $set_y(&mut self, value: String) {
+                self.data[$j] = value;
             }
 
-            pub fn $x(&self) -> &String {
-                &self.data[$i]
+            pub fn $y(&self) -> &String {
+                &self.data[$j]
             }
         )*
         }
@@ -128,10 +122,8 @@ impl_tag![
     (5, set_italics, italics, is_italics_set),
     (6, set_negative, negative, is_negative_set),
     (7, set_under, under, is_under_set),
-    (8, set_double_under, double_under, is_double_under_set)
-];
+    (8, set_double_under, double_under, is_double_under_set);
 
-impl_tag2![
     (0, set_name, name),
     (1, set_fg_color, fg_color),
     (2, set_bg_color, bg_color),
@@ -175,7 +167,7 @@ impl Display for Tag {
                 TagType::Close => f.write_str("</"),
             }?;
 
-            f.write_str(&self.name())?;
+            f.write_str(self.name())?;
 
             if self.r#type != TagType::Close {
                 write_prop!(dim, is_dim_set, "d");
@@ -199,13 +191,11 @@ impl Display for Tag {
 
         if self.name() == "br" {
             return f.write_str("\n");
-        } else if self.name() == "p" {
-            if !self.custom().is_empty() {
-                return f.write_fmt(format_args!(
-                    "{}",
-                    " ".repeat(self.custom().parse::<usize>().unwrap_or(0))
-                ));
-            }
+        } else if self.name() == "p" && !self.custom().is_empty() {
+            return f.write_fmt(format_args!(
+                "{}",
+                " ".repeat(self.custom().parse::<usize>().unwrap_or(0))
+            ));
         }
 
         let mut buf = vec![];

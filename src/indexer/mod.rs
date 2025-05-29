@@ -1,19 +1,20 @@
 use std::mem::take;
 
-pub struct Stage1 {
+/// The Indexer adds indices to empty placeholders
+pub struct Indexer {
     source: String,
     start: usize,
     current: usize,
     parts: Vec<String>,
 }
 
-impl Default for Stage1 {
+impl Default for Indexer {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl Stage1 {
+impl Indexer {
     pub fn new() -> Self {
         Self {
             source: String::new(),
@@ -23,7 +24,7 @@ impl Stage1 {
         }
     }
 
-    pub fn parse(&mut self, source: String) -> String {
+    pub fn index(&mut self, source: String) -> String {
         self.source = source;
         self.parts = Vec::with_capacity(self.source.len() / 2);
 

@@ -7,7 +7,7 @@ pub fn is_alpha(c: char) -> bool {
 }
 
 pub fn is_digit(c: char) -> bool {
-    matches!(c, '0'..='9')
+    c.is_ascii_digit()
 }
 
 pub fn is_alpha_numeric(c: char) -> bool {

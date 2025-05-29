@@ -1,5 +1,5 @@
 use crate::error::{Error, ErrorType};
-use crate::{scanner::GenericScanner, stage_2::fragment::Fragment};
+use crate::{scanner::GenericScanner, splitter::fragment::Fragment};
 use scanner::Scanner;
 use std::collections::VecDeque;
 use tag::{Tag, TagType};
@@ -61,6 +61,12 @@ macro_rules! assign_prop_switch {
 
 pub struct TagParser {
     stack: Vec<Tag>,
+}
+
+impl Default for TagParser {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl TagParser {

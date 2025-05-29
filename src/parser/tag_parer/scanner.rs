@@ -4,7 +4,7 @@ use super::token::{
 };
 use crate::{
     scanner::{is_alpha, is_alpha_numeric, GenericScanner, Source},
-    stage_2::fragment::Fragment,
+    splitter::fragment::Fragment,
 };
 
 pub struct Scanner {

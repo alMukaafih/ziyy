@@ -1,7 +1,7 @@
 use super::token::Token;
 use super::token::TokenType::{self, *};
 use crate::scanner::{GenericScanner, Source};
-use crate::stage_2::fragment::Fragment;
+use crate::splitter::fragment::Fragment;
 
 pub struct Scanner {
     source: Vec<char>,
