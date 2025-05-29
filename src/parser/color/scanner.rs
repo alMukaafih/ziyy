@@ -1,3 +1,4 @@
+use crate::common::Span;
 use crate::scanner::{is_alpha, is_alpha_numeric, is_digit, is_hexdigit, GenericScanner, Source};
 
 use super::token::Token;
@@ -8,28 +9,28 @@ use std::sync::LazyLock;
 
 pub static COLORS: LazyLock<HashMap<&str, TokenType>> = LazyLock::new(|| {
     [
-        ("bg_black", BG_BLACK),
-        ("bg_blue", BG_BLUE),
-        ("bg_byte", BG_BYTE),
-        ("bg_cyan", BG_CYAN),
-        ("bg_default", BG_DEFAULT),
-        ("bg_green", BG_GREEN),
-        ("bg_magenta", BG_MAGENTA),
-        ("bg_red", BG_RED),
-        ("bg_rgb", BG_RGB),
-        ("bg_white", BG_WHITE),
-        ("bg_yellow", BG_YELLOW),
-        ("fg_black", FG_BLACK),
-        ("fg_blue", FG_BLUE),
-        ("fg_byte", FG_BYTE),
-        ("fg_cyan", FG_CYAN),
-        ("fg_default", FG_DEFAULT),
-        ("fg_green", FG_GREEN),
-        ("fg_magenta", FG_MAGENTA),
-        ("fg_red", FG_RED),
-        ("fg_rgb", FG_RGB),
-        ("fg_white", FG_WHITE),
-        ("fg_yellow", FG_YELLOW),
+        ("bblack", BG_BLACK),
+        ("bblue", BG_BLUE),
+        ("bbyte", BG_BYTE),
+        ("bcyan", BG_CYAN),
+        ("bdefault", BG_DEFAULT),
+        ("bgreen", BG_GREEN),
+        ("bmagenta", BG_MAGENTA),
+        ("bred", BG_RED),
+        ("brgb", BG_RGB),
+        ("bwhite", BG_WHITE),
+        ("byellow", BG_YELLOW),
+        ("fblack", FG_BLACK),
+        ("fblue", FG_BLUE),
+        ("fbyte", FG_BYTE),
+        ("fcyan", FG_CYAN),
+        ("fdefault", FG_DEFAULT),
+        ("fgreen", FG_GREEN),
+        ("fmagenta", FG_MAGENTA),
+        ("fred", FG_RED),
+        ("frgb", FG_RGB),
+        ("fwhite", FG_WHITE),
+        ("fyellow", FG_YELLOW),
     ]
     .into()
 });
@@ -51,7 +52,7 @@ pub struct Scanner {
     tokens: Vec<Token>,
     start: usize,
     current: usize,
-    line: usize,
+    span: Span,
 }
 
 impl_generic_scanner!(|s: &mut Scanner| {
@@ -75,13 +76,15 @@ impl_generic_scanner!(|s: &mut Scanner| {
 });
 
 impl Scanner {
-    pub fn new(source: String) -> Self {
+    pub fn new(source: String, mut span: Span) -> Self {
+        span.tie_start();
+
         Self {
             source: source.chars().collect(),
             tokens: vec![],
             start: 0,
             current: 0,
-            line: 0,
+            span,
         }
     }
 
@@ -152,7 +155,7 @@ impl Scanner {
     fn add_token2(&mut self, r#type: TokenType, literal: Option<u8>) {
         let text = self.source[self.start..self.current].to_string();
         self.tokens
-            .push(Token::new(r#type, text, literal, self.line));
+            .push(Token::new(r#type, text, literal, self.span));
     }
 }
 

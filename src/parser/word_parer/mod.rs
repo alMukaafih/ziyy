@@ -1,4 +1,4 @@
-use super::chunk::Chunk;
+use super::chunk::{Chunk, ChunkData};
 use super::color::Color;
 use super::tag_parer::tag::Tag;
 use crate::error::Error;
@@ -36,6 +36,7 @@ impl WordParser {
     }
 
     pub fn parse(&self, source: Fragment) -> Result<Vec<Chunk>, Error> {
+        let mut span = source.span;
         let mut scanner = Scanner::new(source);
         let mut tokens: VecDeque<_> = scanner.scan_tokens().into();
 
@@ -61,9 +62,8 @@ impl WordParser {
                 }
                 ESCAPE_X => {
                     let num = u32::from_str_radix(&token.lexeme[2..], 16).unwrap();
-                    let c = char::from_u32(num).unwrap_or(char::REPLACEMENT_CHARACTER);
-                    eprintln!("{}: {}", token.lexeme, c);
-                    c
+                    
+                    char::from_u32(num).unwrap_or(char::REPLACEMENT_CHARACTER)
                 }
                 ESCAPE_U => {
                     let num = u32::from_str_radix(&token.lexeme[2..], 16).unwrap();
@@ -86,57 +86,97 @@ impl WordParser {
 
         let mut i = 0;
         let len = chars.len();
+        span.tie_start();
+
+        macro_rules! check_nl {
+            () => {
+                if chars[i] == '\n' {
+                    span += (1, 0);
+                }
+            };
+        }
+
         loop {
             if i >= len {
                 break;
             }
 
+            check_nl!();
             let c = chars[i];
+
             if c == '\x1B' && chars[i + 1] == '[' {
                 i += 2;
+                span += (0, 2);
                 // Handle escape
                 let j = i;
 
                 if !matches!(chars[i], '\x30'..='\x39' | '\x3B' | '\x40'..='\x7E') {
                     while i < len && chars[i] != '\x1B' {
+                        check_nl!();
                         i += 1;
+                        span += (0, 1);
                     }
                     let word = chars[j..i].to_string();
-                    chunks.push(Chunk::Word(word));
+                    chunks.push(Chunk {
+                        data: ChunkData::Word(word),
+                        span,
+                    });
+                    span.tie_end();
                     break;
                 }
 
                 while i < len && !matches!(chars[i], '\x40'..='\x7E') {
+                    check_nl!();
                     i += 1;
+                    span += (0, 1);
                 }
 
                 if chars[i] == 'm' {
                     // Handle escape sequence
                     let escape_sequence = chars[j..i].to_string();
+                    eprintln!("{:?}", escape_sequence);
 
                     if let Ok(tag) = self.ansi_to_tag(escape_sequence) {
-                        chunks.push(Chunk::new_tag(tag));
+                        chunks.push(Chunk {
+                            data: ChunkData::Tag(tag),
+                            span,
+                        });
+                        span.tie_end();
                     }
                 } else {
                     while i < len && chars[i] != '\x1B' {
+                        check_nl!();
                         i += 1;
+                        span += (0, 1);
                     }
                     let word = chars[j..i].to_string();
-                    chunks.push(Chunk::Word(word));
+                    chunks.push(Chunk {
+                        data: ChunkData::Word(word),
+                        span,
+                    });
+                    span.tie_end();
                 }
                 i += 1;
+                span += (0, 1);
 
                 continue;
             } else {
                 let j = i;
                 while i < len && chars[i] != '\x1B' {
+                    check_nl!();
                     i += 1;
+                    span += (0, 1);
                 }
                 let word = chars[j..i].to_string();
-                chunks.push(Chunk::Word(word));
+                chunks.push(Chunk {
+                    data: ChunkData::Word(word),
+                    span,
+                });
+                span.tie_end();
             }
             // Handle normal character
             i += 1;
+            span += (0, 1);
         }
 
         Ok(chunks)
@@ -147,13 +187,18 @@ impl WordParser {
         // This is a placeholder implementation
         let mut parts = ansi
             .split(';')
-            .map(|x| x.parse::<i32>().map_err(|_| 0))
+            .map(|x| {
+                if x.is_empty() {
+                    Ok(0)
+                } else {
+                    x.parse::<i32>().map_err(|_| 0)
+                }
+            })
             .collect::<VecDeque<_>>();
 
         let mut next = || parts.pop_front().unwrap_or(Err(-1));
 
         let mut tag = Tag::default();
-        tag.set_name("$ansi".to_string());
         loop {
             let num = next();
 
@@ -257,6 +302,9 @@ impl WordParser {
                 _ => {}
             }
         }
+
+        tag.set_custom(ansi);
+        tag.set_name("$ansi".to_string());
 
         Ok(tag)
     }

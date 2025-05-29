@@ -1,6 +1,6 @@
 use crate::error::Result;
 use crate::splitter::fragment::{Fragment, FragmentType};
-use chunk::Chunk;
+use chunk::{Chunk, ChunkData};
 use word_parer::WordParser;
 
 pub mod chunk;
@@ -26,20 +26,28 @@ impl Parser {
         let word_parer = WordParser::new();
         let mut chunks = vec![];
         for frag in frags {
+            let span = frag.span;
             match frag.r#type {
                 FragmentType::Error => {
                     // Handle error fragments
-                    eprintln!("Error fragment encountered: {:?}", frag);
+                    eprintln!("Error fragment encountered: {:?}", frag); // TODO: return Err(...)
                 }
+
                 FragmentType::Tag => {
-                    let tag = tag_parser.parse(frag)?;
-                    chunks.push(Chunk::new_tag(tag));
+                    chunks.push(Chunk {
+                        data: ChunkData::Tag(tag_parser.parse(frag)?),
+                        span,
+                    });
                 }
+
                 FragmentType::Whitespace => {
                     // Handle whitespace fragments
-                    let chunk = Chunk::new_ws(frag.lexeme);
-                    chunks.push(chunk);
+                    chunks.push(Chunk {
+                        data: ChunkData::WhiteSpace(frag.lexeme),
+                        span,
+                    });
                 }
+
                 FragmentType::Word => {
                     // Handle word fragments
                     let chs = word_parer.parse(frag)?;

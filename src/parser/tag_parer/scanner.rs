@@ -3,6 +3,7 @@ use super::token::{
     TokenType::{self, *},
 };
 use crate::{
+    common::Span,
     scanner::{is_alpha, is_alpha_numeric, GenericScanner, Source},
     splitter::fragment::Fragment,
 };
@@ -12,17 +13,19 @@ pub struct Scanner {
     tokens: Vec<Token>,
     start: usize,
     current: usize,
-    line: usize,
+    span: Span,
 }
 
 impl Scanner {
-    pub fn new(source: Fragment) -> Self {
+    pub fn new(mut source: Fragment) -> Self {
+        source.span.tie_start();
+
         Self {
             source: source.lexeme.chars().collect(),
             tokens: vec![],
             start: 0,
             current: 0,
-            line: source.line,
+            span: source.span,
         }
     }
 
@@ -37,7 +40,7 @@ impl Scanner {
     fn string(&mut self, c: char) {
         while self.peek() != c && !self.is_at_end() {
             if self.peek() == '\n' {
-                self.line += 1;
+                self.span += (1, 0);
             }
             self.advance();
         }
@@ -73,7 +76,7 @@ impl Scanner {
     fn add_token2(&mut self, r#type: TokenType, literal: Option<String>) {
         let text = self.source[self.start..self.current].to_string();
         self.tokens
-            .push(Token::new(r#type, text, literal, self.line));
+            .push(Token::new(r#type, text, literal, self.span));
     }
 }
 
@@ -100,7 +103,7 @@ impl_generic_scanner!(|s: &mut Scanner| {
         '<' => match_add!('/', LESS_SLASH, LESS),
         ' ' | '\r' | '\t' => {}
         '\n' => {
-            s.line += 1;
+            s.span += (1, 0);
         }
         '"' => s.string('"'),
         '\'' => s.string('\''),

@@ -44,7 +44,8 @@ macro_rules! assign_prop_color {
         if $token.r#type == EQUAL {
             $token = $next()?;
             expect(&$token, STRING, ErrorType::InvalidTagPropertyValue)?;
-            let color: Color = format!("{}{}", $pre, $token.literal.unwrap()).try_into()?;
+            let color: Color =
+                (format!("{}{}", $pre, $token.literal.unwrap()), $token.span).try_into()?;
             $tag.$set_prop(color.into());
             $token = $next()?;
         }
@@ -90,12 +91,11 @@ impl TagParser {
                 return Err(Error::new(
                     ErrorType::InvalidTag,
                     format!("Invalid tag: {:?} {:?}", open, close),
-                    tokens[0].line,
-                    0, // TODO: column
+                    tokens[0].span,
                 ));
             }
         };
-        let line = tokens[0].line;
+        let span = tokens[0].span;
         let mut tokens: VecDeque<_> = tokens[1..tokens.len()].to_vec().into();
 
         let mut next = || {
@@ -103,8 +103,7 @@ impl TagParser {
                 return Err(Error::new(
                     ErrorType::InvalidTag,
                     "Unexpected end of input".to_string(),
-                    line, // TODO: line
-                    0,    // TODO: column
+                    span,
                 ));
             }
 
@@ -163,18 +162,22 @@ impl TagParser {
                     assign_prop_switch!(tag, set_double_under, next, token)
                 }
 
-                "c" | "fg" => assign_prop_color!(tag, set_fg_color, next, token, "fg_"),
+                "c" | "fg" => assign_prop_color!(tag, set_fg_color, next, token, "f"),
 
-                "x" | "bg" => assign_prop_color!(tag, set_bg_color, next, token, "bg_"),
+                "x" | "bg" => assign_prop_color!(tag, set_bg_color, next, token, "b"),
 
                 "black" | "blue" | "cyan" | "default" | "green" | "magenta" | "red" | "white"
                 | "yellow" => {
+                    let color = |pre: &str| -> Result<_, _> {
+                        let c: Color =
+                            (format!("{pre}{}", token.lexeme), token.span - (0, 1)).try_into()?;
+                        Ok(c.into())
+                    };
+
                     if tag.name() == "c" {
-                        let color: Color = format!("fg_{}", token.lexeme).try_into()?;
-                        tag.set_fg_color(color.into());
+                        tag.set_fg_color(color("f")?);
                     } else if tag.name() == "x" {
-                        let color: Color = format!("bg_{}", token.lexeme).try_into()?;
-                        tag.set_bg_color(color.into());
+                        tag.set_bg_color(color("b")?);
                     }
 
                     consume_declaration!(tag, next, token);
@@ -187,14 +190,19 @@ impl TagParser {
                         token = next()?;
                     }
 
-                    let color = format!("byte({})", token.literal.unwrap());
+                    let color = |pre: &str| -> Result<_, _> {
+                        let c: Color = (
+                            format!("{pre}byte({})", token.literal.unwrap()),
+                            token.span.unquote() - (0, 6),
+                        )
+                            .try_into()?;
+                        Ok(c.into())
+                    };
 
                     if tag.name() == "c" {
-                        let color: Color = format!("fg_{color}").try_into()?;
-                        tag.set_fg_color(color.into());
+                        tag.set_fg_color(color("f")?);
                     } else if tag.name() == "x" {
-                        let color: Color = format!("bg_{color}").try_into()?;
-                        tag.set_bg_color(color.into());
+                        tag.set_bg_color(color("b")?);
                     }
                 }
                 "rgb" => {
@@ -205,14 +213,19 @@ impl TagParser {
                         token = next()?;
                     }
 
-                    let color = format!("rgb({})", token.literal.unwrap());
+                    let color = |pre: &str| -> Result<_, _> {
+                        let c: Color = (
+                            format!("{pre}rgb({})", token.literal.unwrap()),
+                            token.span.unquote() - (0, 5),
+                        )
+                            .try_into()?;
+                        Ok(c.into())
+                    };
 
                     if tag.name() == "c" {
-                        let color: Color = format!("fg_{color}").try_into()?;
-                        tag.set_fg_color(color.into());
+                        tag.set_fg_color(color("f")?);
                     } else if tag.name() == "x" {
-                        let color: Color = format!("bg_{color}").try_into()?;
-                        tag.set_bg_color(color.into());
+                        tag.set_bg_color(color("b")?);
                     }
                 }
                 "n" => {
@@ -255,8 +268,7 @@ impl TagParser {
                         return Err(Error::new(
                             ErrorType::InvalidTag,
                             format!("Mismatched tag: {:?} {:?}", last.name(), tag.name()),
-                            token.line,
-                            0, // TODO: column
+                            token.span,
                         ));
                     }
                 }
@@ -274,8 +286,7 @@ fn expect(token: &Token, expected: token::TokenType, error: ErrorType) -> Result
         Err(Error::new(
             error,
             format!("Expected {:?}, but found {:?}", expected, token.r#type),
-            token.line,
-            0, // TODO: column
+            token.span,
         ))
     }
 }

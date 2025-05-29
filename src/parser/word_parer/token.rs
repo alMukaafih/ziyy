@@ -1,3 +1,5 @@
+use crate::common::Span;
+
 #[allow(non_camel_case_types)]
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Default)]
@@ -26,15 +28,15 @@ pub enum TokenType {
 pub struct Token {
     pub r#type: TokenType,
     pub lexeme: String,
-    pub line: usize,
+    pub span: Span,
 }
 
 impl Token {
-    pub fn new(r#type: TokenType, lexeme: String, line: usize) -> Self {
+    pub fn new(r#type: TokenType, lexeme: String, span: Span) -> Self {
         Token {
             r#type,
             lexeme,
-            line,
+            span,
         }
     }
 }

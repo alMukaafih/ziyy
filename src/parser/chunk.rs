@@ -1,15 +1,20 @@
-use std::fmt::Display;
+use std::{
+    fmt::Display,
+    ops::{Deref, DerefMut},
+};
+
+use crate::common::Span;
 
 use super::tag_parer::tag::Tag;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum Chunk {
+pub enum ChunkData {
     Tag(Tag),
     WhiteSpace(String),
     Word(String),
 }
 
-impl Chunk {
+impl ChunkData {
     pub fn new_tag(tag: Tag) -> Self {
         Self::Tag(tag)
     }
@@ -23,7 +28,7 @@ impl Chunk {
     }
 
     pub fn is_tag(&self) -> bool {
-        matches!(self, Chunk::Tag(_))
+        matches!(self, ChunkData::Tag(_))
     }
 
     pub fn is_tag_and<F>(&self, f: F) -> bool
@@ -31,22 +36,22 @@ impl Chunk {
         F: FnOnce(&Tag) -> bool,
     {
         match self {
-            Chunk::Tag(tag) => f(tag),
-            Chunk::WhiteSpace(_) => false,
-            Chunk::Word(_) => false,
+            ChunkData::Tag(tag) => f(tag),
+            ChunkData::WhiteSpace(_) => false,
+            ChunkData::Word(_) => false,
         }
     }
 
     pub fn is_word(&self) -> bool {
-        matches!(self, Chunk::Word(_))
+        matches!(self, ChunkData::Word(_))
     }
 
     pub fn is_ws(&self) -> bool {
-        matches!(self, Chunk::WhiteSpace(_))
+        matches!(self, ChunkData::WhiteSpace(_))
     }
 
     pub fn tag(&self) -> Option<&Tag> {
-        if let Chunk::Tag(tag) = self {
+        if let ChunkData::Tag(tag) = self {
             Some(tag)
         } else {
             None
@@ -54,7 +59,7 @@ impl Chunk {
     }
 
     pub fn word(&self) -> Option<&String> {
-        if let Chunk::Word(word) = self {
+        if let ChunkData::Word(word) = self {
             Some(word)
         } else {
             None
@@ -62,7 +67,7 @@ impl Chunk {
     }
 
     pub fn ws(&self) -> Option<&String> {
-        if let Chunk::WhiteSpace(ws) = self {
+        if let ChunkData::WhiteSpace(ws) = self {
             Some(ws)
         } else {
             None
@@ -70,7 +75,7 @@ impl Chunk {
     }
 
     pub fn tag_mut(&mut self) -> Option<&mut Tag> {
-        if let Chunk::Tag(tag) = self {
+        if let ChunkData::Tag(tag) = self {
             Some(tag)
         } else {
             None
@@ -78,20 +83,40 @@ impl Chunk {
     }
 }
 
-impl Display for Chunk {
+impl Display for ChunkData {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if f.alternate() {
             match self {
-                Chunk::Tag(tag) => f.write_fmt(format_args!("{tag:#}")),
-                Chunk::WhiteSpace(ws) => f.write_fmt(format_args!("{ws:?}")),
-                Chunk::Word(word) => word.fmt(f),
+                ChunkData::Tag(tag) => f.write_fmt(format_args!("{tag:#}")),
+                ChunkData::WhiteSpace(ws) => f.write_fmt(format_args!("{ws:?}")),
+                ChunkData::Word(word) => word.fmt(f),
             }
         } else {
             match self {
-                Chunk::Tag(tag) => tag.fmt(f),
-                Chunk::WhiteSpace(ws) => ws.fmt(f),
-                Chunk::Word(word) => word.fmt(f),
+                ChunkData::Tag(tag) => tag.fmt(f),
+                ChunkData::WhiteSpace(ws) => ws.fmt(f),
+                ChunkData::Word(word) => word.fmt(f),
             }
         }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Chunk {
+    pub data: ChunkData,
+    pub span: Span,
+}
+
+impl Deref for Chunk {
+    type Target = ChunkData;
+
+    fn deref(&self) -> &Self::Target {
+        &self.data
+    }
+}
+
+impl DerefMut for Chunk {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.data
     }
 }

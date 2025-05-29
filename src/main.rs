@@ -18,7 +18,7 @@ fn main() {
         <p tab="10">Print version info and exit</p>
         <p tab="2" src="cyan" b>-h<e>,</e> --help</p>
         <p tab="10">Print help</p>
-        <br /> [1;3;48;2;150;75;0mHello World! \x1b[1m
+        <br /> [1;3;48;2;150;75;0mHello World! \x1b[m
     </ziyy>"#;
     let source = indexer.index(source.to_string());
     println!("{:?}", source);

@@ -1,5 +1,6 @@
 use super::token::Token;
 use super::token::TokenType::{self, *};
+use crate::common::Span;
 use crate::scanner::{GenericScanner, Source};
 use crate::splitter::fragment::Fragment;
 
@@ -8,17 +9,19 @@ pub struct Scanner {
     tokens: Vec<Token>,
     start: usize,
     current: usize,
-    line: usize,
+    span: Span,
 }
 
 impl Scanner {
-    pub fn new(source: Fragment) -> Self {
+    pub fn new(mut source: Fragment) -> Self {
+        source.span.tie_start();
+
         Self {
             source: source.lexeme.chars().collect(),
             tokens: vec![],
             start: 0,
             current: 0,
-            line: source.line,
+            span: source.span,
         }
     }
 
@@ -92,7 +95,7 @@ impl Scanner {
 
     fn add_token(&mut self, r#type: TokenType) {
         let text = self.source[self.start..self.current].to_string();
-        self.tokens.push(Token::new(r#type, text, self.line));
+        self.tokens.push(Token::new(r#type, text, self.span));
     }
 }
 

@@ -1,8 +1,11 @@
 use std::{collections::HashMap, rc::Rc};
 
-use crate::parser::{
-    chunk::Chunk,
-    tag_parer::tag::{Tag, TagType},
+use crate::{
+    common::Span,
+    parser::{
+        chunk::{Chunk, ChunkData},
+        tag_parer::tag::{Tag, TagType},
+    },
 };
 use document::{Document, Node};
 
@@ -34,8 +37,8 @@ impl Resolver {
         let mut node = tree.root();
 
         for chunk in chunks.iter() {
-            match chunk {
-                chunk @ Chunk::Tag(tag) => match tag.r#type {
+            match &chunk.data {
+                ChunkData::Tag(tag) => match tag.r#type {
                     TagType::Open => {
                         node = node.append(chunk.clone());
                     }
@@ -49,11 +52,11 @@ impl Resolver {
                         node.append(chunk.clone());
                     }
                 },
-                ws @ Chunk::WhiteSpace(_) => {
-                    node.append(ws.clone());
+                ChunkData::WhiteSpace(_) => {
+                    node.append(chunk.clone());
                 }
-                word @ Chunk::Word(_) => {
-                    node.append(word.clone());
+                ChunkData::Word(_) => {
+                    node.append(chunk.clone());
                 }
             }
         }
@@ -107,9 +110,9 @@ impl Resolver {
                 } else if child.id() as usize == child.doc().len() - 1
                     && child_chunk.ws().is_some_and(|s| s.contains("\n"))
                 {
-                    *child_chunk = Chunk::WhiteSpace("\n".to_string());
+                    child_chunk.data = ChunkData::WhiteSpace("\n".to_string());
                 } else {
-                    *child_chunk = Chunk::WhiteSpace(" ".to_string());
+                    child_chunk.data = ChunkData::WhiteSpace(" ".to_string());
                 }
 
                 if let Some(first) = child.next_sibling().and_then(|next| next.first_child()) {
@@ -172,7 +175,10 @@ impl Resolver {
                                 .is_some_and(|first| first.id() == child.id())
                         {
                         } else {
-                            child.insert_before(Chunk::WhiteSpace("\n".to_string()));
+                            child.insert_before(Chunk {
+                                data: ChunkData::WhiteSpace("\n".to_string()),
+                                span: Span::null(),
+                            });
                         }
                     }
 

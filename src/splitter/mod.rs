@@ -3,6 +3,8 @@ use std::mem::take;
 use fragment::Fragment;
 use fragment::FragmentType::{self, *};
 
+use crate::common::Span;
+
 pub mod fragment;
 
 pub struct Splitter {
@@ -10,7 +12,7 @@ pub struct Splitter {
     fragments: Vec<Fragment>,
     start: usize,
     current: usize,
-    line: usize,
+    span: Span,
 }
 
 impl Default for Splitter {
@@ -32,7 +34,7 @@ impl Splitter {
             fragments: vec![],
             start: 0,
             current: 0,
-            line: 1,
+            span: Span::default(),
         }
     }
 
@@ -166,16 +168,18 @@ impl Splitter {
 
     fn advance(&mut self) -> char {
         self.current += 1;
+        self.span += (0, 1);
         let ch = self.source[self.current - 1];
         if ch == '\n' {
-            self.line += 1;
+            self.span += (1, 0);
         }
         ch
     }
 
     fn add_fragment(&mut self, r#type: FragmentType) {
         let text = self.source[self.start..self.current].to_string();
-        self.fragments.push(Fragment::new(r#type, text, self.line));
+        self.fragments.push(Fragment::new(r#type, text, self.span));
+        self.span.tie_end();
     }
 }
 

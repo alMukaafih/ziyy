@@ -4,9 +4,12 @@ use std::{
     rc::Rc,
 };
 
-use crate::parser::{
-    chunk::Chunk,
-    tag_parer::tag::{Tag, TagType},
+use crate::{
+    common::Span,
+    parser::{
+        chunk::{Chunk, ChunkData},
+        tag_parer::tag::{Tag, TagType},
+    },
 };
 pub use node::Node;
 
@@ -31,7 +34,10 @@ impl Document {
 
         let node = Rc::new(Node::new(
             0,
-            Chunk::Tag(tag),
+            Chunk {
+                data: ChunkData::Tag(tag),
+                span: Span::null(),
+            },
             Rc::downgrade(&Rc::clone(&doc)),
         ));
 
@@ -122,11 +128,11 @@ impl Display for Document {
             match edge {
                 Edge::Open(node) if node.has_children() => {
                     indent.indent(node.next_sibling().is_some());
-                    writeln!(f, "{indent}{:#}", node.chunk().borrow())?;
+                    writeln!(f, "{indent}{:#}", node.chunk().borrow().data)?;
                 }
                 Edge::Open(node) => {
                     indent.indent(node.next_sibling().is_some());
-                    writeln!(f, "{indent}{:#}", node.chunk().borrow())?;
+                    writeln!(f, "{indent}{:#}", node.chunk().borrow().data)?;
                     indent.deindent();
                 }
                 Edge::Close(node) if node.has_children() => {

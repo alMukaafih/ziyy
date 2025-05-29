@@ -1,3 +1,5 @@
+use crate::common::Span;
+
 #[allow(non_camel_case_types)]
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -40,16 +42,16 @@ pub struct Token {
     pub r#type: TokenType,
     pub lexeme: String,
     pub literal: Option<u8>,
-    pub line: usize,
+    pub span: Span,
 }
 
 impl Token {
-    pub fn new(r#type: TokenType, lexeme: String, literal: Option<u8>, line: usize) -> Self {
+    pub fn new(r#type: TokenType, lexeme: String, literal: Option<u8>, span: Span) -> Self {
         Token {
             r#type,
             literal,
             lexeme,
-            line,
+            span,
         }
     }
 }

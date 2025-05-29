@@ -1,3 +1,5 @@
+use crate::common::Span;
+
 #[derive(Debug, Clone)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum FragmentType {
@@ -11,15 +13,15 @@ pub enum FragmentType {
 pub struct Fragment {
     pub r#type: FragmentType,
     pub lexeme: String,
-    pub line: usize,
+    pub span: Span,
 }
 
 impl Fragment {
-    pub fn new(r#type: FragmentType, lexeme: String, line: usize) -> Self {
+    pub fn new(r#type: FragmentType, lexeme: String, span: Span) -> Self {
         Fragment {
             r#type,
             lexeme,
-            line,
+            span,
         }
     }
 }

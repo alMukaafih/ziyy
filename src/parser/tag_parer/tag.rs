@@ -162,6 +162,10 @@ impl Display for Tag {
                 };
             }
 
+            if self.name() == "$ansi" {
+                return f.write_fmt(format_args!("$ansi: \"\\u{{1b}}[{}m\"", self.custom()));
+            }
+
             match self.r#type {
                 TagType::Open | TagType::SelfClose => f.write_str("<"),
                 TagType::Close => f.write_str("</"),

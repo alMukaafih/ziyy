@@ -1,3 +1,4 @@
+use crate::common::Span;
 use crate::error::{Error, ErrorType};
 use crate::scanner::GenericScanner;
 pub use number::Number;
@@ -20,8 +21,7 @@ macro_rules! number {
                 return Err(Error::new(
                     ErrorType::InvalidNumber,
                     format!("{:?} is not a valid number", $token.lexeme),
-                    $token.line,
-                    0, // TODO: column
+                    $token.span,
                 ));
             }
         }
@@ -82,8 +82,7 @@ impl Color {
                 return Err(Error::new(
                     ErrorType::InvalidNumber,
                     format!("{:?} is not a valid number", token.lexeme),
-                    token.line,
-                    0, // TODO: column
+                    token.span,
                 ));
             }
         }
@@ -113,14 +112,14 @@ impl Color {
     }
 }
 
-impl TryFrom<String> for Color {
+impl TryFrom<(String, Span)> for Color {
     type Error = crate::error::Error;
 
-    fn try_from(source: String) -> Result<Self, Self::Error> {
-        if source.is_empty() {
-            return Ok(Color(source));
+    fn try_from(source: (String, Span)) -> Result<Self, Self::Error> {
+        if source.0.is_empty() {
+            return Ok(Color(source.0));
         }
-        let mut scanner = Scanner::new(source);
+        let mut scanner = Scanner::new(source.0, source.1);
         let mut tokens: VecDeque<_> = scanner.scan_tokens().into();
         //println!("{:?}", tokens);
         //let line = tokens[0].line;
@@ -129,8 +128,7 @@ impl TryFrom<String> for Color {
                 return Err(Error::new(
                     ErrorType::UnexpectedEof,
                     "Unexpected end of input".to_string(),
-                    0, // TODO: line
-                    0, // TODO: column
+                    Span::default(), // TODO: sapn
                 ));
             }
 
@@ -167,8 +165,7 @@ impl TryFrom<String> for Color {
                 return Err(Error::new(
                     ErrorType::InvalidColor,
                     format!("{:?} is not a valid color", token.lexeme),
-                    token.line,
-                    0, // TODO: column
+                    token.span,
                 ));
             }
         };
@@ -196,8 +193,7 @@ fn expect(token: &Token, expected: token::TokenType, error: ErrorType) -> Result
         Err(Error::new(
             error,
             format!("Expected {:?}, but found {:?}", expected, token.r#type),
-            token.line,
-            0, // TODO: column
+            token.span,
         ))
     }
 }

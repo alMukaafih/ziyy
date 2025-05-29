@@ -313,14 +313,14 @@ impl Node {
     pub fn to_string(self: &Rc<Node>, buf: &mut String) {
         if self.has_children() {
             let tag_chunk = self.chunk.borrow();
-            let tag = tag_chunk.tag().unwrap();
+            let tag = tag_chunk.data.tag().unwrap();
             buf.push_str(tag.to_string().as_str());
             for child in self.children() {
                 child.to_string(buf);
             }
             //buf.push_str((!tag.clone()).to_string().as_str());
         } else {
-            buf.push_str(self.chunk.borrow().to_string().as_str());
+            buf.push_str(self.chunk.borrow().data.to_string().as_str());
         }
     }
 }

@@ -1,5 +1,7 @@
 pub use source::Source;
 
+use crate::common::Span;
+
 mod source;
 
 pub fn is_alpha(c: char) -> bool {
@@ -18,14 +20,14 @@ pub fn is_hexdigit(c: char) -> bool {
     c.is_ascii_hexdigit()
 }
 
-pub trait GenericScanner<T, U> {
+pub trait GenericScanner<T: PartialEq, U> {
     fn source(&self) -> &impl Source<T>;
     fn tokens(&mut self) -> &mut Vec<U>;
     fn start(&self) -> usize;
     fn set_start(&mut self, n: usize);
     fn current(&self) -> usize;
     fn set_current(&mut self, n: usize);
-    //fn line(&self) -> &mut usize;
+    fn span(&mut self) -> &mut Span;
     fn scan_token(&mut self);
 
     fn scan_tokens<'a>(&'a mut self) -> Vec<U>
@@ -70,7 +72,12 @@ pub trait GenericScanner<T, U> {
 
     fn advance(&mut self) -> T {
         self.set_current(self.current() + 1);
-        self.source().at(self.current() - 1)
+        *self.span() += (0, 1);
+        let ch = self.source().at(self.current() - 1);
+        if ch == self.source().nl() {
+            *self.span() += (1, 0);
+        }
+        ch
     }
 }
 
@@ -99,6 +106,10 @@ macro_rules! impl_generic_scanner {
 
             fn set_current(&mut self, n: usize) {
                 self.current = n;
+            }
+
+            fn span(&mut self) -> &mut Span {
+                &mut self.span
             }
 
             fn scan_token(&mut self) {
