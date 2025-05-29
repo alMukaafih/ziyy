@@ -1,4 +1,4 @@
-use ziyy::{indexer::Indexer, parser::Parser, resolver::Resolver, splitter::Splitter};
+use ziyy_core::{Indexer, Parser, Resolver, Splitter};
 
 fn main() {
     let mut indexer = Indexer::new();
