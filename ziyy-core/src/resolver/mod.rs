@@ -1,6 +1,7 @@
 use std::{collections::HashMap, rc::Rc};
 
 use crate::{
+    BUILTIN_TAGS,
     common::Span,
     parser::{
         chunk::{Chunk, ChunkData},
@@ -10,10 +11,6 @@ use crate::{
 use document::{Document, Node};
 
 pub mod document;
-
-static BUILTIN_TAGS: &[&str] = &[
-    "a", "b", "br", "d", "h", "i", "k", "p", "r", "s", "u", "ziyy",
-];
 
 pub struct Resolver {
     bindings: HashMap<String, Tag>,
@@ -85,14 +82,25 @@ impl Resolver {
         for child in node.children() {
             let child_chunk = child.chunk().borrow();
             if child_chunk.is_tag() {
-                let name = child_chunk.tag().unwrap().name();
+                let tag = child_chunk.tag().unwrap();
+                let name = tag.name();
                 if name == "let" {
-                    let name = child_chunk.tag().unwrap().custom();
+                    let mut tag = tag.clone();
+                    if !tag.src().is_empty() {
+                        for ansector in child.ancestors() {
+                            if let Some(binding) =
+                                self.bindings
+                                    .get(&format!("{}/{}", ansector.id(), tag.src()))
+                            {
+                                tag.inherit(binding);
+                                break;
+                            }
+                        }
+                    }
+
+                    let name = tag.custom();
                     let id = node.id();
-                    self.bindings.insert(
-                        format!("{id}/{name}"),
-                        child.chunk().borrow().tag().unwrap().clone(),
-                    );
+                    self.bindings.insert(format!("{id}/{name}"), tag);
                     detachables.push(child.clone());
                 }
             }
@@ -136,7 +144,7 @@ impl Resolver {
                 }
             } else if child_chunk.is_tag() {
                 let name = child_chunk.tag().unwrap().name();
-                if matches!(name.as_str(), "p" | "ziyy" | "$root") {
+                if matches!(name.as_str(), "p" | "ziyy" | "$root" | "div") {
                     if let Some(first) = child.first_child() {
                         if first.chunk().borrow().is_ws() {
                             detachables.push(first);
@@ -168,8 +176,8 @@ impl Resolver {
                 let tag = child_chunk.tag_mut().unwrap();
                 if tag.r#type == TagType::Open {
                     let name = tag.name();
-                    if name == "p" {
-                        if matches!(node_name, "ziyy" | "$root" | "p")
+                    if matches!(name.as_str(), "ziyy" | "p" | "div") {
+                        if matches!(node_name, "ziyy" | "$root" | "p" | "div")
                             && node
                                 .first_child()
                                 .is_some_and(|first| first.id() == child.id())
@@ -179,6 +187,10 @@ impl Resolver {
                                 data: ChunkData::WhiteSpace("\n".to_string()),
                                 span: Span::null(),
                             });
+                        }
+                    } else if name == "a" {
+                        for grand_child in child.children() {
+                            grand_child.null_tags();
                         }
                     }
 
@@ -206,7 +218,15 @@ impl Resolver {
                     }
 
                     let last = child.last_child().unwrap();
-                    *last.chunk().borrow_mut().tag_mut().unwrap() = !tag.clone();
+                    let mut last_chunk = last.chunk().borrow_mut();
+                    if last_chunk.is_tag_and(|tag| tag.r#type == TagType::Close) {
+                        *last_chunk.tag_mut().unwrap() = !tag.clone();
+                    } else {
+                        last.insert_after(Chunk {
+                            data: ChunkData::Tag(!tag.clone()),
+                            span: Span::null(),
+                        });
+                    }
                 }
 
                 self._resolve(&child, tag.name());

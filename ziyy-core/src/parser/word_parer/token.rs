@@ -28,6 +28,7 @@ pub enum TokenType {
 pub struct Token {
     pub r#type: TokenType,
     pub lexeme: String,
+    #[allow(dead_code)]
     pub span: Span,
 }
 

@@ -23,7 +23,6 @@ pub fn is_hexdigit(c: char) -> bool {
 pub trait GenericScanner<T: PartialEq, U> {
     fn source(&self) -> &impl Source<T>;
     fn tokens(&mut self) -> &mut Vec<U>;
-    fn start(&self) -> usize;
     fn set_start(&mut self, n: usize);
     fn current(&self) -> usize;
     fn set_current(&mut self, n: usize);
@@ -58,14 +57,6 @@ pub trait GenericScanner<T: PartialEq, U> {
         }
     }
 
-    fn peek_n(&self, n: usize) -> T {
-        if self.current() + n > self.source().len() {
-            self.source().null()
-        } else {
-            self.source().at(self.current() + n)
-        }
-    }
-
     fn is_at_end(&self) -> bool {
         self.current() >= self.source().len()
     }
@@ -90,10 +81,6 @@ macro_rules! impl_generic_scanner {
 
             fn tokens(&mut self) -> &mut Vec<Token> {
                 &mut self.tokens
-            }
-
-            fn start(&self) -> usize {
-                self.start
             }
 
             fn set_start(&mut self, n: usize) {

@@ -1,4 +1,7 @@
-use std::ops::{Add, AddAssign, Sub};
+use std::{
+    fmt::Display,
+    ops::{Add, AddAssign, Sub},
+};
 
 use super::Position;
 
@@ -34,26 +37,40 @@ impl Span {
     }
 }
 
-impl Add<(u32, u32)> for Span {
+impl Add<(usize, usize)> for Span {
     type Output = Span;
 
-    fn add(mut self, rhs: (u32, u32)) -> Self::Output {
+    fn add(mut self, rhs: (usize, usize)) -> Self::Output {
         self.end += rhs;
         self
     }
 }
 
-impl AddAssign<(u32, u32)> for Span {
-    fn add_assign(&mut self, rhs: (u32, u32)) {
+impl AddAssign<(usize, usize)> for Span {
+    fn add_assign(&mut self, rhs: (usize, usize)) {
         self.end += rhs;
     }
 }
 
-impl Sub<(u32, u32)> for Span {
+impl Sub<(usize, usize)> for Span {
     type Output = Span;
 
-    fn sub(mut self, rhs: (u32, u32)) -> Self::Output {
+    fn sub(mut self, rhs: (usize, usize)) -> Self::Output {
         self.start -= rhs;
         self
+    }
+}
+
+impl Display for Span {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if f.alternate() {
+            f.write_fmt(format_args!("{:#}..{:#}", self.start, self.end))
+        } else {
+            if *self == Span::null() {
+                f.write_str("null")
+            } else {
+                self.start.fmt(f)
+            }
+        }
     }
 }

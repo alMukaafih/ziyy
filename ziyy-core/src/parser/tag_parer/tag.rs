@@ -30,6 +30,12 @@ impl Default for Tag {
 }
 
 impl Tag {
+    pub fn with_name(name: &str) -> Self {
+        let mut tag = Tag::default();
+        tag.set_name(name.to_string());
+        tag
+    }
+
     pub fn inherit(&mut self, src: &Tag) {
         macro_rules! inherit_prop {
             (1, $f:tt, $g:tt ) => {
@@ -72,11 +78,7 @@ macro_rules! set_style {
 macro_rules! get_style {
     ( $style:expr, $offset:expr ) => {{
         let n = ($style >> (Tag::L - $offset)) & 1;
-        if n == 1 {
-            true
-        } else {
-            false
-        }
+        if n == 1 { true } else { false }
     }};
 }
 
@@ -202,7 +204,7 @@ impl Display for Tag {
             ));
         }
 
-        let mut buf = vec![];
+        let mut buf = Vec::with_capacity(128);
         let _ = buf.write(b"\x1b[");
         macro_rules! write_prop {
             ( $f:tt, $g:tt, $on:expr, $off:expr ) => {
@@ -243,7 +245,21 @@ impl Display for Tag {
         buf.push(b'm');
 
         if buf.len() == 3 {
-            return Ok(());
+            buf.clear();
+        }
+
+        if self.name() == "a" {
+            match self.r#type {
+                TagType::Open => {
+                    let _ = buf.write(b"\x1b]8;;");
+                    let _ = buf.write(self.custom().as_bytes());
+                    let _ = buf.write(b"\x1b\\");
+                }
+                TagType::Close => {
+                    let _ = buf.write(b"\x1b]8;;\x1b\\");
+                }
+                TagType::SelfClose => {}
+            }
         }
 
         for ch in buf {

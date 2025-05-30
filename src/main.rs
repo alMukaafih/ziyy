@@ -4,10 +4,45 @@ use std::fs::File;
 use std::io::{stdout, BufReader, Read, Write};
 use std::path::Path;
 use std::process::exit;
-use ziyy::style_fmt;
+use std::sync::LazyLock;
+use ziyy::style;
 use ziyy_core::{Indexer, Parser, Resolver, Splitter};
 
 mod arg;
+
+static HELP: LazyLock<String> = LazyLock::new(|| {
+    style(format!(
+        r#"<ziyy>
+            <let name="bold:green" c="green" b />
+            <let name="cyan" c="cyan" />
+
+            <div>
+                <p>{}</p>
+                <br />
+                <p>
+                    <span src="bold:green">Usage:</span>
+                    <cyan>
+                        <b>{}</b>
+                        <i>[OPTION]</i>
+                        \<FILE\>
+                    </cyan>
+                </p>
+            </div>
+            <br />
+
+            <div>
+                <p src="bold:green">Options:</p>
+                <p tab="2" src="cyan" b>-V, --version</p>
+                <p tab="10">Print version info and exit</p>
+                <p tab="2" src="cyan" b>-h, --help</p>
+                <p tab="10">Print help</p>
+            </div>
+            <br />
+        </ziyy>"#,
+        env!("CARGO_PKG_DESCRIPTION"),
+        env!("CARGO_BIN_NAME")
+    ))
+});
 
 pub fn parse(source: &str, out: &mut impl Write) -> ziyy::Result<()> {
     let mut indexer = Indexer::new();
@@ -23,6 +58,7 @@ pub fn parse(source: &str, out: &mut impl Write) -> ziyy::Result<()> {
 
     let mut buf = String::new();
     output.root().to_string(&mut buf);
+    eprintln!("{output}");
 
     let _ = out.write(buf.as_bytes());
     Ok(())
@@ -30,30 +66,7 @@ pub fn parse(source: &str, out: &mut impl Write) -> ziyy::Result<()> {
 
 fn usage() {
     let mut out = stdout();
-    let help = style_fmt!(
-        r#"<ziyy>
-            <let name="bold:green" c="green" b />
-            <let name="cyan" c="cyan" />
-
-            <p>{}</p>
-            <br />
-            <p>
-                <span src="bold:green">Usage:</span> <cyan><b>{}</b> <i>[OPTION]</i> \<FILE\></cyan>
-            </p>
-            <br />
-
-            <p src="bold:green">Options:</p>
-            <p tab="2" src="cyan" b>-V<e>,</e> --version</p>
-            <p tab="10">Print version info and exit</p>
-            <p tab="2" src="cyan" b>-h<e>,</e> --help</p>
-            <p tab="10">Print help</p>
-            <br />
-        </ziyy>"#,
-        env!("CARGO_PKG_DESCRIPTION"),
-        env!("CARGO_BIN_NAME")
-    );
-
-    let _ = out.write(help.as_bytes());
+    let _ = out.write(HELP.as_bytes());
     let _ = out.flush();
 }
 
@@ -79,7 +92,7 @@ fn main() {
     .unwrap();
     let mut opt = Opt::default();
     let mut params = vec![];
-    println!("{args:?}");
+    //println!("{args:?}");
     for arg in args {
         match arg {
             LongSwitch(switch) if switch == "help" => {

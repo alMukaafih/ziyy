@@ -14,4 +14,3 @@ members = ["ziyy-core", "ziyy-proc"]
 
 [dependencies]
 ziyy-core = { path = "ziyy-core" }
-ziyy-proc = { path = "ziyy-proc" }

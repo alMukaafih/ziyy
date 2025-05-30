@@ -7,7 +7,6 @@ name = "ziyy"
 version = "2.0.0"
 dependencies = [
  "ziyy-core",
- "ziyy-proc",
 ]
 
 [[package]]

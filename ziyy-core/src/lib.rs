@@ -14,6 +14,11 @@ mod parser;
 mod resolver;
 mod splitter;
 
+static BUILTIN_TAGS: &[&str] = &[
+    "a", "b", "br", "d", "div", "h", "i", "k", "p", "r", "s", "span", "table", "td", "tr", "u",
+    "ziyy",
+];
+
 /// Styles the given text using ziyy.
 ///
 /// # Example

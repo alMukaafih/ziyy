@@ -78,7 +78,7 @@ impl TagParser {
     }
 
     pub fn parse(&mut self, source: Fragment) -> Result<Tag, Error> {
-        let mut scanner = Scanner::new(source);
+        let mut scanner = Scanner::new(source.clone());
         let tokens = scanner.scan_tokens();
         let open = &tokens[0].r#type;
         let close = &tokens[tokens.len() - 1].r#type;

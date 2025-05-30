@@ -4,7 +4,7 @@ use std::{
 };
 
 use super::Document;
-use crate::parser::chunk::Chunk;
+use crate::parser::{chunk::Chunk, tag_parer::tag::Tag};
 
 #[derive(Debug, Clone)]
 struct Kin {
@@ -321,6 +321,17 @@ impl Node {
             //buf.push_str((!tag.clone()).to_string().as_str());
         } else {
             buf.push_str(self.chunk.borrow().data.to_string().as_str());
+        }
+    }
+
+    pub fn null_tags(self: &Rc<Node>) {
+        if self.chunk.borrow().is_tag() {
+            let mut tag_chunk = self.chunk.borrow_mut();
+            let tag = tag_chunk.data.tag_mut().unwrap();
+            *tag = Tag::with_name("$null");
+            for child in self.children() {
+                child.null_tags();
+            }
         }
     }
 }

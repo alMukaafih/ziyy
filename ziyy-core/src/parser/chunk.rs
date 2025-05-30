@@ -120,3 +120,16 @@ impl DerefMut for Chunk {
         &mut self.data
     }
 }
+
+impl Display for Chunk {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if f.alternate() {
+            f.write_fmt(format_args!(
+                "{:#} \x1b[38;5;59m--> {}\x1b[39m",
+                self.data, self.span
+            ))
+        } else {
+            self.data.fmt(f)
+        }
+    }
+}

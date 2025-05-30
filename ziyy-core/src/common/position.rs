@@ -1,9 +1,12 @@
-use std::ops::{AddAssign, SubAssign};
+use std::{
+    fmt::Display,
+    ops::{AddAssign, SubAssign},
+};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Position {
-    line: u32,
-    column: u32,
+    line: usize,
+    column: usize,
 }
 
 impl Default for Position {
@@ -13,13 +16,13 @@ impl Default for Position {
 }
 
 impl Position {
-    pub fn new(line: u32, column: u32) -> Self {
+    pub fn new(line: usize, column: usize) -> Self {
         Self { line, column }
     }
 }
 
-impl AddAssign<(u32, u32)> for Position {
-    fn add_assign(&mut self, rhs: (u32, u32)) {
+impl AddAssign<(usize, usize)> for Position {
+    fn add_assign(&mut self, rhs: (usize, usize)) {
         let (line, column) = rhs;
         self.line += line;
         if line > 0 {
@@ -30,8 +33,8 @@ impl AddAssign<(u32, u32)> for Position {
     }
 }
 
-impl SubAssign<(u32, u32)> for Position {
-    fn sub_assign(&mut self, rhs: (u32, u32)) {
+impl SubAssign<(usize, usize)> for Position {
+    fn sub_assign(&mut self, rhs: (usize, usize)) {
         let (line, column) = rhs;
         self.line -= line;
         self.column -= column;
@@ -45,5 +48,15 @@ impl PartialOrd for Position {
             ord => return ord,
         }
         self.column.partial_cmp(&other.column)
+    }
+}
+
+impl Display for Position {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if f.alternate() {
+            f.write_fmt(format_args!("({},{})", self.line, self.column))
+        } else {
+            f.write_fmt(format_args!("{}:{}", self.line, self.column))
+        }
     }
 }

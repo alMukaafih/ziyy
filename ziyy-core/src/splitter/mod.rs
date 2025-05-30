@@ -41,69 +41,51 @@ impl Splitter {
     pub fn split(&mut self, source: String) -> Vec<Fragment> {
         self.source = source.chars().collect();
 
+        macro_rules! consume_word {
+            ($c:ident) => {
+                loop {
+                    if self.is_at_end() {
+                        break;
+                    }
+
+                    if is_whitespace(self.peek()) {
+                        break;
+                    }
+
+                    if matches!(self.peek(), '<') {
+                        break;
+                    }
+
+                    if matches!($c, '\\') {
+                        self.advance();
+                    }
+
+                    self.advance();
+                }
+            };
+        }
+
         while !self.is_at_end() {
             self.start = self.current;
 
-            let c = self.advance();
+            let mut c = self.advance();
 
             match c {
                 ' ' | '\r' | '\t' | '\n' => self.whitespace(),
                 '\\' => {
-                    self.advance();
+                    c = self.advance();
+                    consume_word!(c);
                     self.add_fragment(Word);
                 }
                 '<' => self.tag(),
                 _ => {
-                    loop {
-                        if self.is_at_end() {
-                            break;
-                        }
-
-                        if is_whitespace(self.peek()) {
-                            break;
-                        }
-
-                        if matches!(self.peek(), '<') {
-                            break;
-                        }
-
-                        self.advance();
-                    }
+                    consume_word!(c);
                     self.add_fragment(Word);
                 }
             }
         }
 
-        let frags = take(&mut self.fragments);
-        let mut new_frags = vec![];
-        let mut skip = 0;
-        for (i, frag) in frags.iter().enumerate() {
-            if skip > 0 {
-                skip -= 1;
-                continue;
-            }
-
-            if matches!(frag.r#type, Word) {
-                let mut frag = frag.clone();
-                let mut n = i + 1;
-
-                while n < frags.len() {
-                    let f = frags[n].clone();
-                    if matches!(f.r#type, Word) {
-                        frag.lexeme += f.lexeme.as_str();
-                        n += 1;
-                    } else {
-                        new_frags.push(frag);
-                        skip = n - i - 1;
-                        break;
-                    }
-                }
-            } else {
-                new_frags.push(frag.clone());
-            }
-        }
-
-        new_frags
+        take(&mut self.fragments)
     }
 
     fn tag(&mut self) {

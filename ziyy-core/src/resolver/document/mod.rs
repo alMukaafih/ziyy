@@ -128,11 +128,11 @@ impl Display for Document {
             match edge {
                 Edge::Open(node) if node.has_children() => {
                     indent.indent(node.next_sibling().is_some());
-                    writeln!(f, "{indent}{:#}", node.chunk().borrow().data)?;
+                    writeln!(f, "{indent}{:#}", node.chunk().borrow())?;
                 }
                 Edge::Open(node) => {
                     indent.indent(node.next_sibling().is_some());
-                    writeln!(f, "{indent}{:#}", node.chunk().borrow().data)?;
+                    writeln!(f, "{indent}{:#}", node.chunk().borrow())?;
                     indent.deindent();
                 }
                 Edge::Close(node) if node.has_children() => {
