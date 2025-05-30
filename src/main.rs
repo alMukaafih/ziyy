@@ -6,7 +6,7 @@ use std::path::Path;
 use std::process::exit;
 use std::sync::LazyLock;
 use ziyy::style;
-use ziyy::{Indexer, Parser, Resolver, Splitter};
+use ziyy_core::{Indexer, Parser, Resolver, Splitter};
 
 mod arg;
 

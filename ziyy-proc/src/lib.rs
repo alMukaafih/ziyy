@@ -26,7 +26,7 @@ fn style_with(item: TokenStream, styler: fn(String) -> String) -> TokenStream {
 /// Styles text
 #[proc_macro]
 pub fn style_fmt(item: TokenStream) -> TokenStream {
-    style_with(item, ziyy::style::<String>)
+    style_with(item, ziyy_core::style::<String>)
 }
 
 #[proc_macro]
@@ -41,7 +41,7 @@ pub fn style(item: TokenStream) -> TokenStream {
             let strings: Vec<_> = s.split('"').collect();
             let end = strings.len() - 1;
             let s = strings[1..end].join("\"");
-            let parsed = ziyy::style(s);
+            let parsed = ziyy_core::style(s);
 
             let literal = Literal::string(&parsed);
             *token = TokenTree::Literal(literal)
