@@ -1,4 +1,5 @@
 #![allow(clippy::pedantic)]
+pub use error::{Error, ErrorType, Result};
 pub use indexer::Indexer;
 pub use parser::Parser;
 pub use resolver::Resolver;
@@ -13,9 +14,22 @@ mod parser;
 mod resolver;
 mod splitter;
 
-pub fn style<T: AsRef<str>>(text: T) -> String {
+/// Styles the given text using ziyy.
+///
+/// # Example
+///
+/// ```
+/// use ziyy::style;
+///
+/// let styled_text = style("This is <b>bold</b> text");
+/// ```
+/// # Panics
+///
+/// This function will panic if the parser encounters an error while parsing the input source.
+///
+pub fn style<T: AsRef<str>>(source: T) -> String {
     let mut indexer = Indexer::new();
-    let source = indexer.index(text.as_ref().to_string());
+    let source = indexer.index(source.as_ref().to_string());
     let mut splitter = Splitter::new();
     let frags = splitter.split(source);
 

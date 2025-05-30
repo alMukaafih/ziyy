@@ -1,14 +1,54 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
+use core::iter::FromIterator;
+use proc_macro::{Literal, TokenStream, TokenTree};
+
+fn style_with(item: TokenStream, styler: fn(String) -> String) -> TokenStream {
+    let mut tokens: Vec<_> = item.into_iter().collect();
+
+    if !tokens.is_empty() {
+        let token = tokens.get_mut(0).unwrap();
+
+        if let TokenTree::Literal(literal) = token {
+            let s: String = literal.to_string();
+            let strings: Vec<_> = s.split('"').collect();
+            let end = strings.len() - 1;
+            let s = strings[1..end].join("\"");
+            let parsed = styler(s);
+
+            let literal = Literal::string(&parsed);
+            *token = TokenTree::Literal(literal)
+        }
+    }
+
+    let token_stream = TokenStream::from_iter(tokens).to_string();
+    format!("format!({token_stream})").parse().unwrap()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+/// Styles text
+#[proc_macro]
+pub fn style_fmt(item: TokenStream) -> TokenStream {
+    style_with(item, ziyy_core::style::<String>)
+}
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+#[proc_macro]
+pub fn style(item: TokenStream) -> TokenStream {
+    let mut tokens: Vec<_> = item.into_iter().collect();
+
+    if !tokens.is_empty() && tokens.len() == 1 {
+        let token = tokens.get_mut(0).unwrap();
+
+        if let TokenTree::Literal(literal) = token {
+            let s: String = literal.to_string();
+            let strings: Vec<_> = s.split('"').collect();
+            let end = strings.len() - 1;
+            let s = strings[1..end].join("\"");
+            let parsed = ziyy_core::style(s);
+
+            let literal = Literal::string(&parsed);
+            *token = TokenTree::Literal(literal)
+        }
+
+        TokenStream::from_iter(tokens)
+    } else {
+        panic!("")
     }
 }
