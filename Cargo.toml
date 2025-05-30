@@ -10,7 +10,6 @@ keywords = ["terminal", "color", "style", "rgb", "cli"]
 categories = ["command-line-interface", "command-line-utilities"]
 
 [workspace]
-members = ["ziyy-core", "ziyy-proc"]
+members = ["ziyy-proc"]
 
 [dependencies]
-ziyy-core = { path = "ziyy-core" }
