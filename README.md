@@ -1,7 +1,7 @@
 # Ziyy - Terminal Styles.
 
 <p align="center">
-  <img src='logo.svg' width='250' alt='iyy Logo'>
+  <img src='https://raw.githubusercontent.com/alMukaafih/ziyy/refs/heads/main/logo.svg' width='250' alt='iyy Logo'>
 </p>
 
 ## Overview
