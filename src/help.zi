@@ -1,0 +1,27 @@
+<ziyy>
+    <let name="bold:green" c="green" b />
+    <let name="cyan" c="cyan" />
+
+    <div>
+        <p>{}</p>
+        <br />
+        <p>
+            <span src="bold:green">Usage:</span>
+            <cyan>
+                <b>{}</b>
+                <i>[OPTION]</i>
+                \<FILE\>
+            </cyan>
+        </p>
+    </div>
+    <br />
+
+    <div>
+        <p src="bold:green">Options:</p>
+        <p tab="2" src="cyan" b>-V, --version</p>
+        <p tab="10">Print version info and exit</p>
+        <p tab="2" src="cyan" b>-h, --help</p>
+        <p tab="10">Print help</p>
+    </div>
+    <br />
+</ziyy>

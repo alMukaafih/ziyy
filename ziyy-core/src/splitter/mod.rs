@@ -7,6 +7,7 @@ use crate::common::Span;
 
 pub mod fragment;
 
+#[doc(hidden)]
 pub struct Splitter {
     source: Vec<char>,
     fragments: Vec<Fragment>,

@@ -8,6 +8,7 @@ pub mod color;
 pub mod tag_parer;
 pub mod word_parer;
 
+#[doc(hidden)]
 pub struct Parser {}
 
 impl Default for Parser {

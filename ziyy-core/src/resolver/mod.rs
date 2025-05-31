@@ -12,6 +12,7 @@ use document::{Document, Node};
 
 pub mod document;
 
+#[doc(hidden)]
 pub struct Resolver {
     bindings: HashMap<String, Tag>,
 }
@@ -60,7 +61,7 @@ impl Resolver {
 
         let node = tree.root();
         let mut detachables = vec![];
-        self.collect_bindings(&node, &mut detachables);
+        self.resolve_bindings(&node, &mut detachables);
         for node in &detachables {
             node.detach();
         }
@@ -78,11 +79,11 @@ impl Resolver {
     }
 
     /// Collect all declared bindings: <let />
-    fn collect_bindings(&mut self, node: &Rc<Node>, detachables: &mut Vec<Rc<Node>>) {
+    fn resolve_bindings(&mut self, node: &Rc<Node>, detachables: &mut Vec<Rc<Node>>) {
         for child in node.children() {
-            let child_chunk = child.chunk().borrow();
+            let mut child_chunk = child.chunk().borrow_mut();
             if child_chunk.is_tag() {
-                let tag = child_chunk.tag().unwrap();
+                let tag = child_chunk.tag_mut().unwrap();
                 let name = tag.name();
                 if name == "let" {
                     let mut tag = tag.clone();
@@ -103,8 +104,31 @@ impl Resolver {
                     self.bindings.insert(format!("{id}/{name}"), tag);
                     detachables.push(child.clone());
                 }
+
+                if !BUILTIN_TAGS.contains(&name.as_str()) {
+                    for ansector in child.ancestors() {
+                        if let Some(binding) =
+                            self.bindings.get(&format!("{}/{}", ansector.id(), name))
+                        {
+                            tag.inherit(binding);
+                            break;
+                        }
+                    }
+                }
+
+                if !tag.src().is_empty() {
+                    for ansector in child.ancestors() {
+                        if let Some(binding) =
+                            self.bindings
+                                .get(&format!("{}/{}", ansector.id(), tag.src()))
+                        {
+                            tag.inherit(binding);
+                            break;
+                        }
+                    }
+                }
             }
-            self.collect_bindings(&child, detachables);
+            self.resolve_bindings(&child, detachables);
         }
     }
 
@@ -191,29 +215,6 @@ impl Resolver {
                     } else if name == "a" {
                         for grand_child in child.children() {
                             grand_child.null_tags();
-                        }
-                    }
-
-                    if !BUILTIN_TAGS.contains(&name.as_str()) {
-                        for ansector in child.ancestors() {
-                            if let Some(binding) =
-                                self.bindings.get(&format!("{}/{}", ansector.id(), name))
-                            {
-                                tag.inherit(binding);
-                                break;
-                            }
-                        }
-                    }
-
-                    if !tag.src().is_empty() {
-                        for ansector in child.ancestors() {
-                            if let Some(binding) =
-                                self.bindings
-                                    .get(&format!("{}/{}", ansector.id(), tag.src()))
-                            {
-                                tag.inherit(binding);
-                                break;
-                            }
                         }
                     }
 

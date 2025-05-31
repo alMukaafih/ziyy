@@ -34,10 +34,52 @@ macro_rules! hex {
     };
 }
 
-#[derive(Clone, Debug)]
-pub struct Color(String);
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+pub struct Rgb(u8, u8, u8, u8);
+
+impl Display for Rgb {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let Rgb(r, g, b, n) = self;
+        f.write_fmt(format_args!("{n};2;{r};{g};{b};"))
+    }
+}
+
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+pub struct Ansi256(u8, u8);
+
+impl Display for Ansi256 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let Ansi256(i, n) = self;
+        f.write_fmt(format_args!("{n};5;{i};"))
+    }
+}
+
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+pub struct Ansi4Bit(u8);
+
+impl Display for Ansi4Bit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+pub enum Color {
+    Ansi256(Ansi256),
+    Ansi4Bit(Ansi4Bit),
+    Rgb(Rgb),
+    String(String),
+}
 
 impl Color {
+    pub fn new() -> Self {
+        Color::String(String::new())
+    }
+
+    pub fn with(s: String) -> Self {
+        Color::String(s)
+    }
+
     fn rgb(mut next: impl FnMut() -> Result<Token, Error>, n: u8) -> Result<Color, Error> {
         let token = next()?;
 
@@ -91,7 +133,10 @@ impl Color {
 
         expect(&token, RIGHT_PAREN, ErrorType::UnexpectedToken)?;
 
-        Ok(Color(format!("{n};2;{r};{g};{b};")))
+        match (&r, &g, &b) {
+            (Number::U8(r), Number::U8(g), Number::U8(b)) => Ok(Color::Rgb(Rgb(*r, *g, *b, n))),
+            _ => Ok(Color::String(format!("{n};2;{r};{g};{b};"))),
+        }
     }
 
     fn byte(mut next: impl FnMut() -> Result<Token, Error>, n: u8) -> Result<Color, Error> {
@@ -104,11 +149,18 @@ impl Color {
         let token = next()?;
         expect(&token, RIGHT_PAREN, ErrorType::UnexpectedToken)?;
 
-        Ok(Color(format!("{n};5;{i};")))
+        match &i {
+            Number::U8(i) => Ok(Color::Ansi256(Ansi256(*i, n))),
+            Number::PlaceHolder(_) => Ok(Color::String(format!("{n};5;{i};"))),
+        }
     }
 
     pub fn four_bit(n: u8) -> Color {
-        Color(format!("{n};"))
+        Color::Ansi4Bit(Ansi4Bit(n))
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.to_string().is_empty()
     }
 }
 
@@ -117,7 +169,7 @@ impl TryFrom<(String, Span)> for Color {
 
     fn try_from(source: (String, Span)) -> Result<Self, Self::Error> {
         if source.0.is_empty() {
-            return Ok(Color(source.0));
+            return Ok(Color::String(source.0));
         }
         let mut scanner = Scanner::new(source.0, source.1);
         let mut tokens: VecDeque<_> = scanner.scan_tokens().into();
@@ -176,13 +228,18 @@ impl TryFrom<(String, Span)> for Color {
 
 impl From<Color> for String {
     fn from(color: Color) -> Self {
-        color.0
+        color.to_string()
     }
 }
 
 impl Display for Color {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.0.fmt(f)
+        match self {
+            Color::Ansi256(ansi256) => ansi256.fmt(f),
+            Color::Ansi4Bit(ansi4_bit) => ansi4_bit.fmt(f),
+            Color::Rgb(rgb) => rgb.fmt(f),
+            Color::String(s) => s.fmt(f),
+        }
     }
 }
 

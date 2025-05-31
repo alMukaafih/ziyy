@@ -4,6 +4,8 @@ use std::{
     ops::Not,
 };
 
+use crate::parser::color::Color;
+
 #[derive(Default, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum TagType {
     #[default]
@@ -13,10 +15,32 @@ pub enum TagType {
 }
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
+enum Value {
+    Color(Color),
+    String(String),
+}
+
+impl Value {
+    fn color(&self) -> &Color {
+        match self {
+            Value::Color(color) => color,
+            Value::String(_) => panic!("illegal"),
+        }
+    }
+
+    fn string(&self) -> &String {
+        match self {
+            Value::Color(_) => panic!("illegal"),
+            Value::String(string) => string,
+        }
+    }
+}
+
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct Tag {
     pub r#type: TagType,
     style: u32,
-    data: Vec<String>,
+    data: Vec<Value>,
 }
 
 impl Default for Tag {
@@ -24,7 +48,13 @@ impl Default for Tag {
         Self {
             r#type: TagType::SelfClose,
             style: 0,
-            data: vec![String::new(); 6],
+            data: vec![
+                Value::String(String::new()),
+                Value::Color(Color::new()),
+                Value::Color(Color::new()),
+                Value::String(String::new()),
+                Value::String(String::new()),
+            ],
         }
     }
 }
@@ -46,7 +76,7 @@ impl Tag {
 
             (2, $f:tt, $g:tt ) => {
                 if !src.$f().is_empty() && self.$f().is_empty() {
-                    self.$g(src.$f().to_string());
+                    self.$g(src.$f().clone());
                 }
             };
         }
@@ -83,7 +113,7 @@ macro_rules! get_style {
 }
 
 macro_rules! impl_tag {
-    ( $( ( $i:expr, $set_x:tt, $x:tt, $is_set:tt ) ),*; $( ( $j:expr, $set_y:tt, $y:tt ) ),* ) => {
+    ( $( ( $i:expr, $set_x:tt, $x:tt, $is_set:tt ) ),*; $( ( $j:expr, $set_y:tt, $y:tt ) ),*; $( ( $k:expr, $set_z:tt, $z:tt ) ),* ) => {
         impl Tag {
             const L: u32 = 31;
 
@@ -104,11 +134,21 @@ macro_rules! impl_tag {
 
         $(
             pub fn $set_y(&mut self, value: String) {
-                self.data[$j] = value;
+                self.data[$j] = Value::String(value);
             }
 
             pub fn $y(&self) -> &String {
-                &self.data[$j]
+                &self.data[$j].string()
+            }
+        )*
+
+        $(
+            pub fn $set_z(&mut self, value: Color) {
+                self.data[$k] = Value::Color(value);
+            }
+
+            pub fn $z(&self) -> &Color {
+                &self.data[$k].color()
             }
         )*
         }
@@ -127,10 +167,11 @@ impl_tag![
     (8, set_double_under, double_under, is_double_under_set);
 
     (0, set_name, name),
-    (1, set_fg_color, fg_color),
-    (2, set_bg_color, bg_color),
     (3, set_custom, custom),
-    (4, set_src, src)
+    (4, set_src, src);
+
+    (1, set_fg_color, fg_color),
+    (2, set_bg_color, bg_color)
 ];
 
 impl Not for Tag {
@@ -234,8 +275,8 @@ impl Display for Tag {
                 let _ = buf.write(b"49;");
             }
         } else {
-            let _ = buf.write(self.data[1].as_bytes());
-            let _ = buf.write(self.data[2].as_bytes());
+            let _ = buf.write(self.fg_color().to_string().as_bytes());
+            let _ = buf.write(self.bg_color().to_string().as_bytes());
         }
 
         if buf[buf.len() - 1] == b';' {

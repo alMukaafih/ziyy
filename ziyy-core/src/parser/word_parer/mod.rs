@@ -62,7 +62,7 @@ impl WordParser {
                 }
                 ESCAPE_X => {
                     let num = u32::from_str_radix(&token.lexeme[2..], 16).unwrap();
-                    
+
                     char::from_u32(num).unwrap_or(char::REPLACEMENT_CHARACTER)
                 }
                 ESCAPE_U => {
@@ -267,17 +267,17 @@ impl WordParser {
                         let r = next()?;
                         let g = next()?;
                         let b = next()?;
-                        tag.set_fg_color(format!(
+                        tag.set_fg_color(Color::with(format!(
                             "38;2;{};{};{};",
                             shrink!(r),
                             shrink!(g),
                             shrink!(b)
-                        ));
+                        )));
                     }
 
                     if num == 5 {
                         let byte = next()?;
-                        tag.set_fg_color(format!("38;5;{};", shrink!(byte)));
+                        tag.set_fg_color(Color::with(format!("38;5;{};", shrink!(byte))));
                     }
                 }
 
@@ -287,16 +287,16 @@ impl WordParser {
                         let r = next()?;
                         let g = next()?;
                         let b = next()?;
-                        tag.set_bg_color(format!(
+                        tag.set_bg_color(Color::with(format!(
                             "48;2;{};{};{};",
                             shrink!(r),
                             shrink!(g),
                             shrink!(b)
-                        ));
+                        )));
                     }
                     if num == 5 {
                         let byte = next()?;
-                        tag.set_bg_color(format!("48;5;{};", shrink!(byte)));
+                        tag.set_bg_color(Color::with(format!("48;5;{};", shrink!(byte))));
                     }
                 }
                 _ => {}

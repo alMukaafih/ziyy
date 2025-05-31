@@ -5,40 +5,13 @@ use std::io::{stdout, BufReader, Read, Write};
 use std::path::Path;
 use std::process::exit;
 use std::sync::LazyLock;
-use ziyy::style;
 use ziyy_core::{Indexer, Parser, Resolver, Splitter};
 
 mod arg;
 
 static HELP: LazyLock<String> = LazyLock::new(|| {
-    style(format!(
-        r#"<ziyy>
-            <let name="bold:green" c="green" b />
-            <let name="cyan" c="cyan" />
-
-            <div>
-                <p>{}</p>
-                <br />
-                <p>
-                    <span src="bold:green">Usage:</span>
-                    <cyan>
-                        <b>{}</b>
-                        <i>[OPTION]</i>
-                        \<FILE\>
-                    </cyan>
-                </p>
-            </div>
-            <br />
-
-            <div>
-                <p src="bold:green">Options:</p>
-                <p tab="2" src="cyan" b>-V, --version</p>
-                <p tab="10">Print version info and exit</p>
-                <p tab="2" src="cyan" b>-h, --help</p>
-                <p tab="10">Print help</p>
-            </div>
-            <br />
-        </ziyy>"#,
+    ziyy::style(format!(
+        include_str!("help.zi"),
         env!("CARGO_PKG_DESCRIPTION"),
         env!("CARGO_BIN_NAME")
     ))

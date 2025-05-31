@@ -38,7 +38,7 @@ macro_rules! assign_prop {
 
 macro_rules! assign_prop_color {
     ( $tag:expr, $set_prop:tt, $next:expr, $token:expr, $pre:expr ) => {{
-        $tag.$set_prop(String::new());
+        $tag.$set_prop(Color::new());
 
         $token = $next()?;
         if $token.r#type == EQUAL {
@@ -196,7 +196,7 @@ impl TagParser {
                             token.span.unquote() - (0, 6),
                         )
                             .try_into()?;
-                        Ok(c.into())
+                        Ok(c)
                     };
 
                     if tag.name() == "c" {
@@ -219,7 +219,7 @@ impl TagParser {
                             token.span.unquote() - (0, 5),
                         )
                             .try_into()?;
-                        Ok(c.into())
+                        Ok(c)
                     };
 
                     if tag.name() == "c" {
@@ -267,7 +267,7 @@ impl TagParser {
                     if last.name() != tag.name() {
                         return Err(Error::new(
                             ErrorType::InvalidTag,
-                            format!("Mismatched tag: {:?} {:?}", last.name(), tag.name()),
+                            format!("Mismatched tag: {:?} {:?}", tag.name(), last.name()),
                             token.span,
                         ));
                     }

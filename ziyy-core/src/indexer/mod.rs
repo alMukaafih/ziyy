@@ -1,6 +1,7 @@
 use std::mem::take;
 
 /// The Indexer adds indices to empty placeholders
+#[doc(hidden)]
 pub struct Indexer {
     source: String,
     start: usize,
