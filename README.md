@@ -1,41 +1,80 @@
-# Ziyy - Convenient Terminal Output Styler.
+# Ziyy - Terminal Styles.
 
-Style your Terminal output using easy to remember Tags. For example to make your output bold, put `[b]`  before the rest of your String to make it bold. The General Syntax is:
+<p align="center">
+  <img src='logo.svg' width='250' alt='iyy Logo'>
+</p>
+
+## Overview
+Style your Terminal using HTML `<b>..</b>`.
+
+## Example
+```html
+<b u i c="rgb(5, 165, 104)">This is a Bold Green Underlined Text in Italics</b>
 ```
-"[`a tag`]some text...[`another tag`]some more text..."
-```
-The Tags are in pairs and each pair behave like an on-off switch. For a Tag with name `TAG`, `[TAG]` is the on switch and `[/TAG]` is the off switch. The only exception is the `[/0]` that switches off all tags. 
+### Output
+<pre>
+<b style="color:rgb(5, 165, 104);"><i><u>This is a Bold Green Underlined Text in Italics</u></i></b>
+</pre>
 
 ## Tags
-The following is a table of all supported tags,
-| Tag | Description |
-| --- | ----------- |
-| `[c:'color']` | Color the preceding text using `color`. |
-| `[/c]` | Reset color.
-| `[x:'color']` | Color the background preceding text. using `color` |
-| `[/x]` | Reset Background color.
-| `[b]` | Embolden preceding text.
-`[/b]` | Remove boldness.
-`[i]` | Italicize preceding text.
-`[/i]` | Remove italics.
-`[u]` | Underline preceding text.
-`[/u]` | Remove underline.
-`[s]` | Strike through preceding text.
-`[/s]` | Remove strike.
-`[/0]` | Remove all styling.
+All tags have [Effects](#effects), [General Colors](#general-colors) and [Inheritance](#inheritance) Properties except for `<br>`.
 
-## Valid Colors
-These are the current valid colors for both text and background:
-| Color | Description |
-| ----- | ----------- |
-black | Terminal's default black color.
-red | Terminal's default red color.
-green | Terminal's default green color.
-yellow | Terminal's default yellow color.
-blue | Terminal's default blue color.
-magenta | Terminal's default magenta color.
-cyan | Terminal's default cyan color.
-white | Terminal's default white color.
-rgb(#, #, #) | RGB color. # represents a Number within the Range 0 - 255
+### Text Effects
+| Tag | Effect | Properties |
+| --------| ----------- | --- |
+| `<b>` | Bold |  |
+| `<d>` | Dim |  |
+| `<h>` | Hide |  |
+| `<k>` | Blink |  |
+| `<r>` | Reverse foreground and background | |
+| `<i>` | Italics |  |
+| `<s>` | Strike-Through |  |
+| `<u>` | Underline | `double`: Double Underline |
 
-> A new color will overwrite the previous color
+### Text Color
+| Tag | Color | Properties |
+| --- | ------ | -- |
+| `<c>` | Foreground Color | [Special Colors](#special-colors) properties. |
+| `<x>` | Background Color | [Special Colors](#special-colors) properties. |
+
+### Others
+| Tag | Description | Properties |
+| --- | ------ | -- |
+| `<a>` | Insert a link. | `href`: url of the link,  |
+| `<p>` | Insert new Paragraph | `tab`: indent the paragraph with *n* spaces,  |
+| `<br>` | Insert a line break. | `n`: no of line breaks to insert. default is 1. |
+| `<let>` | Declares new custom tag.  | `name`: Name of tag. Supports only ASCII character set.  |
+| `<ziyy>` | The root of other tags. |  |
+
+## Properties
+### Effects
+| Property | Description | Type |
+| --- | ------ | --- |
+| `b \| bold` | Bold | `"true" \| "false" or unassigned (true` |
+| `d \| dim` | Dim |  |
+| `h \| hidden \| hide \| invisible` | Hide |  |
+| `k \| blink` | Blink |  |
+| `r \| invert \| reverse \| negative` | Reverse |  |
+| `i \| italics` | Italics |  |
+| `s \| strike-through` | Strike-Through |  |
+| `u \| underline` | Underline |  |
+| `uu \| double-underline` | Double Underline |  |
+
+### General Colors
+| Property | Description | Type |
+| --- | ------ | --- |
+| `c \| fg`   | Foreground color | `"black" \| "red" \| "green" \| "yellow" \| "blue" \| "magenta" \| "cyan" \| "white" \| "fixed(#)" \| "rgb(#, #, #)"` |
+| `x \| bg`   | Background color |  | ANSI 4 bit colors (`<c>` and `<x>` tags only) | `unassinged` |
+
+## Special Colors
+| Property | Description | Type |
+| --- | ------ | --- |
+| `fixed` | ANSI 256 color | `"#"` |
+| `rgb` | Rgb colors | `"#, #, #"` |
+> `#` is a number within `0..255`
+
+### Inheritance
+| Property | Description | Type |
+| --- | ------ | --- |
+| `src` | Inherit properties from a tag. | `string` |
+
