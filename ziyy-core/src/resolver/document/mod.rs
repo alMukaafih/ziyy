@@ -37,7 +37,7 @@ impl Document {
             0,
             Chunk {
                 data: ChunkData::Tag(tag),
-                span: Span::null(),
+                span: Span::inserted(),
             },
             Rc::downgrade(&Rc::clone(&doc)),
         ));

@@ -31,7 +31,7 @@ impl Span {
         span
     }
 
-    pub fn null() -> Self {
+    pub fn inserted() -> Self {
         let pos = Position::new(0, 0);
         Span::new(pos, pos)
     }
@@ -52,6 +52,12 @@ impl AddAssign<(usize, usize)> for Span {
     }
 }
 
+impl AddAssign for Span {
+    fn add_assign(&mut self, rhs: Self) {
+        self.end = rhs.end
+    }
+}
+
 impl Sub<(usize, usize)> for Span {
     type Output = Span;
 
@@ -65,10 +71,10 @@ impl Display for Span {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if f.alternate() {
             f.write_fmt(format_args!("{:#}..{:#}", self.start, self.end))
-        } else if *self == Span::null() {
-            f.write_str("null")
+        } else if *self == Span::inserted() {
+            f.write_str("\x1b[4minserted\x1b[24m")
         } else {
-            self.start.fmt(f)
+            f.write_fmt(format_args!("{}..{}", self.start, self.end))
         }
     }
 }

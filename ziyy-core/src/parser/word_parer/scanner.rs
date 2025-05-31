@@ -1,5 +1,4 @@
 use super::token::Token;
-use super::token::TokenType::{self, *};
 use crate::common::Span;
 use crate::scanner::{GenericScanner, Source};
 use crate::splitter::fragment::Fragment;
@@ -47,55 +46,52 @@ impl Scanner {
             matches!(c, '0'..'8')
         }
 
-        let r#type = match c {
-            'a' => ESCAPE_A,
-            'b' => ESCAPE_B,
-            'e' => ESCAPE_E,
-            'f' => ESCAPE_F,
-            'n' => ESCAPE_N,
-            'r' => ESCAPE_R,
-            't' => ESCAPE_T,
-            'v' => ESCAPE_V,
-            '\\' => ESCAPE_BACKSLASH,
-            '<' => ESCAPE_LESS,
-            '>' => ESCAPE_GREATER,
+        match c {
+            'a' => self.add_token('\x07'),
+            'b' => self.add_token('\x08'),
+            'e' => self.add_token('\x1b'),
+            'f' => self.add_token('\x0c'),
+            'n' => self.add_token('\x0a'),
+            'r' => self.add_token('\x0d'),
+            't' => self.add_token('\t'),
+            'v' => self.add_token('\x0b'),
+            '\\' => self.add_token('\\'),
+            '<' => self.add_token('<'),
+            '>' => self.add_token('>'),
             '0' => {
                 scan_until(3, is_octdigit);
-                ESCAPE_0
+                let num = u32::from_str_radix(&self.text()[2..], 8).unwrap();
+                self.add_token(char::from_u32(num).unwrap_or(char::REPLACEMENT_CHARACTER));
             }
             'x' => {
                 scan_until(2, is_hexdigit);
-                ESCAPE_X
+                let num = u32::from_str_radix(&self.text()[2..], 16).unwrap();
+                self.add_token(char::from_u32(num).unwrap_or(char::REPLACEMENT_CHARACTER));
             }
             'u' => {
                 scan_until(4, is_hexdigit);
-                ESCAPE_U
+                let num = u32::from_str_radix(&self.text()[2..], 16).unwrap();
+                self.add_token(char::from_u32(num).unwrap_or(char::REPLACEMENT_CHARACTER));
             }
             'U' => {
                 scan_until(8, is_hexdigit);
-                ESCAPE_U
+                let num = u32::from_str_radix(&self.text()[2..], 16).unwrap();
+                self.add_token(char::from_u32(num).unwrap_or(char::REPLACEMENT_CHARACTER));
             }
-            _ => return self.text(),
+            _ => {
+                self.add_token('\\');
+                self.add_token(c);
+            }
         };
-
-        self.add_token(r#type);
     }
 
-    fn text(&mut self) {
-        while !self.is_at_end() {
-            match self.peek() {
-                '\\' => break,
-                _ => {
-                    self.advance();
-                }
-            }
-        }
-        self.add_token(TEXT);
+    fn text(&self) -> String {
+        self.source[self.start..self.current].to_string()
     }
 
-    fn add_token(&mut self, r#type: TokenType) {
-        let text = self.source[self.start..self.current].to_string();
-        self.tokens.push(Token::new(r#type, text, self.span));
+    fn add_token(&mut self, literal: char) {
+        self.tokens.push(Token::new(literal, self.span));
+        self.span.tie_end();
     }
 }
 
@@ -103,14 +99,10 @@ impl_generic_scanner!(|s: &mut Scanner| {
     let c = s.advance();
     match c {
         '\\' => s.escape(),
-        '\x1B' => {
-            s.add_token(ESCAPE);
+        '\x1b' => {
+            s.add_token('\x1b');
         }
-        _ => s.text(),
-    }
-
-    if s.is_at_end() {
-        s.add_token(EOF);
+        _ => s.add_token(c),
     }
 });
 

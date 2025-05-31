@@ -1,12 +1,13 @@
 use super::chunk::{Chunk, ChunkData};
 use super::color::{Ansi256, Color, Rgb};
+use crate::common::Span;
 use crate::error::Error;
 use crate::scanner::GenericScanner;
 use crate::splitter::fragment::Fragment;
 use ansi::Ansi;
 use scanner::Scanner;
 use std::collections::VecDeque;
-use token::TokenType::*;
+use token::Token;
 pub mod ansi;
 mod scanner;
 mod token;
@@ -37,146 +38,80 @@ impl WordParser {
     }
 
     pub fn parse(&self, source: Fragment) -> Result<Vec<Chunk>, Error> {
-        let mut span = source.span;
         let mut scanner = Scanner::new(source);
-        let mut tokens: VecDeque<_> = scanner.scan_tokens().into();
-
-        let mut next = || tokens.pop_front().unwrap_or_default();
-
-        let mut chars = vec![];
-
-        loop {
-            let token = next();
-            let c = match token.r#type {
-                ESCAPE => '\x1B',
-                ESCAPE_A => '\x07',
-                ESCAPE_B => '\x08',
-                ESCAPE_E => '\x1B',
-                ESCAPE_F => '\x0C',
-                ESCAPE_N => '\x0A',
-                ESCAPE_R => '\x0D',
-                ESCAPE_T => '\t',
-                ESCAPE_V => '\x0B',
-                ESCAPE_0 => {
-                    let num = u32::from_str_radix(&token.lexeme[2..], 8).unwrap();
-                    char::from_u32(num).unwrap_or(char::REPLACEMENT_CHARACTER)
-                }
-                ESCAPE_X => {
-                    let num = u32::from_str_radix(&token.lexeme[2..], 16).unwrap();
-
-                    char::from_u32(num).unwrap_or(char::REPLACEMENT_CHARACTER)
-                }
-                ESCAPE_U => {
-                    let num = u32::from_str_radix(&token.lexeme[2..], 16).unwrap();
-                    char::from_u32(num).unwrap_or(char::REPLACEMENT_CHARACTER)
-                }
-                ESCAPE_LESS => '<',
-                ESCAPE_GREATER => '>',
-                ESCAPE_BACKSLASH => '\\',
-                TEXT => {
-                    let chs = token.lexeme.chars().collect::<Vec<_>>();
-                    chars.extend(chs);
-                    continue;
-                }
-                EOF => break,
-            };
-            chars.push(c);
-        }
+        let tokens = scanner.scan_tokens();
 
         let mut chunks = vec![];
 
         let mut i = 0;
-        let len = chars.len();
-        span.tie_start();
-
-        macro_rules! check_nl {
-            () => {
-                if chars[i] == '\n' {
-                    span += (1, 0);
-                }
-            };
-        }
+        let len = tokens.len();
 
         loop {
             if i >= len {
                 break;
             }
 
-            check_nl!();
-            let c = chars[i];
+            let c = tokens[i].literal;
 
-            if c == '\x1B' && chars[i + 1] == '[' {
+            if c == '\x1b' && tokens[i + 1].literal == '[' {
+                let g = i;
                 i += 2;
-                span += (0, 2);
                 // Handle escape
-                let j = i;
+                let h = i;
 
-                if !matches!(chars[i], '\x30'..='\x39' | '\x3B' | '\x40'..='\x7E') {
-                    while i < len && chars[i] != '\x1B' {
-                        check_nl!();
+                if !matches!(tokens[i].literal, '\x30'..='\x39' | '\x3b' | '\x40'..='\x7e') {
+                    while i < len && tokens[i].literal != '\x1b' {
                         i += 1;
-                        span += (0, 1);
                     }
-                    let word = chars[j..i].to_string();
+                    let word = tokens[h..i].to_string();
                     chunks.push(Chunk {
                         data: ChunkData::Word(word),
-                        span,
+                        span: tokens[h..i].to_span(),
                     });
-                    span.tie_end();
+
                     break;
                 }
 
-                while i < len && !matches!(chars[i], '\x40'..='\x7E') {
-                    check_nl!();
+                while i < len && !matches!(tokens[i].literal, '\x40'..='\x7e') {
                     i += 1;
-                    span += (0, 1);
                 }
 
-                if chars[i] == 'm' {
+                if tokens[i].literal == 'm' {
                     // Handle escape sequence
-                    let escape_sequence = chars[j..i].to_string();
+                    let escape_sequence = tokens[h..i].to_string();
 
                     if let Ok(ansi) = self.to_ansi(escape_sequence) {
                         chunks.push(Chunk {
                             data: ChunkData::Ansi(ansi),
-                            span,
+                            span: tokens[g..i].to_span(),
                         });
-                        span.tie_end();
                     }
                 } else {
-                    while i < len && chars[i] != '\x1B' {
-                        check_nl!();
+                    while i < len && tokens[i].literal != '\x1b' {
                         i += 1;
-                        span += (0, 1);
                     }
-                    let word = chars[j..i].to_string();
+                    let word = tokens[h..i].to_string();
                     chunks.push(Chunk {
                         data: ChunkData::Word(word),
-                        span,
+                        span: tokens[h..i].to_span(),
                     });
-                    span.tie_end();
                 }
                 i += 1;
-                span += (0, 1);
 
                 continue;
             } else {
-                let j = i;
-                while i < len && chars[i] != '\x1B' {
-                    check_nl!();
+                let h = i;
+                while i < len && tokens[i].literal != '\x1b' {
                     i += 1;
-                    span += (0, 1);
                 }
-                let word = chars[j..i].to_string();
+                let word = tokens[h..i].to_string();
                 chunks.push(Chunk {
                     data: ChunkData::Word(word),
-                    span,
-                });
-                span.tie_end();
+                    span: tokens[h..i].to_span(),
+                })
             }
             // Handle normal character
-            i += 1;
-            span += (0, 1);
+            i += 1
         }
 
         Ok(chunks)
@@ -345,18 +280,32 @@ impl WordParser {
     }
 }
 
-trait ToString {
+trait Transform {
     fn to_string(&self) -> String;
+    fn to_span(&self) -> Span;
 }
 
-impl ToString for [char] {
+impl Transform for [Token] {
     fn to_string(&self) -> String {
         let mut text = String::with_capacity(self.len());
 
-        for ch in self {
-            text.push(*ch)
+        for token in self {
+            text.push(token.literal)
         }
 
         text
+    }
+
+    fn to_span(&self) -> Span {
+        let mut span = Span::inserted();
+        for token in self {
+            if span == Span::inserted() {
+                span = token.span;
+            } else {
+                span += token.span;
+            }
+        }
+
+        span
     }
 }

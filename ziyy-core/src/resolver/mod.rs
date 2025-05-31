@@ -204,7 +204,7 @@ impl Resolver {
                         } else {
                             child.insert_before(Chunk {
                                 data: ChunkData::WhiteSpace("\n".to_string()),
-                                span: Span::null(),
+                                span: Span::inserted(),
                             });
                         }
                     } else if name == "a" {
@@ -220,7 +220,7 @@ impl Resolver {
                     } else {
                         last.insert_after(Chunk {
                             data: ChunkData::Tag(!tag.clone()),
-                            span: Span::null(),
+                            span: Span::inserted(),
                         });
                     }
                 }

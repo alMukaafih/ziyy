@@ -94,6 +94,10 @@ impl_ansi![
 
 impl Display for Ansi {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if f.alternate() {
+            return f.write_fmt(format_args!("\"{}\"", self.to_string().escape_debug()));
+        }
+
         let mut buf = Vec::with_capacity(128);
         let _ = buf.write(b"\x1b[");
         macro_rules! write_prop {
