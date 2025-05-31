@@ -35,7 +35,7 @@ macro_rules! hex {
 }
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
-pub struct Rgb(u8, u8, u8, u8);
+pub struct Rgb(pub u8, pub u8, pub u8, pub u8);
 
 impl Display for Rgb {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -45,7 +45,7 @@ impl Display for Rgb {
 }
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
-pub struct Ansi256(u8, u8);
+pub struct Ansi256(pub u8, pub u8);
 
 impl Display for Ansi256 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -69,6 +69,12 @@ pub enum Color {
     Ansi4Bit(Ansi4Bit),
     Rgb(Rgb),
     String(String),
+}
+
+impl Default for Color {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Color {

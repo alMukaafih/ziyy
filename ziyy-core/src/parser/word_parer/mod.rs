@@ -1,12 +1,13 @@
 use super::chunk::{Chunk, ChunkData};
-use super::color::Color;
-use super::tag_parer::tag::Tag;
+use super::color::{Ansi256, Color, Rgb};
 use crate::error::Error;
 use crate::scanner::GenericScanner;
 use crate::splitter::fragment::Fragment;
+use ansi::Ansi;
 use scanner::Scanner;
 use std::collections::VecDeque;
 use token::TokenType::*;
+pub mod ansi;
 mod scanner;
 mod token;
 
@@ -134,11 +135,10 @@ impl WordParser {
                 if chars[i] == 'm' {
                     // Handle escape sequence
                     let escape_sequence = chars[j..i].to_string();
-                    eprintln!("{:?}", escape_sequence);
 
-                    if let Ok(tag) = self.ansi_to_tag(escape_sequence) {
+                    if let Ok(ansi) = self.to_ansi(escape_sequence) {
                         chunks.push(Chunk {
-                            data: ChunkData::Tag(tag),
+                            data: ChunkData::Ansi(ansi),
                             span,
                         });
                         span.tie_end();
@@ -182,10 +182,10 @@ impl WordParser {
         Ok(chunks)
     }
 
-    fn ansi_to_tag(&self, ansi: String) -> Result<Tag, i8> {
+    fn to_ansi(&self, source: String) -> Result<Ansi, i8> {
         // Convert ANSI escape codes to tags
         // This is a placeholder implementation
-        let mut parts = ansi
+        let mut parts = source
             .split(';')
             .map(|x| {
                 if x.is_empty() {
@@ -198,7 +198,7 @@ impl WordParser {
 
         let mut next = || parts.pop_front().unwrap_or(Err(-1));
 
-        let mut tag = Tag::default();
+        let mut ansi = Ansi::default();
         loop {
             let num = next();
 
@@ -210,39 +210,87 @@ impl WordParser {
 
             match num {
                 -1 => break,
-                0 => tag = Tag::default(),
+                0 => ansi = Ansi::default(),
 
-                1 => tag.set_bold(true),
-                2 => tag.set_dim(true),
+                1 => {
+                    ansi.set_bold(true);
+                    ansi.set_dim(false);
+                    ansi.set_clear_bold(false);
+                }
+                2 => {
+                    ansi.set_bold(false);
+                    ansi.set_dim(true);
+                    ansi.set_clear_bold(false);
+                }
                 22 => {
-                    tag.set_bold(false);
-                    tag.set_dim(false);
+                    ansi.set_bold(false);
+                    ansi.set_dim(false);
+                    ansi.set_clear_bold(true);
                 }
 
-                3 => tag.set_italics(true),
-                23 => tag.set_italics(false),
+                3 => {
+                    ansi.set_italics(true);
+                    ansi.set_clear_italics(false);
+                }
+                23 => {
+                    ansi.set_italics(false);
+                    ansi.set_clear_italics(true);
+                }
 
-                4 => tag.set_under(true),
-                21 => tag.set_double_under(true),
+                4 => {
+                    ansi.set_under(true);
+                    ansi.set_double_under(false);
+                    ansi.set_clear_under(false);
+                }
+                21 => {
+                    ansi.set_under(false);
+                    ansi.set_double_under(true);
+                    ansi.set_clear_under(false);
+                }
                 24 => {
-                    tag.set_under(false);
-                    tag.set_double_under(false);
+                    ansi.set_under(false);
+                    ansi.set_double_under(false);
+                    ansi.set_clear_under(true);
                 }
 
-                5 => tag.set_blink(true),
-                25 => tag.set_blink(false),
+                5 => {
+                    ansi.set_blink(true);
+                    ansi.set_clear_blink(false);
+                }
+                25 => {
+                    ansi.set_blink(false);
+                    ansi.set_clear_blink(true);
+                }
 
-                7 => tag.set_negative(true),
-                27 => tag.set_negative(false),
+                7 => {
+                    ansi.set_negative(true);
+                    ansi.set_clear_negative(false);
+                }
+                27 => {
+                    ansi.set_negative(false);
+                    ansi.set_clear_negative(true);
+                }
 
-                8 => tag.set_hidden(true),
-                28 => tag.set_hidden(true),
+                8 => {
+                    ansi.set_hidden(true);
+                    ansi.set_clear_hidden(false);
+                }
+                28 => {
+                    ansi.set_hidden(false);
+                    ansi.set_clear_hidden(true);
+                }
 
-                9 => tag.set_strike(true),
-                29 => tag.set_strike(false),
+                9 => {
+                    ansi.set_strike(true);
+                    ansi.set_clear_strike(false);
+                }
+                29 => {
+                    ansi.set_strike(false);
+                    ansi.set_clear_strike(true);
+                }
 
-                fg @ 30..=37 | fg @ 39 => tag.set_fg_color(Color::four_bit(shrink!(fg)).into()),
-                bg @ 40..=47 | bg @ 49 => tag.set_bg_color(Color::four_bit(shrink!(bg)).into()),
+                fg @ 30..=37 | fg @ 39 => ansi.set_fg_color(Color::four_bit(shrink!(fg))),
+                bg @ 40..=47 | bg @ 49 => ansi.set_bg_color(Color::four_bit(shrink!(bg))),
 
                 /* 90 => tag.fg_color = "black".into(),
                 91 => tag.fg_color = "red".into(),
@@ -267,17 +315,12 @@ impl WordParser {
                         let r = next()?;
                         let g = next()?;
                         let b = next()?;
-                        tag.set_fg_color(Color::with(format!(
-                            "38;2;{};{};{};",
-                            shrink!(r),
-                            shrink!(g),
-                            shrink!(b)
-                        )));
+                        ansi.set_fg_color(Color::Rgb(Rgb(38, shrink!(r), shrink!(g), shrink!(b))));
                     }
 
                     if num == 5 {
-                        let byte = next()?;
-                        tag.set_fg_color(Color::with(format!("38;5;{};", shrink!(byte))));
+                        let fixed = next()?;
+                        ansi.set_fg_color(Color::Ansi256(Ansi256(38, shrink!(fixed))));
                     }
                 }
 
@@ -287,26 +330,18 @@ impl WordParser {
                         let r = next()?;
                         let g = next()?;
                         let b = next()?;
-                        tag.set_bg_color(Color::with(format!(
-                            "48;2;{};{};{};",
-                            shrink!(r),
-                            shrink!(g),
-                            shrink!(b)
-                        )));
+                        ansi.set_fg_color(Color::Rgb(Rgb(48, shrink!(r), shrink!(g), shrink!(b))));
                     }
                     if num == 5 {
-                        let byte = next()?;
-                        tag.set_bg_color(Color::with(format!("48;5;{};", shrink!(byte))));
+                        let fixed = next()?;
+                        ansi.set_fg_color(Color::Ansi256(Ansi256(48, shrink!(fixed))));
                     }
                 }
                 _ => {}
             }
         }
 
-        tag.set_custom(ansi);
-        tag.set_name("$ansi".to_string());
-
-        Ok(tag)
+        Ok(ansi)
     }
 }
 

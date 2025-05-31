@@ -13,9 +13,7 @@ use document::{Document, Node};
 pub mod document;
 
 #[doc(hidden)]
-pub struct Resolver {
-    bindings: HashMap<String, Tag>,
-}
+pub struct Resolver {}
 
 impl Default for Resolver {
     fn default() -> Self {
@@ -25,9 +23,7 @@ impl Default for Resolver {
 
 impl Resolver {
     pub fn new() -> Self {
-        Self {
-            bindings: HashMap::new(),
-        }
+        Self {}
     }
 
     pub fn resolve(&mut self, chunks: Vec<Chunk>) -> Rc<Document> {
@@ -56,59 +52,51 @@ impl Resolver {
                 ChunkData::Word(_) => {
                     node.append(chunk.clone());
                 }
+                ChunkData::Ansi(_) => {
+                    node.append(chunk.clone());
+                }
             }
         }
 
         let node = tree.root();
-        let mut detachables = vec![];
-        self.resolve_bindings(&node, &mut detachables);
-        for node in &detachables {
-            node.detach();
+
+        {
+            let mut detachables = vec![];
+            let mut bindings: HashMap<String, Tag> = HashMap::new();
+            Resolver::resolve_bindings(&mut bindings, &node, &mut detachables);
+            for node in &detachables {
+                node.detach();
+            }
         }
 
-        //for _ in 0..1 {
-        let mut detachables = vec![];
-        self.optimize_ws(&node, &mut detachables);
-        for node in &detachables {
-            node.detach();
+        {
+            let mut detachables = vec![];
+            Resolver::optimize_ws(&node, &mut detachables);
+            for node in &detachables {
+                node.detach();
+            }
         }
-        //}
-        self._resolve(&node, "$root");
+
+        Resolver::_resolve(&node, "$root");
 
         tree
     }
 
-    /// Collect all declared bindings: <let />
-    fn resolve_bindings(&mut self, node: &Rc<Node>, detachables: &mut Vec<Rc<Node>>) {
+    /// Resolve all declared bindings: <let />
+    fn resolve_bindings(
+        bindings: &mut HashMap<String, Tag>,
+        node: &Rc<Node>,
+        detachables: &mut Vec<Rc<Node>>,
+    ) {
         for child in node.children() {
             let mut child_chunk = child.chunk().borrow_mut();
             if child_chunk.is_tag() {
                 let tag = child_chunk.tag_mut().unwrap();
-                let name = tag.name();
-                if name == "let" {
-                    let mut tag = tag.clone();
-                    if !tag.src().is_empty() {
-                        for ansector in child.ancestors() {
-                            if let Some(binding) =
-                                self.bindings
-                                    .get(&format!("{}/{}", ansector.id(), tag.src()))
-                            {
-                                tag.inherit(binding);
-                                break;
-                            }
-                        }
-                    }
-
-                    let name = tag.custom();
-                    let id = node.id();
-                    self.bindings.insert(format!("{id}/{name}"), tag);
-                    detachables.push(child.clone());
-                }
+                let name = tag.name().clone();
 
                 if !BUILTIN_TAGS.contains(&name.as_str()) {
                     for ansector in child.ancestors() {
-                        if let Some(binding) =
-                            self.bindings.get(&format!("{}/{}", ansector.id(), name))
+                        if let Some(binding) = bindings.get(&format!("{}/{}", ansector.id(), name))
                         {
                             tag.inherit(binding);
                             break;
@@ -119,21 +107,28 @@ impl Resolver {
                 if !tag.src().is_empty() {
                     for ansector in child.ancestors() {
                         if let Some(binding) =
-                            self.bindings
-                                .get(&format!("{}/{}", ansector.id(), tag.src()))
+                            bindings.get(&format!("{}/{}", ansector.id(), tag.src()))
                         {
                             tag.inherit(binding);
                             break;
                         }
                     }
                 }
+
+                if name == "let" {
+                    let tag = tag.clone();
+                    let name = tag.custom();
+                    let id = node.id();
+                    bindings.insert(format!("{id}/{name}"), tag);
+                    detachables.push(child.clone());
+                }
             }
-            self.resolve_bindings(&child, detachables);
+            Resolver::resolve_bindings(bindings, &child, detachables);
         }
     }
 
     /// Optimizes Excess Whitespace
-    fn optimize_ws(&self, node: &Rc<Node>, detachables: &mut Vec<Rc<Node>>) {
+    fn optimize_ws(node: &Rc<Node>, detachables: &mut Vec<Rc<Node>>) {
         for child in node.children() {
             let mut child_chunk = child.chunk().borrow_mut();
             if child_chunk.is_ws() {
@@ -189,11 +184,11 @@ impl Resolver {
                 }
             }
 
-            self.optimize_ws(&child, detachables);
+            Resolver::optimize_ws(&child, detachables);
         }
     }
 
-    fn _resolve(&self, node: &Rc<Node>, node_name: &str) {
+    fn _resolve(node: &Rc<Node>, node_name: &str) {
         for child in node.children() {
             let mut child_chunk = child.chunk().borrow_mut();
             if child_chunk.is_tag() {
@@ -230,9 +225,9 @@ impl Resolver {
                     }
                 }
 
-                self._resolve(&child, tag.name());
+                Resolver::_resolve(&child, tag.name());
             } else {
-                self._resolve(&child, node_name);
+                Resolver::_resolve(&child, node_name);
             }
         }
     }

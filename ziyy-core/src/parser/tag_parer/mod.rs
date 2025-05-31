@@ -171,7 +171,7 @@ impl TagParser {
                     let color = |pre: &str| -> Result<_, _> {
                         let c: Color =
                             (format!("{pre}{}", token.lexeme), token.span - (0, 1)).try_into()?;
-                        Ok(c.into())
+                        Ok(c)
                     };
 
                     if tag.name() == "c" {
@@ -182,7 +182,7 @@ impl TagParser {
 
                     consume_declaration!(tag, next, token);
                 }
-                "byte" => {
+                "fixed" => {
                     token = next()?;
                     if token.r#type == EQUAL {
                         token = next()?;
@@ -192,8 +192,8 @@ impl TagParser {
 
                     let color = |pre: &str| -> Result<_, _> {
                         let c: Color = (
-                            format!("{pre}byte({})", token.literal.unwrap()),
-                            token.span.unquote() - (0, 6),
+                            format!("{pre}fixed({})", token.literal.unwrap()),
+                            token.span.unquote() - (0, 7),
                         )
                             .try_into()?;
                         Ok(c)

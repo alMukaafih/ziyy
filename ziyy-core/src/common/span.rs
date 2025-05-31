@@ -65,12 +65,10 @@ impl Display for Span {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if f.alternate() {
             f.write_fmt(format_args!("{:#}..{:#}", self.start, self.end))
+        } else if *self == Span::null() {
+            f.write_str("null")
         } else {
-            if *self == Span::null() {
-                f.write_str("null")
-            } else {
-                self.start.fmt(f)
-            }
+            self.start.fmt(f)
         }
     }
 }

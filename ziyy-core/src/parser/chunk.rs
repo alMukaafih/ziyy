@@ -5,13 +5,14 @@ use std::{
 
 use crate::common::Span;
 
-use super::tag_parer::tag::Tag;
+use super::{tag_parer::tag::Tag, word_parer::ansi::Ansi};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ChunkData {
     Tag(Tag),
     WhiteSpace(String),
     Word(String),
+    Ansi(Ansi),
 }
 
 impl ChunkData {
@@ -39,6 +40,7 @@ impl ChunkData {
             ChunkData::Tag(tag) => f(tag),
             ChunkData::WhiteSpace(_) => false,
             ChunkData::Word(_) => false,
+            ChunkData::Ansi(_) => false,
         }
     }
 
@@ -90,12 +92,14 @@ impl Display for ChunkData {
                 ChunkData::Tag(tag) => f.write_fmt(format_args!("{tag:#}")),
                 ChunkData::WhiteSpace(ws) => f.write_fmt(format_args!("{ws:?}")),
                 ChunkData::Word(word) => word.fmt(f),
+                ChunkData::Ansi(ansi) => ansi.fmt(f),
             }
         } else {
             match self {
                 ChunkData::Tag(tag) => tag.fmt(f),
                 ChunkData::WhiteSpace(ws) => ws.fmt(f),
                 ChunkData::Word(word) => word.fmt(f),
+                ChunkData::Ansi(ansi) => ansi.fmt(f),
             }
         }
     }

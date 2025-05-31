@@ -15,6 +15,7 @@ struct Kin {
 }
 
 #[derive(Debug, Clone)]
+#[doc(hidden)]
 pub struct Node {
     id: u32,
     kin: RefCell<Kin>,

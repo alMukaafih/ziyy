@@ -10,6 +10,29 @@ pub enum Arg {
     Param(String),
 }
 
+impl Arg {
+    pub fn is_long_switch_and(&self, f: fn(&String) -> bool) -> bool {
+        match self {
+            Arg::LongSwitch(s) => f(s),
+            _ => false,
+        }
+    }
+
+    pub fn is_short_switch_and(&self, f: fn(&String) -> bool) -> bool {
+        match self {
+            Arg::ShortSwitch(s) => f(s),
+            _ => false,
+        }
+    }
+
+    pub fn is_params_and(self, mut f: impl FnMut(String)) {
+        match self {
+            Arg::Param(s) => f(s),
+            _ => {}
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum Error {
     Long(String),
@@ -28,7 +51,7 @@ fn split_args(args0: Args) -> Vec<String> {
 
     for arg in args0 {
         if let Some(ch) = arg.strip_prefix('-') {
-            if ch.chars().nth(0) == Some('-') {
+            if ch.chars().next() == Some('-') {
                 args.push(arg.clone());
                 continue;
             }

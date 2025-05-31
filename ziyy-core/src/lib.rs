@@ -2,7 +2,10 @@
 pub use error::{Error, ErrorType, Result};
 pub use indexer::Indexer;
 pub use parser::Parser;
-pub use resolver::Resolver;
+pub use resolver::{
+    Resolver,
+    document::{Document, Node},
+};
 pub use splitter::Splitter;
 
 mod error;

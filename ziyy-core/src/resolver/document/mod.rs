@@ -18,6 +18,7 @@ mod iter;
 mod node;
 
 #[derive(Clone)]
+#[doc(hidden)]
 pub struct Document {
     nodes: RefCell<Vec<Rc<Node>>>,
 }
