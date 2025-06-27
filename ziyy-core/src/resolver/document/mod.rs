@@ -89,17 +89,17 @@ impl Debug for Document {
     fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
         use iter::Edge;
         if f.alternate() {
-            write!(f, "Tree {{")?;
+            write!(f, "Document {{")?;
             for edge in self.root2().traverse() {
                 match edge {
                     Edge::Open(node) if node.has_children() => {
-                        write!(f, " {:?} => {{", node.chunk())?;
+                        write!(f, " {:#?} => {{", node.chunk())?;
                     }
                     Edge::Open(node) if node.next_sibling().is_some() => {
-                        write!(f, " {:?},", node.chunk())?;
+                        write!(f, " {:#?},", node.chunk())?;
                     }
                     Edge::Open(node) => {
-                        write!(f, " {:?}", node.chunk())?;
+                        write!(f, " {:#?}", node.chunk())?;
                     }
                     Edge::Close(node) if node.has_children() => {
                         if node.next_sibling().is_some() {
@@ -113,7 +113,9 @@ impl Debug for Document {
             }
             write!(f, " }}")
         } else {
-            f.debug_struct("Tree").field("vec", &self.nodes).finish()
+            f.debug_struct("Document")
+                .field("nodes", &self.nodes)
+                .finish()
         }
     }
 }

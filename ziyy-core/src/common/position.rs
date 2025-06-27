@@ -5,8 +5,8 @@ use std::{
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Position {
-    line: usize,
-    column: usize,
+    pub line: usize,
+    pub column: usize,
 }
 
 impl Default for Position {

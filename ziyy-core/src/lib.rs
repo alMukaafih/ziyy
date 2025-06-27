@@ -1,12 +1,17 @@
 #![allow(clippy::pedantic)]
 pub use error::{Error, ErrorType, Result};
 pub use indexer::Indexer;
-pub use parser::Parser;
+pub use parser::{Parser, WordParser};
 pub use resolver::{
     Resolver,
     document::{Document, Node},
 };
-pub use splitter::Splitter;
+pub use splitter::{
+    Splitter,
+    fragment::{Fragment, FragmentType},
+};
+
+pub use common::{Position, Span};
 
 mod error;
 #[macro_use]
@@ -44,7 +49,7 @@ pub fn style<T: AsRef<str>>(source: T) -> String {
     let parser = Parser::new();
     let chunks = parser.parse(frags).unwrap(); // TODO: better panics on message
 
-    let mut resolver = Resolver::new();
+    let mut resolver = Resolver::new(false);
     let output = resolver.resolve(chunks);
 
     let mut buf = String::new();

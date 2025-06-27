@@ -6,6 +6,7 @@ use crate::{
     parser::{
         chunk::{Chunk, ChunkData},
         tag_parer::tag::{Tag, TagType},
+        word_parer::ansi::Ansi,
     },
 };
 use document::{Document, Node};
@@ -13,17 +14,13 @@ use document::{Document, Node};
 pub mod document;
 
 #[doc(hidden)]
-pub struct Resolver {}
-
-impl Default for Resolver {
-    fn default() -> Self {
-        Self::new()
-    }
+pub struct Resolver {
+    ansi_only: bool,
 }
 
 impl Resolver {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(ansi_only: bool) -> Self {
+        Self { ansi_only }
     }
 
     pub fn resolve(&mut self, chunks: Vec<Chunk>) -> Rc<Document> {
@@ -52,13 +49,16 @@ impl Resolver {
                 ChunkData::Word(_) => {
                     node.append(chunk.clone());
                 }
-                ChunkData::Ansi(_) => {
-                    node.append(chunk.clone());
-                }
             }
         }
 
         let node = tree.root();
+
+        if self.ansi_only {
+            Resolver::optimize_ansi(&node);
+            Resolver::constrain(&node);
+            return tree;
+        }
 
         {
             let mut detachables = vec![];
@@ -78,6 +78,8 @@ impl Resolver {
         }
 
         Resolver::_resolve(&node, "$root");
+        Resolver::optimize_styles(&node);
+        Resolver::constrain(&node);
 
         tree
     }
@@ -181,6 +183,8 @@ impl Resolver {
                             detachables.push(next);
                         }
                     }
+                } else if name == "pre" {
+                    continue;
                 }
             }
 
@@ -195,8 +199,8 @@ impl Resolver {
                 let tag = child_chunk.tag_mut().unwrap();
                 if tag.r#type == TagType::Open {
                     let name = tag.name();
-                    if matches!(name.as_str(), "ziyy" | "p" | "div") {
-                        if matches!(node_name, "ziyy" | "$root" | "p" | "div")
+                    if matches!(name.as_str(), "ziyy" | "p" | "div" | "pre") {
+                        if matches!(node_name, "ziyy" | "$root" | "p" | "div" | "pre")
                             && node
                                 .first_child()
                                 .is_some_and(|first| first.id() == child.id())
@@ -209,17 +213,15 @@ impl Resolver {
                         }
                     } else if name == "a" {
                         for grand_child in child.children() {
-                            grand_child.null_tags();
+                            grand_child.strip_styles();
                         }
                     }
 
                     let last = child.last_child().unwrap();
-                    let mut last_chunk = last.chunk().borrow_mut();
-                    if last_chunk.is_tag_and(|tag| tag.r#type == TagType::Close) {
-                        *last_chunk.tag_mut().unwrap() = !tag.clone();
-                    } else {
+                    let last_chunk = last.chunk().borrow_mut();
+                    if !last_chunk.is_tag_and(|tag| tag.r#type == TagType::Close) {
                         last.insert_after(Chunk {
-                            data: ChunkData::Tag(!tag.clone()),
+                            data: ChunkData::Tag(tag.close()),
                             span: Span::inserted(),
                         });
                     }
@@ -229,6 +231,77 @@ impl Resolver {
             } else {
                 Resolver::_resolve(&child, node_name);
             }
+        }
+    }
+
+    /// Optimize styles
+    fn optimize_styles(node: &Rc<Node>) {
+        let mut stack = Vec::with_capacity(1024);
+        for child in node.descendants() {
+            let mut child_chunk = child.chunk().borrow_mut();
+            if child_chunk.is_tag() {
+                let tag = child_chunk.tag_mut().unwrap();
+                match tag.r#type {
+                    TagType::Open => {
+                        let (prev_name, prev_style, prev_delta): (String, Ansi, Ansi) =
+                            stack.pop().unwrap_or_default();
+                        let new_style = prev_style.clone() + tag.clone().ansi;
+                        let new_delta = tag.clone().ansi - prev_style.clone();
+
+                        tag.ansi = new_delta.clone();
+
+                        stack.push((prev_name, prev_style, prev_delta));
+                        stack.push((tag.name().clone(), new_style, new_delta));
+                    }
+
+                    TagType::Close => {
+                        let mut current_tag = stack.pop().unwrap_or_default();
+                        let new_tag = current_tag.clone();
+                        while current_tag.0 == "$ansi" {
+                            current_tag = stack.pop().unwrap_or_default();
+                        }
+
+                        tag.ansi = !(new_tag.2);
+                    }
+
+                    TagType::SelfClose => {}
+                }
+            }
+        }
+    }
+
+    fn constrain(node: &Rc<Node>) {
+        if let Some(first) = node.first_child() {
+            first.insert_before(Chunk {
+                data: ChunkData::Word(String::from("\x1b[m")),
+                span: Span::inserted(),
+            });
+        }
+
+        if let Some(last) = node.last_child() {
+            last.insert_after(Chunk {
+                data: ChunkData::Word(String::from("\x1b[m")),
+                span: Span::inserted(),
+            });
+        }
+    }
+
+    fn optimize_ansi(node: &Rc<Node>) {
+        for child in node.children() {
+            let mut child_chunk = child.chunk().borrow_mut();
+            if child_chunk.is_tag() {
+                if let Some(first) = child.first_child() {
+                    let mut first_chunk = first.chunk().borrow_mut();
+                    if first_chunk.is_tag() {
+                        let tag = child_chunk.tag_mut().unwrap();
+                        let first_tag = first_chunk.tag_mut().unwrap();
+
+                        tag.reset_styles();
+                        *first_tag = tag.clone() + first_tag.clone();
+                    }
+                }
+            }
+            Resolver::optimize_ansi(&child);
         }
     }
 }

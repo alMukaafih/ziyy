@@ -5,6 +5,7 @@ pub use number::Number;
 use scanner::Scanner;
 use std::collections::VecDeque;
 use std::fmt::Display;
+use std::ops::AddAssign;
 use token::Token;
 use token::TokenType::*;
 
@@ -78,7 +79,7 @@ impl Default for Color {
 }
 
 impl Color {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Color::String(String::new())
     }
 
@@ -145,7 +146,7 @@ impl Color {
         }
     }
 
-    fn byte(mut next: impl FnMut() -> Result<Token, Error>, n: u8) -> Result<Color, Error> {
+    fn fixed(mut next: impl FnMut() -> Result<Token, Error>, n: u8) -> Result<Color, Error> {
         let token = next()?;
         expect(&token, LEFT_PAREN, ErrorType::UnexpectedToken)?;
 
@@ -204,7 +205,7 @@ impl TryFrom<(String, Span)> for Color {
             token::TokenType::FG_CYAN => Color::four_bit(36),
             token::TokenType::FG_WHITE => Color::four_bit(37),
             token::TokenType::FG_RGB => Color::rgb(next, 38)?,
-            token::TokenType::FG_BYTE => Color::byte(next, 38)?,
+            token::TokenType::FG_FIXED => Color::fixed(next, 38)?,
             token::TokenType::FG_DEFAULT => Color::four_bit(39),
 
             token::TokenType::BG_BLACK => Color::four_bit(40),
@@ -216,7 +217,7 @@ impl TryFrom<(String, Span)> for Color {
             token::TokenType::BG_CYAN => Color::four_bit(46),
             token::TokenType::BG_WHITE => Color::four_bit(47),
             token::TokenType::BG_RGB => Color::rgb(next, 48)?,
-            token::TokenType::BG_BYTE => Color::byte(next, 38)?,
+            token::TokenType::BG_FIXED => Color::fixed(next, 38)?,
             token::TokenType::BG_DEFAULT => Color::four_bit(49),
 
             _ => {
@@ -235,6 +236,14 @@ impl TryFrom<(String, Span)> for Color {
 impl From<Color> for String {
     fn from(color: Color) -> Self {
         color.to_string()
+    }
+}
+
+impl AddAssign for Color {
+    fn add_assign(&mut self, rhs: Self) {
+        if !rhs.is_empty() {
+            *self = rhs
+        }
     }
 }
 

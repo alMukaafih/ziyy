@@ -35,6 +35,22 @@ impl Span {
         let pos = Position::new(0, 0);
         Span::new(pos, pos)
     }
+
+    pub fn calculate(s: &String) -> Self {
+        let start = Position::default();
+
+        let mut end = start;
+        for c in s.chars() {
+            if c == '\n' {
+                end.line += 1;
+                end.column = 1;
+            } else {
+                end.column += 1;
+            }
+        }
+
+        Self { start, end }
+    }
 }
 
 impl Add<(usize, usize)> for Span {

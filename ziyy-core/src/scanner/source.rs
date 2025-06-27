@@ -22,3 +22,21 @@ impl Source<char> for Vec<char> {
         self[i]
     }
 }
+
+impl Source<u8> for Vec<u8> {
+    fn null(&self) -> u8 {
+        b'\0'
+    }
+
+    fn nl(&self) -> u8 {
+        b'\n'
+    }
+
+    fn len(&self) -> usize {
+        self.as_slice().len()
+    }
+
+    fn at(&self, i: usize) -> u8 {
+        self[i]
+    }
+}

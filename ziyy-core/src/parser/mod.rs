@@ -1,7 +1,7 @@
 use crate::error::Result;
 use crate::splitter::fragment::{Fragment, FragmentType};
 use chunk::{Chunk, ChunkData};
-use word_parer::WordParser;
+pub use word_parer::WordParser;
 
 pub mod chunk;
 pub mod color;

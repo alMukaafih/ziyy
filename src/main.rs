@@ -1,14 +1,31 @@
 use arg::{parse_args, Cli};
 use std::env;
 use std::fs::File;
-use std::io::{stdout, BufReader, IsTerminal, Read, Write};
+use std::io::{stdout, BufReader, /* IsTerminal, */ Read, Write};
 use std::path::Path;
 use std::process::exit;
 use std::rc::Rc;
 use ziyy::Error;
-use ziyy_core::{Document, Indexer, Parser, Resolver, Result, Splitter};
+use ziyy_core::{
+    Document, Fragment, FragmentType, Indexer, Parser, Resolver, Result, Span, Splitter, WordParser,
+};
 
 mod arg;
+
+fn optimize(source: String) -> Result<String> {
+    let parser = WordParser::new();
+    let span = Span::calculate(&source);
+    let chunks = parser.parse(Fragment::new(FragmentType::Word, source, span))?;
+    // println!("{chunks:?}");
+
+    let mut resolver = Resolver::new(true);
+    let output = resolver.resolve(chunks);
+    let mut buf = String::new();
+    output.root().to_string(&mut buf);
+
+    Ok(buf)
+    // Ok(output.to_string())
+}
 
 fn parse(source: &str) -> Result<Rc<Document>> {
     let mut indexer = Indexer::new();
@@ -19,7 +36,7 @@ fn parse(source: &str) -> Result<Rc<Document>> {
     let parser = Parser::new();
     let chunks = parser.parse(frags)?;
 
-    let mut resolver = Resolver::new();
+    let mut resolver = Resolver::new(false);
     Ok(resolver.resolve(chunks))
 }
 
@@ -29,8 +46,10 @@ fn parse_to_out(source: &str, out: &mut impl Write, options: Options) {
         let mut buf = String::new();
         if options.tree {
             buf = output.to_string();
+            // buf = format!("{:#?}", output);
         } else {
             output.root().to_string(&mut buf);
+            buf = optimize(buf)?;
         }
 
         let _ = out.write(buf.as_bytes());
@@ -44,16 +63,11 @@ fn parse_to_out(source: &str, out: &mut impl Write, options: Options) {
 
 fn usage() {
     let mut out = stdout();
-    let help = parse(&format!(
-        include_str!("help.zi"),
-        env!("CARGO_PKG_DESCRIPTION"),
-        env!("CARGO_BIN_NAME")
-    ))
-    .unwrap();
+    let help = parse(&format!(include_str!("help.zi"), env!("CARGO_BIN_NAME"))).unwrap();
 
-    if !out.is_terminal() {
-        help.root().null_tags();
-    }
+    /* if !out.is_terminal() {
+        help.root().clear_styles();
+    } */
 
     let mut buf = String::new();
     help.root().to_string(&mut buf);

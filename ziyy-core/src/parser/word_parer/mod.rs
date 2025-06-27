@@ -1,12 +1,12 @@
 use super::chunk::{Chunk, ChunkData};
 use super::color::{Ansi256, Color, Rgb};
+use super::tag_parer::tag::{Tag, TagType};
 use crate::common::Span;
 use crate::error::Error;
 use crate::scanner::GenericScanner;
 use crate::splitter::fragment::Fragment;
-use ansi::Ansi;
+use ansi::State;
 use scanner::Scanner;
-use std::collections::VecDeque;
 use token::Token;
 pub mod ansi;
 mod scanner;
@@ -24,6 +24,7 @@ macro_rules! shrink {
     }};
 }
 
+#[doc(hidden)]
 pub struct WordParser;
 
 impl Default for WordParser {
@@ -63,10 +64,10 @@ impl WordParser {
                     while i < len && tokens[i].literal != '\x1b' {
                         i += 1;
                     }
-                    let word = tokens[h..i].to_string();
+                    let word = tokens[g..i].to_string();
                     chunks.push(Chunk {
                         data: ChunkData::Word(word),
-                        span: tokens[h..i].to_span(),
+                        span: tokens[g..i].to_span(),
                     });
 
                     break;
@@ -80,9 +81,9 @@ impl WordParser {
                     // Handle escape sequence
                     let escape_sequence = tokens[h..i].to_string();
 
-                    if let Ok(ansi) = self.to_ansi(escape_sequence) {
+                    if let Ok(tag) = self.ansi_to_tag(escape_sequence) {
                         chunks.push(Chunk {
-                            data: ChunkData::Ansi(ansi),
+                            data: ChunkData::Tag(tag),
                             span: tokens[g..i].to_span(),
                         });
                     }
@@ -111,121 +112,117 @@ impl WordParser {
                 })
             }
             // Handle normal character
-            i += 1
+            // i += 1
         }
 
         Ok(chunks)
     }
 
-    fn to_ansi(&self, source: String) -> Result<Ansi, i8> {
+    fn ansi_to_tag(&self, source: String) -> Result<Tag, i8> {
         // Convert ANSI escape codes to tags
-        // This is a placeholder implementation
-        let mut parts = source
-            .split(';')
-            .map(|x| {
-                if x.is_empty() {
-                    Ok(0)
-                } else {
-                    x.parse::<i32>().map_err(|_| 0)
-                }
-            })
-            .collect::<VecDeque<_>>();
+        let parts = source.split(';');
 
-        let mut next = || parts.pop_front().unwrap_or(Err(-1));
+        let mut segments = Vec::with_capacity(10);
+        for part in parts {
+            if part.is_empty() {
+                segments.push(0);
+            } else {
+                segments.push(part.parse::<i32>().map_err(|_| 0)?);
+            }
+        }
 
-        let mut ansi = Ansi::default();
+        let mut parts = segments.iter().peekable();
+
+        let mut tag = Tag::default();
         loop {
-            let num = next();
+            let num = parts.next();
 
             let num = match num {
-                Ok(n) => n,
-                Err(-1) => break,
-                Err(_) => return Err(0),
+                Some(n) => *n,
+                None => break,
             };
 
             match num {
                 -1 => break,
-                0 => ansi = Ansi::default(),
+                0 => tag.reset_styles(),
 
                 1 => {
-                    ansi.set_bold(true);
-                    ansi.set_dim(false);
-                    ansi.set_clear_bold(false);
+                    tag.set_brightness(State::A);
                 }
                 2 => {
-                    ansi.set_bold(false);
-                    ansi.set_dim(true);
-                    ansi.set_clear_bold(false);
+                    tag.set_brightness(State::B);
                 }
                 22 => {
-                    ansi.set_bold(false);
-                    ansi.set_dim(false);
-                    ansi.set_clear_bold(true);
+                    let num = parts.peek();
+                    if let Some(num) = num {
+                        tag.set_brightness(match num {
+                            1 => State::BA,
+                            2 => State::AB,
+                            _ => State::E,
+                        });
+                        parts.next();
+                    } else {
+                        tag.set_brightness(State::E);
+                    }
                 }
 
                 3 => {
-                    ansi.set_italics(true);
-                    ansi.set_clear_italics(false);
+                    tag.set_italics(true);
                 }
                 23 => {
-                    ansi.set_italics(false);
-                    ansi.set_clear_italics(true);
+                    tag.set_italics(false);
                 }
 
                 4 => {
-                    ansi.set_under(true);
-                    ansi.set_double_under(false);
-                    ansi.set_clear_under(false);
+                    tag.set_under(State::A);
                 }
                 21 => {
-                    ansi.set_under(false);
-                    ansi.set_double_under(true);
-                    ansi.set_clear_under(false);
+                    tag.set_under(State::B);
                 }
                 24 => {
-                    ansi.set_under(false);
-                    ansi.set_double_under(false);
-                    ansi.set_clear_under(true);
+                    let num = parts.peek();
+                    if let Some(num) = num {
+                        tag.set_under(match num {
+                            4 => State::BA,
+                            21 => State::AB,
+                            _ => State::E,
+                        });
+                        parts.next();
+                    } else {
+                        tag.set_under(State::E);
+                    }
                 }
 
                 5 => {
-                    ansi.set_blink(true);
-                    ansi.set_clear_blink(false);
+                    tag.set_blink(true);
                 }
                 25 => {
-                    ansi.set_blink(false);
-                    ansi.set_clear_blink(true);
+                    tag.set_blink(false);
                 }
 
                 7 => {
-                    ansi.set_negative(true);
-                    ansi.set_clear_negative(false);
+                    tag.set_negative(true);
                 }
                 27 => {
-                    ansi.set_negative(false);
-                    ansi.set_clear_negative(true);
+                    tag.set_negative(false);
                 }
 
                 8 => {
-                    ansi.set_hidden(true);
-                    ansi.set_clear_hidden(false);
+                    tag.set_hidden(true);
                 }
                 28 => {
-                    ansi.set_hidden(false);
-                    ansi.set_clear_hidden(true);
+                    tag.set_hidden(false);
                 }
 
                 9 => {
-                    ansi.set_strike(true);
-                    ansi.set_clear_strike(false);
+                    tag.set_strike(true);
                 }
                 29 => {
-                    ansi.set_strike(false);
-                    ansi.set_clear_strike(true);
+                    tag.set_strike(false);
                 }
 
-                fg @ 30..=37 | fg @ 39 => ansi.set_fg_color(Color::four_bit(shrink!(fg))),
-                bg @ 40..=47 | bg @ 49 => ansi.set_bg_color(Color::four_bit(shrink!(bg))),
+                fg @ 30..=37 | fg @ 39 => tag.set_fg_color(Color::four_bit(shrink!(fg))),
+                bg @ 40..=47 | bg @ 49 => tag.set_bg_color(Color::four_bit(shrink!(bg))),
 
                 /* 90 => tag.fg_color = "black".into(),
                 91 => tag.fg_color = "red".into(),
@@ -245,38 +242,41 @@ impl WordParser {
                 106 => tag.bg_color = "cyan".into(),
                 107 => tag.bg_color = "white".into(), */
                 38 => {
-                    let num = next()?;
+                    let num = *parts.next().ok_or(0)?;
                     if num == 2 {
-                        let r = next()?;
-                        let g = next()?;
-                        let b = next()?;
-                        ansi.set_fg_color(Color::Rgb(Rgb(38, shrink!(r), shrink!(g), shrink!(b))));
+                        let r = *parts.next().ok_or(0)?;
+                        let g = *parts.next().ok_or(0)?;
+                        let b = *parts.next().ok_or(0)?;
+                        tag.set_fg_color(Color::Rgb(Rgb(38, shrink!(r), shrink!(g), shrink!(b))));
                     }
 
                     if num == 5 {
-                        let fixed = next()?;
-                        ansi.set_fg_color(Color::Ansi256(Ansi256(38, shrink!(fixed))));
+                        let fixed = *parts.next().ok_or(0)?;
+                        tag.set_fg_color(Color::Ansi256(Ansi256(38, shrink!(fixed))));
                     }
                 }
 
                 48 => {
-                    let num = next()?;
+                    let num = *parts.next().ok_or(0)?;
                     if num == 2 {
-                        let r = next()?;
-                        let g = next()?;
-                        let b = next()?;
-                        ansi.set_fg_color(Color::Rgb(Rgb(48, shrink!(r), shrink!(g), shrink!(b))));
+                        let r = *parts.next().ok_or(0)?;
+                        let g = *parts.next().ok_or(0)?;
+                        let b = *parts.next().ok_or(0)?;
+                        tag.set_fg_color(Color::Rgb(Rgb(48, shrink!(r), shrink!(g), shrink!(b))));
                     }
                     if num == 5 {
-                        let fixed = next()?;
-                        ansi.set_fg_color(Color::Ansi256(Ansi256(48, shrink!(fixed))));
+                        let fixed = *parts.next().ok_or(0)?;
+                        tag.set_fg_color(Color::Ansi256(Ansi256(48, shrink!(fixed))));
                     }
                 }
                 _ => {}
             }
         }
 
-        Ok(ansi)
+        tag.set_name("$ansi".to_string());
+        tag.r#type = TagType::Open;
+
+        Ok(tag)
     }
 }
 

@@ -4,7 +4,7 @@ use super::token::{
 };
 use crate::{
     common::Span,
-    scanner::{is_alpha, is_alpha_numeric, GenericScanner, Source},
+    scanner::{GenericScanner, Source, is_alpha, is_alpha_numeric},
     splitter::fragment::Fragment,
 };
 

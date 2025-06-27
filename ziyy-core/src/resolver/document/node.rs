@@ -4,7 +4,7 @@ use std::{
 };
 
 use super::Document;
-use crate::parser::{chunk::Chunk, tag_parer::tag::Tag};
+use crate::parser::chunk::Chunk;
 
 #[derive(Debug, Clone)]
 struct Kin {
@@ -325,13 +325,13 @@ impl Node {
         }
     }
 
-    pub fn null_tags(self: &Rc<Node>) {
+    pub fn strip_styles(self: &Rc<Node>) {
         if self.chunk.borrow().is_tag() {
             let mut tag_chunk = self.chunk.borrow_mut();
             let tag = tag_chunk.data.tag_mut().unwrap();
-            *tag = Tag::with_name("$null");
+            tag.reset_styles();
             for child in self.children() {
-                child.null_tags();
+                child.strip_styles();
             }
         }
     }

@@ -4,9 +4,9 @@ version = "2.0.0"
 readme = "../README.md"
 repository = "https://github.com/alMukaafih/ziyy.git"
 edition = "2021"
-description = "Terminal Markup Language."
+description = "Terminal Styling using HTML."
 license = "MIT OR Apache-2.0"
-keywords = ["terminal", "color", "style", "rgb", "cli"]
+keywords = ["terminal", "color", "style", "html", "cli"]
 categories = ["command-line-interface", "command-line-utilities"]
 
 [workspace]

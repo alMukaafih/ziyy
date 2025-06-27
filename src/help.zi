@@ -3,7 +3,7 @@
     <let name="cyan" c="cyan" />
 
     <div>
-        <p>{}</p>
+        <p>Ziyy's compiler.</p>
         <br />
         <p>
             <span src="bold:green">Usage:</span>
@@ -18,7 +18,7 @@
 
     <div>
         <p src="bold:green">Options:</p>
-        <p tab="2" src="cyan" b>-V, --version</p>
+        <p tab="2" src="cyan">\x1b[1m-V, --version</p>
         <p tab="10">Print version info and exit</p>
         <p tab="2" src="cyan" b>-h, --help</p>
         <p tab="10">Print help</p>

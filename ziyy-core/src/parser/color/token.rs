@@ -13,7 +13,7 @@ pub enum TokenType {
     FG_CYAN,
     FG_WHITE,
     FG_RGB,
-    FG_BYTE,
+    FG_FIXED,
     FG_DEFAULT,
 
     BG_BLACK,
@@ -25,7 +25,7 @@ pub enum TokenType {
     BG_CYAN,
     BG_WHITE,
     BG_RGB,
-    BG_BYTE,
+    BG_FIXED,
     BG_DEFAULT,
 
     HEX,

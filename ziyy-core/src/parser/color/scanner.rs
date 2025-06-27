@@ -1,5 +1,5 @@
 use crate::common::Span;
-use crate::scanner::{is_alpha, is_alpha_numeric, is_digit, is_hexdigit, GenericScanner, Source};
+use crate::scanner::{GenericScanner, Source, is_alpha, is_alpha_numeric, is_digit, is_hexdigit};
 
 use super::token::Token;
 use super::token::TokenType::{self, *};
@@ -11,9 +11,10 @@ pub static COLORS: LazyLock<HashMap<&str, TokenType>> = LazyLock::new(|| {
     [
         ("bblack", BG_BLACK),
         ("bblue", BG_BLUE),
-        ("bbyte", BG_BYTE),
+        ("bbyte", BG_FIXED),
         ("bcyan", BG_CYAN),
         ("bdefault", BG_DEFAULT),
+        ("bfalse", BG_DEFAULT),
         ("bgreen", BG_GREEN),
         ("bmagenta", BG_MAGENTA),
         ("bred", BG_RED),
@@ -22,9 +23,10 @@ pub static COLORS: LazyLock<HashMap<&str, TokenType>> = LazyLock::new(|| {
         ("byellow", BG_YELLOW),
         ("fblack", FG_BLACK),
         ("fblue", FG_BLUE),
-        ("fbyte", FG_BYTE),
+        ("fbyte", FG_FIXED),
         ("fcyan", FG_CYAN),
         ("fdefault", FG_DEFAULT),
+        ("ffalse", FG_DEFAULT),
         ("fgreen", FG_GREEN),
         ("fmagenta", FG_MAGENTA),
         ("fred", FG_RED),
