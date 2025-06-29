@@ -3,7 +3,7 @@ use std::{
     ops::{Add, Deref, DerefMut, Not, Sub},
 };
 
-use crate::parser::word_parer::ansi::Ansi;
+use crate::parser::ansi::Ansi;
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum TagType {
@@ -39,27 +39,38 @@ impl Tag {
 
     pub fn close(&self) -> Self {
         assert!(self.r#type == TagType::Open);
-        let mut tag = Tag::default();
-        tag.r#type = TagType::Close;
+        let mut tag = Tag {
+            r#type: TagType::Close,
+            ..Default::default()
+        };
         tag.set_name(self.name().clone());
         tag
     }
 
-    pub fn inherit(&mut self, src: &Tag) {
+    pub fn inherit(&mut self, src: &Ansi) {
         macro_rules! inherit {
-            ($(($set_y:tt, $y:tt ) ),* ) => {
-
-            $(
+            ( 1 $set_y:tt $y:tt ) => {
                 if !src.$y().is_empty() && self.$y().is_empty() {
                     self.$set_y(src.$y().clone());
                 }
-            )*
+            };
+
+            ( 2 $set_x:tt $x:tt ) => {
+                if self.$x().is_none() & src.$x().is_some() {
+                    self.$set_x(src.$x());
+                }
             };
         }
 
-        inherit![(set_fg_color, fg_color), (set_bg_color, bg_color)];
-
-        self.ansi.style |= src.ansi.style
+        inherit!(1 set_fg_color fg_color);
+        inherit!(1 set_bg_color bg_color);
+        inherit!(2 set_brightness brightness);
+        inherit!(2 set_under under);
+        inherit!(2 set_blink blink);
+        inherit!(2 set_hidden hidden);
+        inherit!(2 set_italics italics);
+        inherit!(2 set_negative negative);
+        inherit!(2 set_strike hidden);
     }
 
     pub fn reset_styles(&mut self) {
@@ -87,7 +98,7 @@ macro_rules! impl_tag {
 impl_tag![
     (0, set_name, name),
     (1, set_custom, custom),
-    (2, set_src, src)
+    (2, set_class, class)
 ];
 
 impl Add for Tag {
@@ -150,7 +161,7 @@ impl Debug for Tag {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Tag")
             .field("name", &self.name())
-            .field("src", &self.src())
+            .field("src", &self.class())
             .field("custom", &self.custom())
             .field("type", &self.r#type)
             .field("ansi", &self.ansi)
@@ -185,7 +196,7 @@ impl Display for Tag {
             } else {
                 f.write_str("\n")
             };
-        } else if self.name() == "p" && !self.custom().is_empty() {
+        } else if matches!(self.name().as_str(), "p") && !self.custom().is_empty() {
             f.write_fmt(format_args!(
                 "{}",
                 " ".repeat(self.custom().parse::<usize>().unwrap_or(0))

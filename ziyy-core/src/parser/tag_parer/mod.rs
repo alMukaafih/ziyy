@@ -5,8 +5,8 @@ use std::collections::VecDeque;
 use tag::{Tag, TagType};
 use token::{Token, TokenType::*};
 
+use super::ansi::{State, Style};
 use super::color::Color;
-use super::word_parer::ansi::State;
 
 mod scanner;
 pub mod tag;
@@ -47,9 +47,33 @@ macro_rules! assign_prop_color {
             $token = $next()?;
         }
     }};
+
+    ( $tag:expr, $next:expr, $token:expr, $val:expr ) => {{
+        let mut i = $val;
+        $token = $next()?;
+        if $token.r#type == EQUAL {
+            $token = $next()?;
+            expect(&$token, STRING, ErrorType::InvalidTagPropertyValue)?;
+            let s = $token.literal.unwrap();
+            if s == "light" {
+                i += 60;
+            } else if s == "dark" {
+            } else {
+                // TODO: Throw error
+            }
+
+            $token = $next()?;
+        }
+
+        if $tag.name() == "c" {
+            $tag.set_fg_color(Color::four_bit(30 + i));
+        } else if $tag.name() == "x" {
+            $tag.set_bg_color(Color::four_bit(40 + i));
+        }
+    }};
 }
 
-macro_rules! assign_prop_switch {
+macro_rules! assign_prop_style {
     ( $tag:expr, $next:expr, $token:expr, $set_prop:tt ) => {{
         $token = $next()?;
         if $token.r#type == EQUAL {
@@ -57,16 +81,16 @@ macro_rules! assign_prop_switch {
             expect(&$token, STRING, ErrorType::InvalidTagPropertyValue)?;
             let s = $token.literal.unwrap();
             if s == "false" {
-                // $tag.$set_prop(false);
+                $tag.$set_prop(Style::Clear);
             } else if s == "true" {
-                $tag.$set_prop(true);
+                $tag.$set_prop(Style::Apply);
             } else {
                 // TODO: Throw error
             }
 
             $token = $next()?;
         } else {
-            $tag.$set_prop(true);
+            $tag.$set_prop(Style::Apply);
         }
     }};
 }
@@ -158,22 +182,22 @@ impl TagParser {
                 tag.set_brightness(State::B);
             }
             "i" => {
-                tag.set_italics(true);
+                tag.set_italics(Style::Apply);
             }
             "u" | "ins" => {
                 tag.set_under(State::A);
             }
             "k" | "blink" => {
-                tag.set_blink(true);
+                tag.set_blink(Style::Apply);
             }
             "r" => {
-                tag.set_negative(true);
+                tag.set_negative(Style::Apply);
             }
             "h" => {
-                tag.set_hidden(true);
+                tag.set_hidden(Style::Apply);
             }
             "s" | "del" => {
-                tag.set_strike(true);
+                tag.set_strike(Style::Apply);
             }
             _ => {}
         }
@@ -183,18 +207,18 @@ impl TagParser {
             match token.lexeme.as_str() {
                 "b" | "bold" => assign_prop_state!(tag, next, token, set_brightness, State::A),
                 "d" | "dim" => assign_prop_state!(tag, next, token, set_brightness, State::B),
-                "k" | "blink" => assign_prop_switch!(tag, next, token, set_blink),
+                "k" | "blink" => assign_prop_style!(tag, next, token, set_blink),
                 "h" | "hidden" | "hide" | "invisible" => {
-                    assign_prop_switch!(tag, next, token, set_hidden)
+                    assign_prop_style!(tag, next, token, set_hidden)
                 }
                 "s" | "strike" | "strike-through" => {
-                    assign_prop_switch!(tag, next, token, set_strike)
+                    assign_prop_style!(tag, next, token, set_strike)
                 }
                 "i" | "italics" => {
-                    assign_prop_switch!(tag, next, token, set_italics)
+                    assign_prop_style!(tag, next, token, set_italics)
                 }
                 "r" | "invert" | "reverse" | "negative" => {
-                    assign_prop_switch!(tag, next, token, set_negative)
+                    assign_prop_style!(tag, next, token, set_negative)
                 }
                 "u" | "under" | "underline" => {
                     assign_prop_state!(tag, next, token, set_under, State::A)
@@ -206,22 +230,14 @@ impl TagParser {
                 "c" | "fg" => assign_prop_color!(tag, set_fg_color, next, token, "f"),
 
                 "x" | "bg" => assign_prop_color!(tag, set_bg_color, next, token, "b"),
-
-                "black" | "blue" | "cyan" | "green" | "magenta" | "red" | "white" | "yellow" => {
-                    let color = |pre: &str| -> Result<_, _> {
-                        let c: Color =
-                            (format!("{pre}{}", token.lexeme), token.span - (0, 1)).try_into()?;
-                        Ok(c)
-                    };
-
-                    if tag.name() == "c" {
-                        tag.set_fg_color(color("f")?);
-                    } else if tag.name() == "x" {
-                        tag.set_bg_color(color("b")?);
-                    }
-
-                    consume_declaration!(tag, next, token);
-                }
+                "black" => assign_prop_color!(tag, next, token, 0),
+                "red" => assign_prop_color!(tag, next, token, 1),
+                "green" => assign_prop_color!(tag, next, token, 2),
+                "yellow" => assign_prop_color!(tag, next, token, 3),
+                "blue" => assign_prop_color!(tag, next, token, 4),
+                "magenta" => assign_prop_color!(tag, next, token, 5),
+                "cyan" => assign_prop_color!(tag, next, token, 6),
+                "white" => assign_prop_color!(tag, next, token, 7),
                 "fixed" => {
                     token = next()?;
                     if token.r#type == EQUAL {
@@ -306,22 +322,22 @@ impl TagParser {
                         consume_declaration!(tag, next, token);
                     }
                 }
-                "name" => {
+                "id" => {
                     if tag.name() == "let" {
                         assign_prop!(tag, set_custom, next, token);
                     } else {
                         consume_declaration!(tag, next, token);
                     }
                 }
-                "tab" => {
-                    if tag.name() == "p" {
+                "indent" => {
+                    if matches!(tag.name().as_str(), "p" | "table") {
                         assign_prop!(tag, set_custom, next, token);
                     } else {
                         consume_declaration!(tag, next, token);
                     }
                 }
 
-                "src" => assign_prop!(tag, set_src, next, token),
+                "class" => assign_prop!(tag, set_class, next, token),
 
                 _ => {
                     consume_declaration!(tag, next, token);

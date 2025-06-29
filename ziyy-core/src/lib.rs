@@ -13,6 +13,7 @@ pub use splitter::{
 
 pub use common::{Position, Span};
 
+mod builtin;
 mod error;
 #[macro_use]
 mod scanner;
@@ -21,11 +22,6 @@ mod indexer;
 mod parser;
 mod resolver;
 mod splitter;
-
-static BUILTIN_TAGS: &[&str] = &[
-    "a", "b", "br", "d", "div", "h", "i", "k", "p", "r", "s", "span", "table", "td", "tr", "u",
-    "ziyy",
-];
 
 /// Styles the given text using ziyy.
 ///
@@ -50,7 +46,7 @@ pub fn style<T: AsRef<str>>(source: T) -> String {
     let chunks = parser.parse(frags).unwrap(); // TODO: better panics on message
 
     let mut resolver = Resolver::new(false);
-    let output = resolver.resolve(chunks);
+    let output = resolver.resolve(chunks).unwrap();
 
     let mut buf = String::new();
     output.root().to_string(&mut buf);

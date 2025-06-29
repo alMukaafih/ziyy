@@ -1,7 +1,7 @@
 # Ziyy - Terminal Styler.
 
 <p align="center">
-  <img src='https://raw.githubusercontent.com/alMukaafih/ziyy/refs/heads/main/logo.svg' width='250' alt='iyy Logo'>
+  <img src='https://raw.githubusercontent.com/alMukaafih/ziyy/refs/heads/main/logo.svg' width='250' alt="Ziyy's Logo">
 </p>
 
 ## Overview
@@ -14,7 +14,7 @@ Style your Terminal using HTML `<b>..</b>`.
 
 Ansi Equivalent
 ```
-\x1b[4;3;38;2;5;165;104mThis is a bold green underlined text in italics
+\x1b[1;4;3;38;2;5;165;104mThis is a bold green underlined text in italics\x1b[22;24;23;39m
 ```
 
 ### Output
@@ -22,23 +22,23 @@ Ansi Equivalent
 <b style="color:rgb(5, 165, 104);"><i><u>This is a bold green underlined text in italics</u></i></b>
 </pre>
 
-## Tags
-All tags have [Effects](#effects), [General Colors](#general-colors) and [Inheritance](#inheritance) Attributes except for `<br>`.
+## Elements
+All elements have [Effects](#effects), [General Colors](#general-colors) and [Inheritance](#inheritance) attributes except for `<br>`.
 
 ### Main root
-| Tag | Description | Attributes |
+| Element | Description | Attributes |
 | --------| ----------- | --- |
-| `<ziyy>` | The root tag. |  |
+| `<ziyy>` | The root element. |  |
 
 ### Text content
-| Tag | Description | Attributes |
+| Element | Description | Attributes |
 | --------| ----------- | --- |
 | `<div>` | Used to group related content |  |
 | `<pre>` | Represents preformatted text which is to be presented exactly as written. Whitespaces are preserved. |  |
-| `<p>` | Represents a paragraph. | `tab`: indent the paragraph with *n* spaces,  |
+| `<p>` | Represents a paragraph. | `indent`: indent the paragraph with *n* spaces,  |
 
 ### Inline text semantics
-| Tag | Description | Attributes |
+| Element | Description | Attributes |
 | --------| ----------- | --- |
 | `<a>` | Creates a hyperlink. | `href`: url of the link,  |
 | `<b> \| <strong>` | Causes text to be bold. |  |
@@ -50,17 +50,18 @@ All tags have [Effects](#effects), [General Colors](#general-colors) and [Inheri
 | `<i> \| <em>` | Causes text to be italicized. |  |
 | `<s> \| <del>` | Strikes through text. |  |
 | `<u> \| <ins>` | Underlines text. | `double`: Use double lines to underline text. |
+| `<uu>` | Double Underlines text. |  |
 
 ### Text Color
-| Tag | Description | Attributes |
+| Element | Description | Attributes |
 | --- | ------ | -- |
-| `<c>` | Sets foreground color. | [Special Colors](#special-colors) properties. |
-| `<x>` | Sets background color. | [Special Colors](#special-colors) properties. |
+| `<c>` | Sets foreground color. | [Special Colors](#special-colors) attributes. |
+| `<x>` | Sets background color. | [Special Colors](#special-colors) attributes. |
 
 ### Declaration
-| Tag | Description | Attributes |
+| Element | Description | Attributes |
 | --- | ------ | -- |
-| `<let>` | Declares new custom tag.  | `name`: Name of tag.  |
+| `<let>` | Declares new custom element.  | `id`: Name of element.  |
 
 ## Attributes
 ### Effects
@@ -99,7 +100,7 @@ All tags have [Effects](#effects), [General Colors](#general-colors) and [Inheri
 ### Inheritance
 | Property | Description | Type |
 | --- | ------ | --- |
-| `src` | Inherit properties from a tag. | [string](#string) |
+| `class` | A space-separated list of elements to inherit styles from. Can either be a builtin element or a element declared with `<let>`. | [string](#string) |
 
 
 ## Types
@@ -108,7 +109,10 @@ All tags have [Effects](#effects), [General Colors](#general-colors) and [Inheri
 if equals "true" or is an empty attribute, it enables style. if equals "false" disables style.
 
 ### `color`
-possible values are "black" \| "red" \| "green" \| "yellow" \| "blue" \| "magenta" \| "cyan \| "white" \| "fixed([u8](#u8))" \| "rgb([u8](#u8), [u8](#u8), [u8](#u8))". See [Special Colors](#special-colors)
+possible values are "black" \| "red" \| "green" \| "yellow" \| "blue" \| "magenta" \| "cyan \| "white" \| "fixed([u8](#u8))" \| "rgb([u8](#u8), [u8](#u8), [u8](#u8))" \| [hex](#hex). See [Special Colors](#special-colors).
+
+### `hex`
+\#XXXXXX or \#XXX. Posible values for X are 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f, A, B, C, D, E and F. Examples are #001f57 and #fff.
 
 ### `mode`
 if equals "light", enables light or bright version of color. If equals "dark" or is an empty attribute, enables dark version of color.

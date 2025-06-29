@@ -3,6 +3,7 @@ use crate::splitter::fragment::{Fragment, FragmentType};
 use chunk::{Chunk, ChunkData};
 pub use word_parer::WordParser;
 
+pub mod ansi;
 pub mod chunk;
 pub mod color;
 pub mod tag_parer;
@@ -24,7 +25,7 @@ impl Parser {
 
     pub fn parse(&self, frags: Vec<Fragment>) -> Result<Vec<Chunk>> {
         let mut tag_parser = tag_parer::TagParser::new();
-        let word_parer = WordParser::new();
+        // let word_parer = WordParser::new();
         let mut chunks = vec![];
         for frag in frags {
             let span = frag.span;
@@ -51,8 +52,12 @@ impl Parser {
 
                 FragmentType::Word => {
                     // Handle word fragments
-                    let chs = word_parer.parse(frag)?;
-                    chunks.extend_from_slice(&chs);
+                    // let chs = word_parer.parse(frag)?;
+                    // chunks.extend_from_slice(&chs);
+                    chunks.push(Chunk {
+                        data: ChunkData::Word(frag.lexeme),
+                        span,
+                    });
                 }
             }
         }

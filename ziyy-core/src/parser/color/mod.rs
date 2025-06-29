@@ -31,7 +31,7 @@ macro_rules! number {
 
 macro_rules! hex {
     ( $str:expr ) => {
-        u8::from_str_radix($str, 16).unwrap().into()
+        u8::from_str_radix($str, 16).unwrap()
     };
 }
 
@@ -93,9 +93,9 @@ impl Color {
         expect(&token, LEFT_PAREN, ErrorType::UnexpectedToken)?;
 
         let token = next()?;
-        let mut r: Number = Number::U8(0);
-        let mut g: Number = Number::U8(0);
-        let mut b: Number = Number::U8(0);
+        let r: Number;
+        let g: Number;
+        let b: Number;
 
         match token.r#type {
             NUMBER | PLACE_HOLDER => {
@@ -113,20 +113,7 @@ impl Color {
                 let token = next()?;
                 b = number!(token);
             }
-            HEX => match token.lexeme.len() {
-                // TODO: support place holder
-                4 => {
-                    r = hex!(&token.lexeme[1..2].repeat(2));
-                    g = hex!(&token.lexeme[2..3].repeat(2));
-                    b = hex!(&token.lexeme[3..4].repeat(2));
-                }
-                7 => {
-                    r = hex!(&token.lexeme[1..3]);
-                    g = hex!(&token.lexeme[3..5]);
-                    b = hex!(&token.lexeme[5..7]);
-                }
-                _ => {}
-            },
+
             _ => {
                 return Err(Error::new(
                     ErrorType::InvalidNumber,
@@ -144,6 +131,27 @@ impl Color {
             (Number::U8(r), Number::U8(g), Number::U8(b)) => Ok(Color::Rgb(Rgb(*r, *g, *b, n))),
             _ => Ok(Color::String(format!("{n};2;{r};{g};{b};"))),
         }
+    }
+
+    fn hex(token: &Token, n: u8) -> Color {
+        let mut r = 0;
+        let mut g = 0;
+        let mut b = 0;
+        let lexeme = &token.lexeme[1..];
+        match lexeme.len() {
+            4 => {
+                r = hex!(&lexeme[1..2].repeat(2));
+                g = hex!(&lexeme[2..3].repeat(2));
+                b = hex!(&lexeme[3..4].repeat(2));
+            }
+            7 => {
+                r = hex!(&lexeme[1..3]);
+                g = hex!(&lexeme[3..5]);
+                b = hex!(&lexeme[5..7]);
+            }
+            _ => {}
+        }
+        Color::Rgb(Rgb(r, g, b, n))
     }
 
     fn fixed(mut next: impl FnMut() -> Result<Token, Error>, n: u8) -> Result<Color, Error> {
@@ -205,6 +213,7 @@ impl TryFrom<(String, Span)> for Color {
             token::TokenType::FG_CYAN => Color::four_bit(36),
             token::TokenType::FG_WHITE => Color::four_bit(37),
             token::TokenType::FG_RGB => Color::rgb(next, 38)?,
+            token::TokenType::FG_HEX => Color::hex(&token, 38),
             token::TokenType::FG_FIXED => Color::fixed(next, 38)?,
             token::TokenType::FG_DEFAULT => Color::four_bit(39),
 
@@ -217,9 +226,9 @@ impl TryFrom<(String, Span)> for Color {
             token::TokenType::BG_CYAN => Color::four_bit(46),
             token::TokenType::BG_WHITE => Color::four_bit(47),
             token::TokenType::BG_RGB => Color::rgb(next, 48)?,
+            token::TokenType::BG_HEX => Color::hex(&token, 48),
             token::TokenType::BG_FIXED => Color::fixed(next, 38)?,
             token::TokenType::BG_DEFAULT => Color::four_bit(49),
-
             _ => {
                 return Err(Error::new(
                     ErrorType::InvalidColor,

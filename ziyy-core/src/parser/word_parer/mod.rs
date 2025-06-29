@@ -1,3 +1,4 @@
+use super::ansi::{State, Style};
 use super::chunk::{Chunk, ChunkData};
 use super::color::{Ansi256, Color, Rgb};
 use super::tag_parer::tag::{Tag, TagType};
@@ -5,10 +6,8 @@ use crate::common::Span;
 use crate::error::Error;
 use crate::scanner::GenericScanner;
 use crate::splitter::fragment::Fragment;
-use ansi::State;
 use scanner::Scanner;
 use token::Token;
-pub mod ansi;
 mod scanner;
 mod token;
 
@@ -167,10 +166,10 @@ impl WordParser {
                 }
 
                 3 => {
-                    tag.set_italics(true);
+                    tag.set_italics(Style::Apply);
                 }
                 23 => {
-                    tag.set_italics(false);
+                    tag.set_italics(Style::Clear);
                 }
 
                 4 => {
@@ -194,53 +193,36 @@ impl WordParser {
                 }
 
                 5 => {
-                    tag.set_blink(true);
+                    tag.set_blink(Style::Apply);
                 }
                 25 => {
-                    tag.set_blink(false);
+                    tag.set_blink(Style::Clear);
                 }
 
                 7 => {
-                    tag.set_negative(true);
+                    tag.set_negative(Style::Apply);
                 }
                 27 => {
-                    tag.set_negative(false);
+                    tag.set_negative(Style::Clear);
                 }
 
                 8 => {
-                    tag.set_hidden(true);
+                    tag.set_hidden(Style::Apply);
                 }
                 28 => {
-                    tag.set_hidden(false);
+                    tag.set_hidden(Style::Clear);
                 }
 
                 9 => {
-                    tag.set_strike(true);
+                    tag.set_strike(Style::Apply);
                 }
                 29 => {
-                    tag.set_strike(false);
+                    tag.set_strike(Style::Clear);
                 }
 
-                fg @ 30..=37 | fg @ 39 => tag.set_fg_color(Color::four_bit(shrink!(fg))),
-                bg @ 40..=47 | bg @ 49 => tag.set_bg_color(Color::four_bit(shrink!(bg))),
+                30..=37 | 39 | 90..=97 => tag.set_fg_color(Color::four_bit(shrink!(num))),
+                40..=47 | 49 | 100..=107 => tag.set_bg_color(Color::four_bit(shrink!(num))),
 
-                /* 90 => tag.fg_color = "black".into(),
-                91 => tag.fg_color = "red".into(),
-                92 => tag.fg_color = "green".into(),
-                93 => tag.fg_color = "yellow".into(),
-                94 => tag.fg_color = "blue".into(),
-                95 => tag.fg_color = "magenta".into(),
-                96 => tag.fg_color = "cyan".into(),
-                97 => tag.fg_color = "white".into(),
-
-                100 => tag.bg_color = "black".into(),
-                101 => tag.bg_color = "red".into(),
-                102 => tag.bg_color = "green".into(),
-                103 => tag.bg_color = "yellow".into(),
-                104 => tag.bg_color = "blue".into(),
-                105 => tag.bg_color = "magenta".into(),
-                106 => tag.bg_color = "cyan".into(),
-                107 => tag.bg_color = "white".into(), */
                 38 => {
                     let num = *parts.next().ok_or(0)?;
                     if num == 2 {

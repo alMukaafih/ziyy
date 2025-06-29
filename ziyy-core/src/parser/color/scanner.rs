@@ -64,9 +64,14 @@ impl_generic_scanner!(|s: &mut Scanner| {
         ')' => s.add_token(RIGHT_PAREN),
         ',' => s.add_token(COMMA),
         '{' => s.place_holder(),
-        '#' => s.hex(),
         c => {
-            if is_digit(c) {
+            if c == 'b' && s.peek() == '#' {
+                s.advance();
+                s.hex(BG_HEX);
+            } else if c == 'f' && s.peek() == '#' {
+                s.advance();
+                s.hex(FG_HEX);
+            } else if is_digit(c) {
                 s.number();
             } else if is_alpha(c) {
                 s.identifier();
@@ -143,11 +148,11 @@ impl Scanner {
         self.add_token(PLACE_HOLDER);
     }
 
-    fn hex(&mut self) {
+    fn hex(&mut self, r#type: TokenType) {
         while is_hexdigit(self.peek()) {
             self.advance();
         }
-        self.add_token(HEX);
+        self.add_token(r#type);
     }
 
     fn add_token(&mut self, r#type: TokenType) {

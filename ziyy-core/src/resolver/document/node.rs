@@ -335,6 +335,18 @@ impl Node {
             }
         }
     }
+
+    pub fn word_len(self: &Rc<Node>, len: &mut usize) {
+        for child in self.children() {
+            if child.chunk.borrow().is_word() {
+                *len += child.chunk.borrow().word().unwrap().chars().count()
+            } else if child.chunk.borrow().is_ws() {
+                *len += child.chunk.borrow().ws().unwrap().chars().count()
+            } else {
+                child.word_len(len);
+            }
+        }
+    }
 }
 
 impl PartialEq for Node {

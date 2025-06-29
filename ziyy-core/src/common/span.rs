@@ -36,7 +36,7 @@ impl Span {
         Span::new(pos, pos)
     }
 
-    pub fn calculate(s: &String) -> Self {
+    pub fn calculate(s: &str) -> Self {
         let start = Position::default();
 
         let mut end = start;

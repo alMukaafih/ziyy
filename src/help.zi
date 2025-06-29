@@ -1,12 +1,12 @@
 <ziyy>
-    <let name="bold:green" c="green" b />
-    <let name="cyan" c="cyan" />
+    <let id="green" c="green" />
+    <let id="cyan" c="cyan" />
 
     <div>
         <p>Ziyy's compiler.</p>
         <br />
         <p>
-            <span src="bold:green">Usage:</span>
+            <span class="b green">Usage:</span>
             <cyan>
                 <b>{}</b>
                 <i>[OPTION]</i>
@@ -17,11 +17,17 @@
     <br />
 
     <div>
-        <p src="bold:green">Options:</p>
-        <p tab="2" src="cyan">\x1b[1m-V, --version</p>
-        <p tab="10">Print version info and exit</p>
-        <p tab="2" src="cyan" b>-h, --help</p>
-        <p tab="10">Print help</p>
+        <p class="b green">Options:</p>
+        <table indent="2">
+            <tr>
+                <td class="b cyan">-V<pass>,</pass> --version</td>
+                <td>Print version info and exit</td>
+            </tr>
+            <tr>
+                <td class="b cyan">-h<pass>,</pass> --help</td>
+                <td>Print help</td>
+            </tr>
+        </table>
     </div>
     <br />
 </ziyy>

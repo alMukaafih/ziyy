@@ -1,7 +1,7 @@
 use arg::{parse_args, Cli};
 use std::env;
 use std::fs::File;
-use std::io::{stdout, BufReader, /* IsTerminal, */ Read, Write};
+use std::io::{stdout, BufReader, IsTerminal, Read, Write};
 use std::path::Path;
 use std::process::exit;
 use std::rc::Rc;
@@ -12,19 +12,14 @@ use ziyy_core::{
 
 mod arg;
 
-fn optimize(source: String) -> Result<String> {
+fn parse_escapes_only(source: &str) -> Result<Rc<Document>> {
     let parser = WordParser::new();
     let span = Span::calculate(&source);
-    let chunks = parser.parse(Fragment::new(FragmentType::Word, source, span))?;
+    let chunks = parser.parse(Fragment::new(FragmentType::Word, source.to_string(), span))?;
     // println!("{chunks:?}");
 
     let mut resolver = Resolver::new(true);
-    let output = resolver.resolve(chunks);
-    let mut buf = String::new();
-    output.root().to_string(&mut buf);
-
-    Ok(buf)
-    // Ok(output.to_string())
+    resolver.resolve(chunks)
 }
 
 fn parse(source: &str) -> Result<Rc<Document>> {
@@ -37,19 +32,25 @@ fn parse(source: &str) -> Result<Rc<Document>> {
     let chunks = parser.parse(frags)?;
 
     let mut resolver = Resolver::new(false);
-    Ok(resolver.resolve(chunks))
+    resolver.resolve(chunks)
 }
 
 fn parse_to_out(source: &str, out: &mut impl Write, options: Options) {
     let mut f = || {
-        let output = parse(source)?;
+        let output = match options.escape_only {
+            true => parse_escapes_only(source),
+            false => parse(source),
+        }?;
+
+        if options.strip {
+            output.root().strip_styles();
+        }
+
         let mut buf = String::new();
         if options.tree {
             buf = output.to_string();
-            // buf = format!("{:#?}", output);
         } else {
             output.root().to_string(&mut buf);
-            buf = optimize(buf)?;
         }
 
         let _ = out.write(buf.as_bytes());
@@ -65,9 +66,9 @@ fn usage() {
     let mut out = stdout();
     let help = parse(&format!(include_str!("help.zi"), env!("CARGO_BIN_NAME"))).unwrap();
 
-    /* if !out.is_terminal() {
-        help.root().clear_styles();
-    } */
+    if !out.is_terminal() {
+        help.root().strip_styles();
+    }
 
     let mut buf = String::new();
     help.root().to_string(&mut buf);
@@ -91,10 +92,11 @@ fn main() {
             short_flags: &[],
             long_flags: &["mode"],
             short_switches: &["h", "V", "c", "e", "n"],
-            long_switches: &["help", "version", "tree"],
+            long_switches: &["help", "strip", "version", "tree"],
         },
     )
-    .unwrap();
+    .unwrap(); // TODO: echo out error
+
     let mut options = Options::default();
     let mut params = vec![];
     //println!("{args:?}");
@@ -108,8 +110,12 @@ fn main() {
             exit(0);
         } else if arg.is_short_switch_and(|s| s == "c") {
             options.cli = true;
+        } else if arg.is_short_switch_and(|s| s == "e") {
+            options.escape_only = true;
         } else if arg.is_short_switch_and(|s| s == "n") {
             options.no_newline = true;
+        } else if arg.is_long_switch_and(|s| s == "strip") {
+            options.strip = true;
         } else if arg.is_long_switch_and(|s| s == "tree") {
             options.tree = true;
         } else {
@@ -151,7 +157,9 @@ fn main() {
 
 #[derive(Default, Clone, Copy)]
 struct Options {
-    no_newline: bool,
     cli: bool,
+    escape_only: bool,
+    no_newline: bool,
+    strip: bool,
     tree: bool,
 }

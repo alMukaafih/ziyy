@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use std::env::Args;
+use std::{env::Args, fmt::Display};
 
 #[derive(Debug)]
 pub enum Arg {
@@ -37,6 +37,15 @@ impl Arg {
 pub enum Error {
     Long(String),
     Short(String),
+}
+
+impl Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Error::Long(v) => f.write_fmt(format_args!("--{v}")),
+            Error::Short(v) => f.write_fmt(format_args!("-{v}")),
+        }
+    }
 }
 
 pub struct Cli<'a> {
