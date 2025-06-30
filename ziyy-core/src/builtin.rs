@@ -3,7 +3,7 @@ use std::{collections::HashMap, sync::LazyLock};
 use crate::parser::ansi::{Ansi, AnsiOptions, State, Style};
 
 pub static BUILTIN_STYLES: LazyLock<HashMap<&str, Ansi>> = LazyLock::new(|| {
-    [
+    let mut map = HashMap::from([
         (
             "b",
             Ansi::with(AnsiOptions {
@@ -67,11 +67,27 @@ pub static BUILTIN_STYLES: LazyLock<HashMap<&str, Ansi>> = LazyLock::new(|| {
                 ..Default::default()
             }),
         ),
-    ]
-    .into()
+    ]);
+
+    let aliases = [
+        ("b", "strong"),
+        ("d", "dim"),
+        ("i", "em"),
+        ("u", "ins"),
+        ("k", "blink"),
+        ("s", "del"),
+    ];
+
+    for (k, a) in aliases {
+        let v = map.get(&k).unwrap().clone();
+        map.insert(a, v);
+    }
+
+    map
 });
 
 pub static BUILTIN_TAGS: &[&str] = &[
-    "a", "b", "br", "d", "div", "h", "i", "k", "p", "r", "s", "script", "span", "style", "table",
-    "td", "tr", "u", "uu", "ziyy",
+    "a", "b", "blink", "br", "d", "del", "dim", "div", "em", "h", "i", "input", "ins", "k", "o",
+    "over", "p", "r", "s", "script", "span", "strong", "style", "table", "td", "th", "tr", "u",
+    "uu", "ziyy",
 ];

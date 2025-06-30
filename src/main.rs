@@ -1,7 +1,7 @@
-use arg::{parse_args, Cli};
+use arg::{Cli, parse_args};
 use std::env;
 use std::fs::File;
-use std::io::{stdout, BufReader, IsTerminal, Read, Write};
+use std::io::{BufReader, IsTerminal, Read, Write, stdin, stdout};
 use std::path::Path;
 use std::process::exit;
 use std::rc::Rc;
@@ -14,7 +14,7 @@ mod arg;
 
 fn parse_escapes_only(source: &str) -> Result<Rc<Document>> {
     let parser = WordParser::new();
-    let span = Span::calculate(&source);
+    let span = Span::calculate(source);
     let chunks = parser.parse(Fragment::new(FragmentType::Word, source.to_string(), span))?;
     // println!("{chunks:?}");
 
@@ -28,7 +28,7 @@ fn parse(source: &str) -> Result<Rc<Document>> {
     let mut splitter = Splitter::new();
     let frags = splitter.split(source);
 
-    let parser = Parser::new();
+    let parser = Parser::default();
     let chunks = parser.parse(frags)?;
 
     let mut resolver = Resolver::new(false);
@@ -92,7 +92,15 @@ fn main() {
             short_flags: &[],
             long_flags: &["mode"],
             short_switches: &["h", "V", "c", "e", "n"],
-            long_switches: &["help", "strip", "version", "tree"],
+            long_switches: &[
+                "ansi",
+                "cli",
+                "help",
+                "no-newline",
+                "strip",
+                "version",
+                "tree",
+            ],
         },
     )
     .unwrap(); // TODO: echo out error
@@ -108,11 +116,13 @@ fn main() {
         {
             println!(env!("CARGO_PKG_VERSION"));
             exit(0);
-        } else if arg.is_short_switch_and(|s| s == "c") {
+        } else if arg.is_short_switch_and(|s| s == "c") | arg.is_long_switch_and(|s| s == "cli") {
             options.cli = true;
-        } else if arg.is_short_switch_and(|s| s == "e") {
+        } else if arg.is_short_switch_and(|s| s == "e") | arg.is_long_switch_and(|s| s == "ansi") {
             options.escape_only = true;
-        } else if arg.is_short_switch_and(|s| s == "n") {
+        } else if arg.is_short_switch_and(|s| s == "n")
+            | arg.is_long_switch_and(|s| s == "no-newline")
+        {
             options.no_newline = true;
         } else if arg.is_long_switch_and(|s| s == "strip") {
             options.strip = true;
@@ -124,11 +134,21 @@ fn main() {
     }
 
     if options.cli {
-        parse_to_out(&params.join(" "), &mut out, options);
+        if params.is_empty() {
+            let mut buf = String::new();
+            let _ = stdin().read_to_string(&mut buf);
+            parse_to_out(&buf, &mut out, options);
+        } else {
+            parse_to_out(&params.join(" "), &mut out, options);
+        }
         if !options.no_newline {
             let _ = writeln!(out);
         }
     } else {
+        if params.is_empty() {
+            usage();
+            exit(1);
+        }
         for param in &params {
             if !Path::new(&param).is_file() {
                 usage();
@@ -145,11 +165,6 @@ fn main() {
             }
             parse_to_out(&file, &mut out, options)
         }
-    }
-
-    if params.is_empty() {
-        usage();
-        exit(1);
     }
 
     let _ = stdout.write(&out);

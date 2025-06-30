@@ -2,6 +2,7 @@ use crate::common::Span;
 
 #[derive(Debug, Clone)]
 #[allow(clippy::upper_case_acronyms)]
+#[doc(hidden)]
 pub enum FragmentType {
     Error,
     Tag,
@@ -10,6 +11,7 @@ pub enum FragmentType {
 }
 
 #[derive(Debug, Clone)]
+#[doc(hidden)]
 pub struct Fragment {
     pub r#type: FragmentType,
     pub lexeme: String,

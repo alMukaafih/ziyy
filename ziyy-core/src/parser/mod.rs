@@ -10,21 +10,23 @@ pub mod tag_parer;
 pub mod word_parer;
 
 #[doc(hidden)]
-pub struct Parser {}
+pub struct Parser {
+    parse_placeholders: bool,
+}
 
 impl Default for Parser {
     fn default() -> Self {
-        Self::new()
+        Self::new(true)
     }
 }
 
 impl Parser {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(parse_placeholders: bool) -> Self {
+        Self { parse_placeholders }
     }
 
     pub fn parse(&self, frags: Vec<Fragment>) -> Result<Vec<Chunk>> {
-        let mut tag_parser = tag_parer::TagParser::new();
+        let mut tag_parser = tag_parer::TagParser::new(self.parse_placeholders);
         // let word_parer = WordParser::new();
         let mut chunks = vec![];
         for frag in frags {

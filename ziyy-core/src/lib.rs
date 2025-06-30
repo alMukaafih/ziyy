@@ -1,4 +1,8 @@
 #![allow(clippy::pedantic)]
+#![warn(missing_docs)]
+
+//! # Ziyy's core library
+
 pub use error::{Error, ErrorType, Result};
 pub use indexer::Indexer;
 pub use parser::{Parser, WordParser};
@@ -28,6 +32,7 @@ mod splitter;
 /// # Example
 ///
 /// ```
+/// # use ziyy_core as ziyy;
 /// use ziyy::style;
 ///
 /// let styled_text = style("This is <b>bold</b> text");
@@ -37,16 +42,23 @@ mod splitter;
 /// This function will panic if the parser encounters an error while parsing the input source.
 ///
 pub fn style<T: AsRef<str>>(source: T) -> String {
-    let mut indexer = Indexer::new();
-    let source = indexer.index(source.as_ref().to_string());
+    // let mut indexer = Indexer::new();
+    // let source = indexer.index(source.as_ref().to_string());
     let mut splitter = Splitter::new();
-    let frags = splitter.split(source);
+    #[allow(clippy::unnecessary_to_owned)]
+    let frags = splitter.split(source.as_ref().to_string());
 
-    let parser = Parser::new();
-    let chunks = parser.parse(frags).unwrap(); // TODO: better panics on message
+    let parser = Parser::new(false);
+    let chunks = match parser.parse(frags) {
+        Ok(v) => v,
+        Err(e) => panic!("{}", e),
+    };
 
     let mut resolver = Resolver::new(false);
-    let output = resolver.resolve(chunks).unwrap();
+    let output = match resolver.resolve(chunks) {
+        Ok(v) => v,
+        Err(e) => panic!("{}", e),
+    };
 
     let mut buf = String::new();
     output.root().to_string(&mut buf);

@@ -1,6 +1,11 @@
 [package]
 name = "ziyy-core"
 version = "0.1.0"
+repository = "https://github.com/alMukaafih/ziyy.git"
 edition = "2024"
+description = "Terminal Styling using HTML-like syntax."
+license = "MIT OR Apache-2.0"
+keywords = ["terminal", "color", "style", "html", "cli"]
+categories = ["command-line-interface", "command-line-utilities"]
 
 [dependencies]

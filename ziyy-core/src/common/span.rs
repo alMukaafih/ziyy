@@ -6,41 +6,45 @@ use std::{
 use super::Position;
 
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
+/// A span in source code.
 pub struct Span {
     start: Position,
     end: Position,
 }
 
 impl Span {
+    /// Creates a new span.
     pub fn new(start: Position, end: Position) -> Self {
         Self { start, end }
     }
 
-    pub fn tie_end(&mut self) {
+    pub(crate) fn tie_end(&mut self) {
         self.start = self.end;
     }
 
-    pub fn tie_start(&mut self) {
+    pub(crate) fn tie_start(&mut self) {
         self.end = self.start;
     }
 
-    pub fn unquote(&self) -> Self {
+    pub(crate) fn unquote(&self) -> Self {
         let mut span = *self;
         span.start += (0, 1);
         span.end -= (0, 1);
         span
     }
 
-    pub fn inserted() -> Self {
+    /// Creates a Span that represents inserted text in source.
+    pub(crate) fn inserted() -> Self {
         let pos = Position::new(0, 0);
         Span::new(pos, pos)
     }
 
-    pub fn calculate(s: &str) -> Self {
+    /// Calculate Span from source.
+    pub fn calculate(source: &str) -> Self {
         let start = Position::default();
 
         let mut end = start;
-        for c in s.chars() {
+        for c in source.chars() {
             if c == '\n' {
                 end.line += 1;
                 end.column = 1;

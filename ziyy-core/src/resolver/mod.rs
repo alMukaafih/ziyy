@@ -166,7 +166,7 @@ impl Resolver {
                 let mut y = 0;
                 for td in tr.children() {
                     if td.chunk().borrow().is_ws() {
-                        td.chunk().borrow_mut().data = ChunkData::WhiteSpace("  ".to_string());
+                        td.chunk().borrow_mut().data = ChunkData::WhiteSpace(" ".to_string());
                         continue;
                     }
                     let mut len = 0;
@@ -292,7 +292,13 @@ impl Resolver {
                 }) {
                     if let Some(next) = node.next_sibling() {
                         if next.chunk().borrow().is_ws() {
-                            detachables.push(next);
+                            if child.next_sibling().is_some_and(|node| {
+                                node.chunk().borrow().is_tag_and(|tag| tag.name() == "td")
+                            }) {
+                                detachables.push(child.clone());
+                            } else {
+                                detachables.push(next);
+                            }
                         }
                     }
                 } else if let Some(next) = child.next_sibling() {

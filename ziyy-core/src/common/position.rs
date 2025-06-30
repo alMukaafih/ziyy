@@ -4,8 +4,11 @@ use std::{
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]
+/// A position in source code.
 pub struct Position {
+    /// Line in source code.
     pub line: usize,
+    /// Column in source code.
     pub column: usize,
 }
 
@@ -16,6 +19,7 @@ impl Default for Position {
 }
 
 impl Position {
+    /// Creates a new Position.
     pub fn new(line: usize, column: usize) -> Self {
         Self { line, column }
     }

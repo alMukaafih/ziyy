@@ -1,9 +1,9 @@
 [package]
 name = "ziyy"
 version = "2.0.0"
-readme = "../README.md"
+readme = "README.md"
 repository = "https://github.com/alMukaafih/ziyy.git"
-edition = "2021"
+edition = "2024"
 description = "Terminal Styling using HTML-like syntax."
 license = "MIT OR Apache-2.0"
 keywords = ["terminal", "color", "style", "html", "cli"]

@@ -25,10 +25,10 @@ impl Arg {
         }
     }
 
+    #[allow(clippy::wrong_self_convention)]
     pub fn is_params_and(self, mut f: impl FnMut(String)) {
-        match self {
-            Arg::Param(s) => f(s),
-            _ => {}
+        if let Arg::Param(s) = self {
+            f(s)
         }
     }
 }
@@ -60,7 +60,7 @@ fn split_args(args0: Args) -> Vec<String> {
 
     for arg in args0 {
         if let Some(ch) = arg.strip_prefix('-') {
-            if ch.chars().next() == Some('-') {
+            if ch.starts_with('-') {
                 args.push(arg.clone());
                 continue;
             }

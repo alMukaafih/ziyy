@@ -1,18 +1,18 @@
-# Ziyy - Terminal Styler.
+# Ziyy 2.0 - Terminal Styler.
 
 <p align="center">
-  <img src='https://raw.githubusercontent.com/alMukaafih/ziyy/refs/heads/main/logo.svg' width='250' alt="Ziyy's Logo">
+  <img src='https://raw.githubusercontent.com/alMukaafih/ziyy/main/logo.svg' width='250' alt="Ziyy's Logo">
 </p>
 
 ## Overview
-Style your Terminal using HTML `<b>..</b>`.
+Style your Terminal using HTML-like tags `<b>..</b>`, making it easy to apply styles such as bold, italics, and colors directly in your terminal output. For example, `<b u c="red">Hello</b>` (where `c` stands for color) will render "Hello" in bold and red.
 
 ## Example
 ```html
 <b u i c="rgb(5, 165, 104)">This is a bold green underlined text in italics</b>
 ```
 
-Ansi Equivalent
+### [Ansi Escape Code](https://en.wikipedia.org/wiki/ANSI_escape_code) Equivalent
 ```
 \x1b[1;4;3;38;2;5;165;104mThis is a bold green underlined text in italics\x1b[22;24;23;39m
 ```
@@ -23,7 +23,7 @@ Ansi Equivalent
 </pre>
 
 ## Elements
-All elements have [Effects](#effects), [General Colors](#general-colors) and [Inheritance](#inheritance) attributes except for `<br>`.
+All elements have [Effects](#effects), [General Colors](#general-colors) and [Inheritance](#inheritance) attributes except for `<br>`, which is an exception because it only inserts line breaks and does not modify text appearance.
 
 ### Main root
 | Element | Description | Attributes |
@@ -40,16 +40,16 @@ All elements have [Effects](#effects), [General Colors](#general-colors) and [In
 ### Inline text semantics
 | Element | Description | Attributes |
 | --------| ----------- | --- |
-| `<a>` | Creates a hyperlink. | `href`: url of the link,  |
+| `<a>` | Creates a hyperlink. For example: `<a href="https://example.com">Example</a>`. | `href`: url of the link,  |
 | `<b> \| <strong>` | Causes text to be bold. |  |
-| `<br>` | Produces a line break in text (carriage-return). | `n`: no of line breaks to insert. Default is 1. |
+| `<br>` | Produces a line break in text (carriage-return). It does not support any styling attributes. | `n`: number of line breaks to insert. Default is 1. |
 | `<d> \| <dim>` | Causes text to be dim. |  |
 | `<h> \| <hide>` | Causes text to be hidden. |  |
 | `<k> \| <blink>` | Causes text to blink. |  |
 | `<r> \| <invert>` | Reverse foreground and background colors of text. | |
 | `<i> \| <em>` | Causes text to be italicized. |  |
 | `<s> \| <del>` | Strikes through text. |  |
-| `<u> \| <ins>` | Underlines text. | `double`: Use double lines to underline text. |
+| `<u> \| <ins>` | Underlines text. | `double`: Use double lines to underline text. Unlike `<uu>`, which is a standalone element for double underlining, this attribute applies double underlining to the `<u>` element. |
 | `<uu>` | Double Underlines text. |  |
 
 ### Text Color
@@ -86,8 +86,8 @@ All elements have [Effects](#effects), [General Colors](#general-colors) and [In
 ## Special Colors
 | Property | Description | Type |
 | --- | ------ | --- |
-| `fixed` | ANSI 256 color | "[u8](#u8)" |
-| `rgb` | Rgb colors | "[u8](#u8), [u8](#u8), [u8](#u8)" |
+| [fixed](https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit) | ANSI 256 color | "[u8](#u8)" |
+| [rgb](https://www.w3schools.com/colors/colors_rgb.asp) | Rgb colors | "[u8](#u8), [u8](#u8), [u8](#u8)" |
 | `black` | Black color | [mode](#mode) |
 | `red` | Red color | [mode](#mode) |
 | `green` | Green color | [mode](#mode) |
@@ -106,19 +106,17 @@ All elements have [Effects](#effects), [General Colors](#general-colors) and [In
 ## Types
 
 ### `bool`
-if equals "true" or is an empty attribute, it enables style. if equals "false" disables style.
+If equals "true" (case-sensitive) or is an empty attribute, it enables the style. If equals "false" (case-sensitive), it disables the style.
 
 ### `color`
-possible values are "black" \| "red" \| "green" \| "yellow" \| "blue" \| "magenta" \| "cyan \| "white" \| "fixed([u8](#u8))" \| "rgb([u8](#u8), [u8](#u8), [u8](#u8))" \| [hex](#hex). See [Special Colors](#special-colors).
-
-### `hex`
-\#XXXXXX or \#XXX. Posible values for X are 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f, A, B, C, D, E and F. Examples are #001f57 and #fff.
+possible values are "black" \| "red" \| "green" \| "yellow" \| "blue" \| "magenta" \| "cyan \| "white" \| "fixed([u8](#u8))" \| "[rgb(red, green, blue)](https://www.w3schools.com/colors/colors_rgb.asp)" \| [#rrggbb or #rgb](https://www.w3schools.com/colors/colors_hexadecimal.asp). See [Special Colors](#special-colors).
 
 ### `mode`
-if equals "light", enables light or bright version of color. If equals "dark" or is an empty attribute, enables dark version of color.
+if equals "light", enables brighter or pastel shades of the color. If equals "dark" or is an empty attribute, enables darker or muted shades of the color.
 
 ### `string`
-Any UTF-8 text between single `'` and double `"` quotes.
+Any [UTF-8](https://en.wikipedia.org/wiki/UTF-8) text between single `'` and double `"` quotes. For example: `'example'` or `"example"`.
 
 ### `u8`
-A number within the range 0..=255.
+A number within the range 0 to 255. For example, 128 is a valid `u8` value.
+

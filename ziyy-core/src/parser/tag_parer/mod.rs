@@ -118,18 +118,21 @@ macro_rules! assign_prop_state {
 }
 
 pub struct TagParser {
+    #[allow(dead_code)]
+    parse_placeholders: bool,
     stack: Vec<Tag>,
 }
 
 impl Default for TagParser {
     fn default() -> Self {
-        Self::new()
+        Self::new(true)
     }
 }
 
 impl TagParser {
-    pub fn new() -> Self {
+    pub fn new(parse_placeholders: bool) -> Self {
         Self {
+            parse_placeholders,
             stack: Vec::with_capacity(8),
         }
     }
@@ -181,11 +184,14 @@ impl TagParser {
             "d" | "dim" => {
                 tag.set_brightness(State::B);
             }
-            "i" => {
+            "i" | "em" => {
                 tag.set_italics(Style::Apply);
             }
             "u" | "ins" => {
                 tag.set_under(State::A);
+            }
+            "uu" => {
+                tag.set_under(State::B);
             }
             "k" | "blink" => {
                 tag.set_blink(Style::Apply);
