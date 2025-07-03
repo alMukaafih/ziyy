@@ -150,7 +150,7 @@ impl TagParser {
             _ => {
                 return Err(Error::new(
                     ErrorType::InvalidTag,
-                    format!("Invalid tag: {:?} {:?}", open, close),
+                    format!("Invalid tag: {open:?} {close:?}"),
                     tokens[0].span,
                 ));
             }

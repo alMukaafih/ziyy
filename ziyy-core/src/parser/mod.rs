@@ -34,7 +34,7 @@ impl Parser {
             match frag.r#type {
                 FragmentType::Error => {
                     // Handle error fragments
-                    eprintln!("Error fragment encountered: {:?}", frag); // TODO: return Err(...)
+                    eprintln!("Error fragment encountered: {frag:?}"); // TODO: return Err(...)
                 }
 
                 FragmentType::Tag => {
