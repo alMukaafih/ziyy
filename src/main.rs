@@ -102,8 +102,15 @@ fn main() {
                 "tree",
             ],
         },
-    )
-    .unwrap(); // TODO: echo out error
+    );
+
+    let args = match args {
+        Ok(args) => args,
+        Err(err) => {
+            eprintln!("\x1b[31;1merror:\x1b[m unexpected argument '{err}' found");
+            exit(1);
+        }
+    };
 
     let mut options = Options::default();
     let mut params = vec![];

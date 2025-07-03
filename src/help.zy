@@ -63,7 +63,7 @@
             <tr>
                 <td></td>
                 <td class="b cyan">--tree</td>
-                <td>\x20Print tree representation of output</td>
+                <td>\x20Print tree representation of output [unstable]</td>
             </tr>
         </table>
     </div>
