@@ -182,6 +182,6 @@ impl ToString for [char] {
     }
 }
 
-fn is_whitespace(c: char) -> bool {
-    matches!(c, ' ' | '\t' | '\n')
+pub fn is_whitespace(c: char) -> bool {
+    matches!(c, ' ' | '\t' | '\n' | '\x0c' | '\x0d')
 }

@@ -2,7 +2,7 @@
 name = "ziyy"
 version = "2.0.0"
 readme = "README.md"
-repository = "https://github.com/alMukaafih/ziyy.git"
+repository = "https://github.com/ziyy-dev/ziyy-rs.git"
 edition = "2024"
 description = "Terminal Styling using HTML-like syntax."
 license = "MIT OR Apache-2.0"

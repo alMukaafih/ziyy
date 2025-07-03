@@ -64,7 +64,7 @@ fn parse_to_out(source: &str, out: &mut impl Write, options: Options) {
 
 fn usage() {
     let mut out = stdout();
-    let help = parse(&format!(include_str!("help.zi"), env!("CARGO_BIN_NAME"))).unwrap();
+    let help = parse(&format!(include_str!("help.zy"), env!("CARGO_BIN_NAME"))).unwrap();
 
     if !out.is_terminal() {
         help.root().strip_styles();

@@ -101,6 +101,7 @@ impl Display for ChunkData {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+#[doc(hidden)]
 pub struct Chunk {
     pub data: ChunkData,
     pub span: Span,

@@ -5,7 +5,7 @@
 
 pub use error::{Error, ErrorType, Result};
 pub use indexer::Indexer;
-pub use parser::{Parser, WordParser};
+pub use parser::{Parser, WordParser, chunk::Chunk};
 pub use resolver::{
     Resolver,
     document::{Document, Node},

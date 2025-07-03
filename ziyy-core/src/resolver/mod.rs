@@ -9,6 +9,7 @@ use crate::{
         chunk::{Chunk, ChunkData},
         tag_parer::tag::{Tag, TagType},
     },
+    splitter::is_whitespace,
 };
 use document::{Document, Node};
 
@@ -236,7 +237,13 @@ impl Resolver {
                 }
 
                 if !tag.class().is_empty() {
-                    for class in tag.class().clone().split_ascii_whitespace().rev() {
+                    for class in tag
+                        .class()
+                        .clone()
+                        .split(is_whitespace)
+                        .filter(|s| !s.is_empty())
+                        .rev()
+                    {
                         for ansector in child.ancestors() {
                             if let Some(binding) = BUILTIN_STYLES.get(class) {
                                 tag.inherit(binding);
