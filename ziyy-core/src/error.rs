@@ -9,7 +9,7 @@ pub enum ErrorType {
     /// Indicates an invalid tag name was encountered.
     InvalidTagName,
     /// Indicates an invalid value for a tag property was encountered.
-    InvalidTagPropertyValue,
+    InvalidTagAttributeValue,
     /// Indicates an invalid number was encountered.
     InvalidNumber,
     /// Indicates an invalid color was encountered.
@@ -18,6 +18,8 @@ pub enum ErrorType {
     UnexpectedToken,
     /// Indicates the end of input was reached unexpectedly.
     UnexpectedEof,
+    /// Indicates an unterminated string literal.
+    UnterminatedString,
 }
 
 /// Represents an error with additional context such as its type, message, and location.
@@ -31,21 +33,20 @@ pub struct Error {
 }
 
 impl Error {
-    /// Creates a new `Error` instance.
-    ///
-    /// # Arguments
-    ///
-    /// * `r#type` - The type of the error.
-    /// * `message` - A descriptive message providing more details about the error.
-    /// * `span` - The span in the source where the error occurred.
-    ///
-    /// # Returns
-    ///
-    /// A new `Error` instance.
+    /// Creates a new Error.
     pub fn new(r#type: ErrorType, message: String, span: Span) -> Self {
         Self {
             r#type,
             message,
+            span,
+        }
+    }
+
+    #[allow(dead_code)]
+    pub(crate) fn invalid_tag(s: String, span: Span) -> Self {
+        Self {
+            r#type: ErrorType::InvalidTag,
+            message: s,
             span,
         }
     }

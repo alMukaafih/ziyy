@@ -32,11 +32,6 @@ impl Parser {
         for frag in frags {
             let span = frag.span;
             match frag.r#type {
-                FragmentType::Error => {
-                    // Handle error fragments
-                    eprintln!("Error fragment encountered: {frag:?}"); // TODO: return Err(...)
-                }
-
                 FragmentType::Tag => {
                     chunks.push(Chunk {
                         data: ChunkData::Tag(tag_parser.parse(frag)?),

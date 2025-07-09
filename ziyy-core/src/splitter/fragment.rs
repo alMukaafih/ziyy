@@ -4,7 +4,6 @@ use crate::common::Span;
 #[allow(clippy::upper_case_acronyms)]
 #[doc(hidden)]
 pub enum FragmentType {
-    Error,
     Tag,
     Whitespace,
     Word,

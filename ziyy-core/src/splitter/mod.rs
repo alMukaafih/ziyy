@@ -4,6 +4,7 @@ use fragment::Fragment;
 use fragment::FragmentType::{self, *};
 
 use crate::common::Span;
+use crate::{Error, ErrorType, Result};
 
 pub mod fragment;
 
@@ -39,7 +40,7 @@ impl Splitter {
         }
     }
 
-    pub fn split(&mut self, source: String) -> Vec<Fragment> {
+    pub fn split(&mut self, source: String) -> Result<Vec<Fragment>> {
         self.source = source.chars().collect();
 
         macro_rules! consume_word {
@@ -78,7 +79,7 @@ impl Splitter {
                     consume_word!(c);
                     self.add_fragment(Word);
                 }
-                '<' => self.tag(),
+                '<' => self.tag()?,
                 _ => {
                     consume_word!(c);
                     self.add_fragment(Word);
@@ -86,17 +87,36 @@ impl Splitter {
             }
         }
 
-        take(&mut self.fragments)
+        Ok(take(&mut self.fragments))
     }
 
-    fn tag(&mut self) {
+    fn tag(&mut self) -> Result<()> {
+        if self.peek() == '>' {
+            self.advance();
+            self.add_fragment(Tag);
+            return Ok(());
+        }
         let mut quote = Quote::None;
 
         loop {
             let c = self.advance();
             if self.is_at_end() {
-                self.add_fragment(Error);
-                return;
+                match quote {
+                    Quote::Single | Quote::Double => {
+                        return Err(Error::new(
+                            ErrorType::UnterminatedString,
+                            "Untermitated string literal".into(),
+                            self.span,
+                        ));
+                    }
+                    Quote::None => {
+                        return Err(Error::new(
+                            ErrorType::UnexpectedEof,
+                            "Untermitated string literal".into(),
+                            self.span,
+                        ));
+                    }
+                }
             }
 
             let close = matches!(self.peek(), '>');
@@ -128,6 +148,7 @@ impl Splitter {
 
         self.advance();
         self.add_fragment(Tag);
+        Ok(())
     }
 
     fn whitespace(&mut self) {

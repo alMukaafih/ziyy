@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{ops::Deref, rc::Rc};
 
 use super::Node;
 
@@ -26,7 +26,10 @@ impl Iterator for Children {
             node
         } else {
             let node = self.front.take();
-            self.front = node.as_ref().and_then(Node::next_sibling);
+            self.front = node
+                .as_ref()
+                .map(|x| x.deref())
+                .and_then(Node::next_sibling);
             node
         }
     }
@@ -128,7 +131,7 @@ macro_rules! axis_iterators {
                 type Item = Rc<Node>;
                 fn next(&mut self) -> Option<Self::Item> {
                     let node = self.0.take();
-                    self.0 = node.as_ref().and_then($f);
+                    self.0 = node.as_ref().map(|x| x.deref()).and_then($f);
                     node
                 }
             }
@@ -155,7 +158,7 @@ axis_iterators! {
 
 impl Node {
     /// Returns an iterator over children.
-    pub fn children(self: &Rc<Node>) -> Children {
+    pub fn children(&self) -> Children {
         Children {
             front: self.first_child(),
             back: self.last_child(),

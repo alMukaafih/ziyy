@@ -6,8 +6,8 @@ use scanner::Scanner;
 use std::collections::VecDeque;
 use std::fmt::Display;
 use std::ops::AddAssign;
-use token::Token;
 use token::TokenType::*;
+use token::{Token, TokenType};
 
 mod number;
 mod scanner;
@@ -60,10 +60,11 @@ pub struct Ansi4Bit(u8);
 
 impl Display for Ansi4Bit {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.0.fmt(f)
+        f.write_fmt(format_args!("{};", self.0))
     }
 }
 
+#[doc(hidden)]
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum Color {
     Ansi256(Ansi256),
@@ -87,7 +88,7 @@ impl Color {
         Color::String(s)
     }
 
-    fn rgb(mut next: impl FnMut() -> Result<Token, Error>, n: u8) -> Result<Color, Error> {
+    fn parse_rgb(mut next: impl FnMut() -> Result<Token, Error>, n: u8) -> Result<Color, Error> {
         let token = next()?;
 
         expect(&token, LEFT_PAREN, ErrorType::UnexpectedToken)?;
@@ -133,7 +134,7 @@ impl Color {
         }
     }
 
-    fn hex(token: &Token, n: u8) -> Color {
+    fn parse_hex(token: &Token, n: u8) -> Color {
         let mut r = 0;
         let mut g = 0;
         let mut b = 0;
@@ -154,7 +155,7 @@ impl Color {
         Color::Rgb(Rgb(r, g, b, n))
     }
 
-    fn fixed(mut next: impl FnMut() -> Result<Token, Error>, n: u8) -> Result<Color, Error> {
+    fn parsed_fixed(mut next: impl FnMut() -> Result<Token, Error>, n: u8) -> Result<Color, Error> {
         let token = next()?;
         expect(&token, LEFT_PAREN, ErrorType::UnexpectedToken)?;
 
@@ -172,6 +173,46 @@ impl Color {
 
     pub fn four_bit(n: u8) -> Color {
         Color::Ansi4Bit(Ansi4Bit(n))
+    }
+
+    pub fn fg_fixed(n: u8) -> Color {
+        Color::Ansi256(Ansi256(n, 38))
+    }
+
+    pub fn bg_fixed(n: u8) -> Color {
+        Color::Ansi256(Ansi256(n, 48))
+    }
+
+    pub fn fg_rgb(r: u8, g: u8, b: u8) -> Color {
+        Color::Rgb(Rgb(r, g, b, 38))
+    }
+
+    pub fn bg_rgb(r: u8, g: u8, b: u8) -> Color {
+        Color::Rgb(Rgb(r, g, b, 48))
+    }
+
+    pub fn fg_hex(h: &str) -> Color {
+        Color::parse_hex(
+            &Token {
+                r#type: TokenType::NUMBER,
+                lexeme: format!("f{h}"),
+                literal: None,
+                span: Span::inserted(),
+            },
+            38,
+        )
+    }
+
+    pub fn bg_hex(h: &str) -> Color {
+        Color::parse_hex(
+            &Token {
+                r#type: TokenType::NUMBER,
+                lexeme: format!("b{h}"),
+                literal: None,
+                span: Span::inserted(),
+            },
+            48,
+        )
     }
 
     pub fn is_empty(&self) -> bool {
@@ -212,9 +253,9 @@ impl TryFrom<(String, Span)> for Color {
             token::TokenType::FG_MAGENTA => Color::four_bit(35),
             token::TokenType::FG_CYAN => Color::four_bit(36),
             token::TokenType::FG_WHITE => Color::four_bit(37),
-            token::TokenType::FG_RGB => Color::rgb(next, 38)?,
-            token::TokenType::FG_HEX => Color::hex(&token, 38),
-            token::TokenType::FG_FIXED => Color::fixed(next, 38)?,
+            token::TokenType::FG_RGB => Color::parse_rgb(next, 38)?,
+            token::TokenType::FG_HEX => Color::parse_hex(&token, 38),
+            token::TokenType::FG_FIXED => Color::parsed_fixed(next, 38)?,
             token::TokenType::FG_DEFAULT => Color::four_bit(39),
 
             token::TokenType::BG_BLACK => Color::four_bit(40),
@@ -225,9 +266,9 @@ impl TryFrom<(String, Span)> for Color {
             token::TokenType::BG_MAGENTA => Color::four_bit(45),
             token::TokenType::BG_CYAN => Color::four_bit(46),
             token::TokenType::BG_WHITE => Color::four_bit(47),
-            token::TokenType::BG_RGB => Color::rgb(next, 48)?,
-            token::TokenType::BG_HEX => Color::hex(&token, 48),
-            token::TokenType::BG_FIXED => Color::fixed(next, 38)?,
+            token::TokenType::BG_RGB => Color::parse_rgb(next, 48)?,
+            token::TokenType::BG_HEX => Color::parse_hex(&token, 48),
+            token::TokenType::BG_FIXED => Color::parsed_fixed(next, 38)?,
             token::TokenType::BG_DEFAULT => Color::four_bit(49),
             _ => {
                 return Err(Error::new(

@@ -57,17 +57,17 @@ impl Span {
     }
 }
 
-impl Add<(usize, usize)> for Span {
+impl Add<(i32, i32)> for Span {
     type Output = Span;
 
-    fn add(mut self, rhs: (usize, usize)) -> Self::Output {
+    fn add(mut self, rhs: (i32, i32)) -> Self::Output {
         self.end += rhs;
         self
     }
 }
 
-impl AddAssign<(usize, usize)> for Span {
-    fn add_assign(&mut self, rhs: (usize, usize)) {
+impl AddAssign<(i32, i32)> for Span {
+    fn add_assign(&mut self, rhs: (i32, i32)) {
         self.end += rhs;
     }
 }
@@ -78,10 +78,10 @@ impl AddAssign for Span {
     }
 }
 
-impl Sub<(usize, usize)> for Span {
+impl Sub<(i32, i32)> for Span {
     type Output = Span;
 
-    fn sub(mut self, rhs: (usize, usize)) -> Self::Output {
+    fn sub(mut self, rhs: (i32, i32)) -> Self::Output {
         self.start -= rhs;
         self
     }

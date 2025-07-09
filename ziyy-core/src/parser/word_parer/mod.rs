@@ -1,4 +1,4 @@
-use super::ansi::{State, Style};
+use super::ansi::{Effect, State};
 use super::chunk::{Chunk, ChunkData};
 use super::color::{Ansi256, Color, Rgb};
 use super::tag_parer::tag::{Tag, TagType};
@@ -166,10 +166,10 @@ impl WordParser {
                 }
 
                 3 => {
-                    tag.set_italics(Style::Apply);
+                    tag.set_italics(Effect::Apply);
                 }
                 23 => {
-                    tag.set_italics(Style::Clear);
+                    tag.set_italics(Effect::Clear);
                 }
 
                 4 => {
@@ -193,31 +193,31 @@ impl WordParser {
                 }
 
                 5 => {
-                    tag.set_blink(Style::Apply);
+                    tag.set_blink(Effect::Apply);
                 }
                 25 => {
-                    tag.set_blink(Style::Clear);
+                    tag.set_blink(Effect::Clear);
                 }
 
                 7 => {
-                    tag.set_negative(Style::Apply);
+                    tag.set_negative(Effect::Apply);
                 }
                 27 => {
-                    tag.set_negative(Style::Clear);
+                    tag.set_negative(Effect::Clear);
                 }
 
                 8 => {
-                    tag.set_hidden(Style::Apply);
+                    tag.set_hidden(Effect::Apply);
                 }
                 28 => {
-                    tag.set_hidden(Style::Clear);
+                    tag.set_hidden(Effect::Clear);
                 }
 
                 9 => {
-                    tag.set_strike(Style::Apply);
+                    tag.set_strike(Effect::Apply);
                 }
                 29 => {
-                    tag.set_strike(Style::Clear);
+                    tag.set_strike(Effect::Clear);
                 }
 
                 30..=37 | 39 | 90..=97 => tag.set_fg_color(Color::four_bit(shrink!(num))),

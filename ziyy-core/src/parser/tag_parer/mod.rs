@@ -5,7 +5,7 @@ use std::collections::VecDeque;
 use tag::{Tag, TagType};
 use token::{Token, TokenType::*};
 
-use super::ansi::{State, Style};
+use super::ansi::{Effect, State};
 use super::color::Color;
 
 mod scanner;
@@ -17,7 +17,7 @@ macro_rules! consume_declaration {
         $token = $next()?;
         if $token.r#type == EQUAL {
             $token = $next()?;
-            expect(&$token, STRING, ErrorType::InvalidTagPropertyValue)?;
+            expect(&$token, STRING, ErrorType::InvalidTagAttributeValue)?;
             $token = $next()?;
         }
     }};
@@ -28,7 +28,7 @@ macro_rules! assign_prop {
         $token = $next()?;
         if $token.r#type == EQUAL {
             $token = $next()?;
-            expect(&$token, STRING, ErrorType::InvalidTagPropertyValue)?;
+            expect(&$token, STRING, ErrorType::InvalidTagAttributeValue)?;
             $tag.$set_prop($token.literal.unwrap());
             $token = $next()?;
         }
@@ -40,7 +40,7 @@ macro_rules! assign_prop_color {
         $token = $next()?;
         if $token.r#type == EQUAL {
             $token = $next()?;
-            expect(&$token, STRING, ErrorType::InvalidTagPropertyValue)?;
+            expect(&$token, STRING, ErrorType::InvalidTagAttributeValue)?;
             let color: Color =
                 (format!("{}{}", $pre, $token.literal.unwrap()), $token.span).try_into()?;
             $tag.$set_prop(color.into());
@@ -53,7 +53,7 @@ macro_rules! assign_prop_color {
         $token = $next()?;
         if $token.r#type == EQUAL {
             $token = $next()?;
-            expect(&$token, STRING, ErrorType::InvalidTagPropertyValue)?;
+            expect(&$token, STRING, ErrorType::InvalidTagAttributeValue)?;
             let s = $token.literal.unwrap();
             if s == "light" {
                 i += 60;
@@ -78,19 +78,19 @@ macro_rules! assign_prop_style {
         $token = $next()?;
         if $token.r#type == EQUAL {
             $token = $next()?;
-            expect(&$token, STRING, ErrorType::InvalidTagPropertyValue)?;
+            expect(&$token, STRING, ErrorType::InvalidTagAttributeValue)?;
             let s = $token.literal.unwrap();
             if s == "false" {
-                $tag.$set_prop(Style::Clear);
+                $tag.$set_prop(Effect::Clear);
             } else if s == "true" {
-                $tag.$set_prop(Style::Apply);
+                $tag.$set_prop(Effect::Apply);
             } else {
                 // TODO: Throw error
             }
 
             $token = $next()?;
         } else {
-            $tag.$set_prop(Style::Apply);
+            $tag.$set_prop(Effect::Apply);
         }
     }};
 }
@@ -100,7 +100,7 @@ macro_rules! assign_prop_state {
         $token = $next()?;
         if $token.r#type == EQUAL {
             $token = $next()?;
-            expect(&$token, STRING, ErrorType::InvalidTagPropertyValue)?;
+            expect(&$token, STRING, ErrorType::InvalidTagAttributeValue)?;
             let s = $token.literal.unwrap();
             if s == "false" {
                 // $tag.$set_prop(false);
@@ -185,7 +185,7 @@ impl TagParser {
                 tag.set_brightness(State::B);
             }
             "i" | "em" => {
-                tag.set_italics(Style::Apply);
+                tag.set_italics(Effect::Apply);
             }
             "u" | "ins" => {
                 tag.set_under(State::A);
@@ -194,16 +194,16 @@ impl TagParser {
                 tag.set_under(State::B);
             }
             "k" | "blink" => {
-                tag.set_blink(Style::Apply);
+                tag.set_blink(Effect::Apply);
             }
             "r" => {
-                tag.set_negative(Style::Apply);
+                tag.set_negative(Effect::Apply);
             }
             "h" => {
-                tag.set_hidden(Style::Apply);
+                tag.set_hidden(Effect::Apply);
             }
             "s" | "del" => {
-                tag.set_strike(Style::Apply);
+                tag.set_strike(Effect::Apply);
             }
             _ => {}
         }
@@ -246,16 +246,25 @@ impl TagParser {
                 "white" => assign_prop_color!(tag, next, token, 7),
                 "fixed" => {
                     token = next()?;
+                    let token2: Token;
                     if token.r#type == EQUAL {
                         token = next()?;
-                        expect(&token, STRING, ErrorType::InvalidTagPropertyValue)?;
+                        expect(&token, STRING, ErrorType::InvalidTagAttributeValue)?;
+                        token2 = token;
                         token = next()?;
+                    } else {
+                        continue;
                     }
 
                     let color = |pre: &str| -> Result<_, _> {
                         let c: Color = (
-                            format!("{pre}fixed({})", token.literal.unwrap()),
-                            token.span.unquote() - (0, 7),
+                            format!("{pre}fixed({})", token2.literal.unwrap()),
+                            // move start of span back by 7 columns due to inserted text ffixed( or bfixed( to preserve span of color in string
+                            // fixed = "..."
+                            // ^^^^^ ^ ^
+                            // ||||| | |
+                            // 12345 6 7
+                            token2.span.unquote() - (0, 7),
                         )
                             .try_into()?;
                         Ok(c)
@@ -269,16 +278,25 @@ impl TagParser {
                 }
                 "rgb" => {
                     token = next()?;
+                    let token2: Token;
                     if token.r#type == EQUAL {
                         token = next()?;
-                        expect(&token, STRING, ErrorType::InvalidTagPropertyValue)?;
+                        expect(&token, STRING, ErrorType::InvalidTagAttributeValue)?;
+                        token2 = token;
                         token = next()?;
+                    } else {
+                        continue;
                     }
 
                     let color = |pre: &str| -> Result<_, _> {
                         let c: Color = (
-                            format!("{pre}rgb({})", token.literal.unwrap()),
-                            token.span.unquote() - (0, 5),
+                            format!("{pre}rgb({})", token2.literal.unwrap()),
+                            // move start of span back by 5 columns due to inserted text frgb( or brgb( to preserve span of color in string
+                            // rgb = "..."
+                            // ^^^ ^ ^
+                            // ||| | |
+                            // 123 4 5
+                            token2.span.unquote() - (0, 5),
                         )
                             .try_into()?;
                         Ok(c)
@@ -298,7 +316,7 @@ impl TagParser {
                         token = next()?;
                         if token.r#type == EQUAL {
                             token = next()?;
-                            expect(&token, STRING, ErrorType::InvalidTagPropertyValue)?;
+                            expect(&token, STRING, ErrorType::InvalidTagAttributeValue)?;
                             let s = token.literal.unwrap();
                             if s == "false" {
                                 tag.set_under(State::A);

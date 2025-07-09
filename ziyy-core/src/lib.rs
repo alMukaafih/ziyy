@@ -16,6 +16,7 @@ pub use splitter::{
 };
 
 pub use common::{Position, Span};
+pub use parser::color::Color;
 
 mod builtin;
 mod error;
@@ -26,6 +27,8 @@ mod indexer;
 mod parser;
 mod resolver;
 mod splitter;
+
+// mod ziyy;
 
 /// Styles the given text using ziyy.
 ///
@@ -42,25 +45,27 @@ mod splitter;
 /// This function will panic if the parser encounters an error while parsing the input source.
 ///
 pub fn style<T: AsRef<str>>(source: T) -> String {
-    // let mut indexer = Indexer::new();
-    // let source = indexer.index(source.as_ref().to_string());
+    match try_style(source) {
+        Ok(v) => v,
+        Err(e) => panic!("{}", e),
+    }
+}
+
+/// Styles the given text using ziyy.
+pub fn try_style<T: AsRef<str>>(source: T) -> Result<String> {
+    let mut indexer = Indexer::new();
+    let source = indexer.index(source.as_ref().to_string());
     let mut splitter = Splitter::new();
     #[allow(clippy::unnecessary_to_owned)]
-    let frags = splitter.split(source.as_ref().to_string());
+    let frags = splitter.split(source)?;
 
     let parser = Parser::new(false);
-    let chunks = match parser.parse(frags) {
-        Ok(v) => v,
-        Err(e) => panic!("{}", e),
-    };
+    let chunks = parser.parse(frags)?;
 
     let mut resolver = Resolver::new(false);
-    let output = match resolver.resolve(chunks) {
-        Ok(v) => v,
-        Err(e) => panic!("{}", e),
-    };
+    let output = resolver.resolve(chunks)?;
 
     let mut buf = String::new();
     output.root().to_string(&mut buf);
-    buf
+    Ok(buf)
 }

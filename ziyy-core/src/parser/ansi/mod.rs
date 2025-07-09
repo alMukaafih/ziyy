@@ -1,5 +1,5 @@
 use crate::parser::color::Color;
-pub use options::{AnsiOptions, Style};
+pub use options::{AnsiOptions, Effect};
 pub use state::State;
 use std::fmt::{Debug, Display, Write};
 use std::io::Write as _;
@@ -126,17 +126,17 @@ macro_rules! impl_ansi {
         )*
 
         $(
-            pub fn $set_y(&mut self, value: Style) {
+            pub fn $set_y(&mut self, value: Effect) {
                 match value {
-                    Style::None => {
+                    Effect::None => {
                         set_style(&mut self.style, $j, false);
                         set_style(&mut self.style, $j + 15, false);
                     }
-                    Style::Apply =>  {
+                    Effect::Apply =>  {
                         set_style(&mut self.style, $j, true);
                         set_style(&mut self.style, $j + 15, false);
                     },
-                    Style::Clear => {
+                    Effect::Clear => {
                         set_style(&mut self.style, $j, false);
                         set_style(&mut self.style, $j + 15, true);
                     }
@@ -144,11 +144,11 @@ macro_rules! impl_ansi {
 
             }
 
-            pub fn $y(&self) -> Style {
+            pub fn $y(&self) -> Effect {
                 match (get_style(&self.style, $j), get_style(&self.style, $j + 15)) {
-                    (false, false) => Style::None,
-                    (true, false) => Style::Apply,
-                    (false, true) => Style::Clear,
+                    (false, false) => Effect::None,
+                    (true, false) => Effect::Apply,
+                    (false, true) => Effect::Clear,
                     _ => panic!()
                 }
             }
@@ -209,11 +209,11 @@ impl Display for Ansi {
         macro_rules! write_prop_style {
             ( $f:tt, $a:expr, $e:expr ) => {
                 match self.$f() {
-                    Style::None => {}
-                    Style::Apply => {
+                    Effect::None => {}
+                    Effect::Apply => {
                         let _ = buf.write($a);
                     }
-                    Style::Clear => {
+                    Effect::Clear => {
                         let _ = buf.write($e);
                     }
                 }
@@ -290,17 +290,17 @@ pub fn merge(lhs: State, rhs: State) -> State {
     }
 }
 
-fn add(lhs: Style, rhs: Style) -> Style {
+fn add(lhs: Effect, rhs: Effect) -> Effect {
     match (lhs, rhs) {
-        (Style::None, Style::None) => Style::None,
-        (Style::None, Style::Apply) => Style::Apply,
-        (Style::None, Style::Clear) => Style::Clear,
-        (Style::Apply, Style::None) => Style::Apply,
-        (Style::Apply, Style::Apply) => Style::Apply,
-        (Style::Apply, Style::Clear) => Style::Clear,
-        (Style::Clear, Style::None) => Style::Clear,
-        (Style::Clear, Style::Apply) => Style::Apply,
-        (Style::Clear, Style::Clear) => Style::Clear,
+        (Effect::None, Effect::None) => Effect::None,
+        (Effect::None, Effect::Apply) => Effect::Apply,
+        (Effect::None, Effect::Clear) => Effect::Clear,
+        (Effect::Apply, Effect::None) => Effect::Apply,
+        (Effect::Apply, Effect::Apply) => Effect::Apply,
+        (Effect::Apply, Effect::Clear) => Effect::Clear,
+        (Effect::Clear, Effect::None) => Effect::Clear,
+        (Effect::Clear, Effect::Apply) => Effect::Apply,
+        (Effect::Clear, Effect::Clear) => Effect::Clear,
     }
 }
 
@@ -343,13 +343,13 @@ fn diff(lhs: State, rhs: State) -> State {
     }
 }
 
-fn sub(lhs: Style, rhs: Style) -> Style {
+fn sub(lhs: Effect, rhs: Effect) -> Effect {
     match (lhs, rhs) {
-        (Style::None, _) => Style::None,
-        (Style::Apply, Style::Apply) => Style::None,
-        (Style::Clear, Style::Clear) => Style::None,
-        (Style::Apply, _) => Style::Apply,
-        (Style::Clear, _) => Style::Clear,
+        (Effect::None, _) => Effect::None,
+        (Effect::Apply, Effect::Apply) => Effect::None,
+        (Effect::Clear, Effect::Clear) => Effect::None,
+        (Effect::Apply, _) => Effect::Apply,
+        (Effect::Clear, _) => Effect::Clear,
     }
 }
 
@@ -429,7 +429,7 @@ impl Not for Ansi {
 
 #[cfg(test)]
 mod test {
-    use crate::parser::ansi::Style;
+    use crate::parser::ansi::Effect;
 
     use super::Ansi;
     use super::State;
@@ -440,30 +440,30 @@ mod test {
         lhs.set_brightness(State::A);
 
         let mut rhs = Ansi::new();
-        rhs.set_blink(Style::Apply);
-        rhs.set_negative(Style::Apply);
+        rhs.set_blink(Effect::Apply);
+        rhs.set_negative(Effect::Apply);
 
         lhs += rhs;
 
         assert_eq!(lhs.brightness(), State::A);
         assert_eq!(lhs.under(), State::None);
-        assert_eq!(lhs.blink(), Style::Apply);
-        assert_eq!(lhs.hidden(), Style::None);
-        assert_eq!(lhs.strike(), Style::None);
-        assert_eq!(lhs.italics(), Style::None);
-        assert_eq!(lhs.negative(), Style::Apply);
+        assert_eq!(lhs.blink(), Effect::Apply);
+        assert_eq!(lhs.hidden(), Effect::None);
+        assert_eq!(lhs.strike(), Effect::None);
+        assert_eq!(lhs.italics(), Effect::None);
+        assert_eq!(lhs.negative(), Effect::Apply);
     }
 
     #[test]
     fn test_ansi_sub() {
         let mut lhs = Ansi::new();
         lhs.set_brightness(State::B);
-        lhs.set_blink(Style::Apply);
-        lhs.set_negative(Style::Apply);
+        lhs.set_blink(Effect::Apply);
+        lhs.set_negative(Effect::Apply);
 
         let mut rhs = Ansi::new();
-        rhs.set_blink(Style::Apply);
-        rhs.set_negative(Style::Apply);
+        rhs.set_blink(Effect::Apply);
+        rhs.set_negative(Effect::Apply);
 
         lhs -= rhs.clone();
 
@@ -471,28 +471,28 @@ mod test {
 
         assert_eq!(lhs.brightness(), State::B);
         assert_eq!(lhs.under(), State::None);
-        assert_eq!(lhs.blink(), Style::None);
-        assert_eq!(lhs.hidden(), Style::None);
-        assert_eq!(lhs.strike(), Style::None);
-        assert_eq!(lhs.italics(), Style::None);
-        assert_eq!(lhs.negative(), Style::None);
+        assert_eq!(lhs.blink(), Effect::None);
+        assert_eq!(lhs.hidden(), Effect::None);
+        assert_eq!(lhs.strike(), Effect::None);
+        assert_eq!(lhs.italics(), Effect::None);
+        assert_eq!(lhs.negative(), Effect::None);
     }
 
     #[test]
     fn test_ansi_not() {
         let mut ansi = Ansi::new();
         ansi.set_brightness(State::A);
-        ansi.set_blink(Style::Apply);
-        ansi.set_negative(Style::Apply);
+        ansi.set_blink(Effect::Apply);
+        ansi.set_negative(Effect::Apply);
 
         let not_ansi = !ansi.clone();
 
         assert_eq!(ansi.brightness(), State::A);
         assert_eq!(ansi.under(), State::None);
-        assert_eq!(not_ansi.blink(), Style::Clear);
-        assert_eq!(not_ansi.hidden(), Style::None);
-        assert_eq!(not_ansi.strike(), Style::None);
-        assert_eq!(not_ansi.italics(), Style::None);
-        assert_eq!(not_ansi.negative(), Style::Clear);
+        assert_eq!(not_ansi.blink(), Effect::Clear);
+        assert_eq!(not_ansi.hidden(), Effect::None);
+        assert_eq!(not_ansi.strike(), Effect::None);
+        assert_eq!(not_ansi.italics(), Effect::None);
+        assert_eq!(not_ansi.negative(), Effect::Clear);
     }
 }

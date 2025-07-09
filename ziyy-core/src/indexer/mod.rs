@@ -1,5 +1,8 @@
 use std::mem::take;
 
+// mod scanner;
+// mod token;
+
 /// The Indexer adds indices to empty placeholders
 #[doc(hidden)]
 pub struct Indexer {

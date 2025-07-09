@@ -3,16 +3,16 @@ use crate::parser::color::Color;
 use super::State;
 
 #[derive(Default, Debug, PartialEq)]
-pub enum Style {
+pub enum Effect {
     #[default]
     None,
     Apply,
     Clear,
 }
 
-impl Style {
+impl Effect {
     pub fn is_some(&self) -> bool {
-        !matches!(self, Style::None)
+        !matches!(self, Effect::None)
     }
 
     pub fn is_none(&self) -> bool {
@@ -24,11 +24,11 @@ impl Style {
 pub struct AnsiOptions {
     pub brightness: State,
     pub under: State,
-    pub blink: Style,
-    pub hidden: Style,
-    pub italics: Style,
-    pub negetive: Style,
-    pub strike: Style,
+    pub blink: Effect,
+    pub hidden: Effect,
+    pub italics: Effect,
+    pub negetive: Effect,
+    pub strike: Effect,
     pub fg_color: Color,
     pub bg_color: Color,
 }

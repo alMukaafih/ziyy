@@ -26,7 +26,7 @@ fn parse(source: &str) -> Result<Rc<Document>> {
     let mut indexer = Indexer::new();
     let source = indexer.index(source.to_string());
     let mut splitter = Splitter::new();
-    let frags = splitter.split(source);
+    let frags = splitter.split(source)?;
 
     let parser = Parser::default();
     let chunks = parser.parse(frags)?;
@@ -67,7 +67,7 @@ fn usage() {
     let help = parse(&format!(include_str!("help.zy"), env!("CARGO_BIN_NAME"))).unwrap();
 
     if !out.is_terminal() {
-        help.root().strip_styles();
+        // help.root().strip_styles();
     }
 
     let mut buf = String::new();

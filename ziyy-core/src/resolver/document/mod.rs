@@ -20,12 +20,15 @@ mod node;
 #[derive(Clone)]
 #[doc(hidden)]
 pub struct Document {
+    recycled: RefCell<Vec<u32>>,
     nodes: RefCell<Vec<Rc<Node>>>,
 }
 
 impl Document {
+    /// Creates a new Document
     pub fn new() -> Rc<Self> {
         let doc = Rc::new(Self {
+            recycled: RefCell::new(Vec::with_capacity(64)),
             nodes: RefCell::new(vec![]),
         });
 
@@ -50,20 +53,16 @@ impl Document {
         doc
     }
 
-    pub fn get(self: &Rc<Self>, id: u32) -> Rc<Node> {
+    pub fn get(&self, id: u32) -> Rc<Node> {
         self.nodes.borrow()[id as usize].clone()
     }
 
-    pub fn node(self: &Rc<Self>, id: u32) -> Rc<Node> {
+    pub fn node(&self, id: u32) -> Rc<Node> {
         self.get(id)
     }
 
-    pub fn root(self: &Rc<Document>) -> Rc<Node> {
+    pub fn root(&self) -> Rc<Node> {
         self.get(0)
-    }
-
-    pub fn root2(&self) -> Rc<Node> {
-        self.nodes.borrow()[0].clone()
     }
 
     pub fn orphan(self: &Rc<Document>, chunk: Chunk) -> Rc<Node> {
@@ -71,16 +70,24 @@ impl Document {
         let mut nodes = self.nodes.borrow_mut();
         let id = nodes.len();
 
-        let node = Rc::new(Node::new(
-            id.try_into().expect("maximum nodes exceeded"),
-            chunk,
-            doc,
-        ));
-        nodes.push(node.clone());
+        let node: Rc<Node>;
+
+        let mut recycled = self.recycled.borrow_mut();
+        if let Some(id) = recycled.pop() {
+            node = Rc::new(Node::new(id, chunk, doc));
+            nodes[id as usize] = node.clone();
+        } else {
+            node = Rc::new(Node::new(
+                id.try_into().expect("maximum nodes exceeded"),
+                chunk,
+                doc,
+            ));
+            nodes.push(node.clone());
+        }
         node
     }
 
-    pub fn len(self: &Rc<Self>) -> usize {
+    pub fn len(&self) -> usize {
         self.nodes.borrow().len()
     }
 }
@@ -90,7 +97,7 @@ impl Debug for Document {
         use iter::Edge;
         if f.alternate() {
             write!(f, "Document {{")?;
-            for edge in self.root2().traverse() {
+            for edge in self.root().traverse() {
                 match edge {
                     Edge::Open(node) if node.has_children() => {
                         write!(f, " {:#?} => {{", node.chunk())?;
@@ -127,7 +134,7 @@ impl Display for Document {
 
         let mut indent: Indentation = Indentation::new(true);
 
-        for edge in self.root2().traverse() {
+        for edge in self.root().traverse() {
             match edge {
                 Edge::Open(node) if node.has_children() => {
                     indent.indent(node.next_sibling().is_some());

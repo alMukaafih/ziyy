@@ -14,10 +14,12 @@ struct Kin {
     children: Option<(u32, u32)>,
 }
 
+pub type RNode = Rc<Node>;
+
 #[derive(Debug, Clone)]
 #[doc(hidden)]
 pub struct Node {
-    id: u32,
+    pub(super) id: u32,
     kin: RefCell<Kin>,
     doc: Weak<Document>,
     chunk: RefCell<Chunk>,
@@ -38,20 +40,20 @@ impl Node {
         }
     }
 
-    pub fn id(self: &Rc<Node>) -> u32 {
+    pub fn id(&self) -> u32 {
         self.id
     }
 
-    pub fn doc(self: &Rc<Node>) -> Rc<Document> {
+    pub fn doc(&self) -> Rc<Document> {
         self.doc.upgrade().unwrap()
     }
 
     /// Returns the chunk of this node.
-    pub fn chunk(self: &Rc<Node>) -> &RefCell<Chunk> {
+    pub fn chunk<'a>(self: &'a RNode) -> &'a RefCell<Chunk> {
         &self.chunk
     }
 
-    fn axis<F>(self: &Rc<Node>, f: F) -> Option<Rc<Node>>
+    fn axis<F>(&self, f: F) -> Option<RNode>
     where
         F: FnOnce(Ref<Kin>) -> Option<u32>,
     {
@@ -59,43 +61,43 @@ impl Node {
     }
 
     /// Returns the parent of this node.
-    pub fn parent(self: &Rc<Node>) -> Option<Rc<Self>> {
+    pub fn parent(&self) -> Option<Rc<Self>> {
         self.axis(|node| node.parent)
     }
 
     /// Returns the previous sibling of this node.
-    pub fn prev_sibling(self: &Rc<Node>) -> Option<Rc<Self>> {
+    pub fn prev_sibling(&self) -> Option<Rc<Self>> {
         self.axis(|node| node.prev_sibling)
     }
 
     /// Returns the next sibling of this node.
-    pub fn next_sibling(self: &Rc<Node>) -> Option<Rc<Self>> {
+    pub fn next_sibling(&self) -> Option<Rc<Self>> {
         self.axis(|node| node.next_sibling)
     }
 
     /// Returns the first child of this node.
-    pub fn first_child(self: &Rc<Node>) -> Option<Rc<Self>> {
+    pub fn first_child(&self) -> Option<Rc<Self>> {
         self.axis(|node| node.children.map(|(id, _)| id))
     }
 
     /// Returns the last child of this node.
-    pub fn last_child(self: &Rc<Node>) -> Option<Rc<Self>> {
+    pub fn last_child(&self) -> Option<Rc<Self>> {
         self.axis(|node| node.children.map(|(_, id)| id))
     }
 
     /// Returns true if this node has children.
-    pub fn has_children(self: &Rc<Node>) -> bool {
+    pub fn has_children(&self) -> bool {
         self.kin.borrow().children.is_some()
     }
 
     /// Appends a new child to this node.
-    pub fn append(self: &Rc<Node>, value: Chunk) -> Rc<Node> {
+    pub fn append(&self, value: Chunk) -> RNode {
         let id = self.doc().orphan(value).id;
         self.append_id(id)
     }
 
     /// Prepends a new child to this node.
-    pub fn prepend(self: &Rc<Node>, value: Chunk) -> Rc<Node> {
+    pub fn prepend(&self, value: Chunk) -> RNode {
         let id = self.doc().orphan(value).id;
         self.prepend_id(id)
     }
@@ -105,7 +107,7 @@ impl Node {
     /// # Panics
     ///
     /// Panics if this node is an orphan.
-    pub fn insert_before(self: &Rc<Node>, value: Chunk) -> Rc<Node> {
+    pub fn insert_before(&self, value: Chunk) -> RNode {
         let id = self.doc().orphan(value).id;
         self.insert_id_before(id)
     }
@@ -115,13 +117,13 @@ impl Node {
     /// # Panics
     ///
     /// Panics if this node is an orphan.
-    pub fn insert_after(self: &Rc<Node>, value: Chunk) -> Rc<Node> {
+    pub fn insert_after(&self, value: Chunk) -> RNode {
         let id = self.doc().orphan(value).id;
         self.insert_id_after(id)
     }
 
     /// Detaches this node from its parent.
-    pub fn detach(self: &Rc<Node>) {
+    pub fn detach(&self, recycle: bool) {
         let mut kin = self.kin.borrow_mut();
         let parent_id = match kin.parent {
             Some(id) => id,
@@ -154,10 +156,14 @@ impl Node {
         } else if last_child_id == self.id {
             parent_kin.children = Some((first_child_id, prev_sibling_id.unwrap()));
         }
+
+        if recycle {
+            self.doc().recycled.borrow_mut().push(self.id);
+        }
     }
 
     /// Appends a child to this node.
-    pub fn append_id(self: &Rc<Node>, new_child_id: u32) -> Rc<Node> {
+    pub fn append_id(&self, new_child_id: u32) -> RNode {
         assert_ne!(
             self.id, new_child_id,
             "Cannot append node as a child to itself"
@@ -170,7 +176,7 @@ impl Node {
         if last_child_id != Some(new_child_id) {
             {
                 let new_child = self.doc().get(new_child_id);
-                new_child.detach();
+                new_child.detach(true);
                 let mut new_child_kin = new_child.kin.borrow_mut();
                 new_child_kin.parent = Some(self.id);
                 new_child_kin.prev_sibling = last_child_id;
@@ -190,7 +196,7 @@ impl Node {
     }
 
     /// Prepends a child to this node.
-    pub fn prepend_id(self: &Rc<Node>, new_child_id: u32) -> Rc<Node> {
+    pub fn prepend_id(&self, new_child_id: u32) -> RNode {
         assert_ne!(
             self.id, new_child_id,
             "Cannot prepend node as a child to itself"
@@ -202,7 +208,7 @@ impl Node {
 
         if first_child_id != Some(new_child_id) {
             let new_child = self.doc().get(new_child_id);
-            new_child.detach();
+            new_child.detach(true);
             let mut new_child_kin = new_child.kin.borrow_mut();
             new_child_kin.parent = Some(self.id);
             new_child_kin.next_sibling = first_child_id;
@@ -226,7 +232,7 @@ impl Node {
     ///
     /// - Panics if `new_sibling_id` is not valid.
     /// - Panics if this node is an orphan.
-    pub fn insert_id_before(self: &Rc<Node>, new_sibling_id: u32) -> Rc<Node> {
+    pub fn insert_id_before(&self, new_sibling_id: u32) -> RNode {
         assert_ne!(
             self.id, new_sibling_id,
             "Cannot insert node as a sibling of itself"
@@ -239,7 +245,7 @@ impl Node {
 
         {
             let new_sibling = self.doc().get(new_sibling_id);
-            new_sibling.detach();
+            new_sibling.detach(true);
             let mut new_sibling_kin = new_sibling.kin.borrow_mut();
             new_sibling_kin.parent = Some(parent_id);
             new_sibling_kin.prev_sibling = prev_sibling_id;
@@ -271,7 +277,7 @@ impl Node {
     ///
     /// - Panics if `new_sibling_id` is not valid.
     /// - Panics if this node is an orphan.
-    pub fn insert_id_after(self: &Rc<Node>, new_sibling_id: u32) -> Rc<Node> {
+    pub fn insert_id_after(&self, new_sibling_id: u32) -> RNode {
         assert_ne!(
             self.id, new_sibling_id,
             "Cannot insert node as a sibling of itself"
@@ -284,7 +290,7 @@ impl Node {
 
         {
             let new_sibling = self.doc().get(new_sibling_id);
-            new_sibling.detach();
+            new_sibling.detach(true);
             let mut new_sibling_kin = new_sibling.kin.borrow_mut();
             new_sibling_kin.parent = Some(parent_id);
             new_sibling_kin.prev_sibling = Some(self.id);
@@ -311,7 +317,7 @@ impl Node {
     }
 
     /// Returns the string representation of this node.
-    pub fn to_string(self: &Rc<Node>, buf: &mut String) {
+    pub fn to_string(&self, buf: &mut String) {
         if self.has_children() {
             let tag_chunk = self.chunk.borrow();
             let tag = tag_chunk.data.tag().unwrap();
@@ -325,7 +331,7 @@ impl Node {
         }
     }
 
-    pub fn strip_styles(self: &Rc<Node>) {
+    pub fn strip_styles(&self) {
         if self.chunk.borrow().is_tag() {
             let mut tag_chunk = self.chunk.borrow_mut();
             let tag = tag_chunk.data.tag_mut().unwrap();
@@ -336,7 +342,7 @@ impl Node {
         }
     }
 
-    pub fn word_len(self: &Rc<Node>, len: &mut usize) {
+    pub fn word_len(&self, len: &mut usize) {
         for child in self.children() {
             if child.chunk.borrow().is_word() {
                 *len += child.chunk.borrow().word().unwrap().chars().count()

@@ -73,7 +73,7 @@ impl Resolver {
                 for chunk in chunks {
                     node.insert_before(chunk);
                 }
-                node.detach();
+                node.detach(true);
             }
         }
 
@@ -82,14 +82,14 @@ impl Resolver {
             let mut bindings: HashMap<String, Tag> = HashMap::new();
             Resolver::resolve_bindings(&mut bindings, &node, &mut detachables);
             for node in detachables.drain(..) {
-                node.detach();
+                node.detach(true);
             }
         }
 
         {
             Resolver::optimize_ws(&node, &mut detachables);
             for node in &detachables {
-                node.detach();
+                node.detach(true);
             }
         }
 
