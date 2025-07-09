@@ -389,21 +389,29 @@ impl Resolver {
 
     /// Optimize styles
     fn optimize_styles(node: &Rc<Node>) {
-        let mut stack = Vec::with_capacity(1024);
+        let mut stack: Vec<(String, Ansi, Ansi)> = Vec::with_capacity(1024);
         for child in node.descendants() {
             let mut child_chunk = child.chunk().borrow_mut();
             if child_chunk.is_tag() {
                 let tag = child_chunk.tag_mut().unwrap();
                 match tag.r#type {
                     TagType::Open => {
-                        let (prev_name, prev_style, prev_delta): (String, Ansi, Ansi) =
-                            stack.pop().unwrap_or_default();
+                        let (_, prev_style, _) = stack.last().cloned().unwrap_or_default();
+                        // [prev_style]<pass>[prev_prev_style]</pass>[prev_style]
                         let new_style = prev_style.clone() + tag.clone().ansi;
                         let new_delta = tag.clone().ansi - prev_style.clone();
+                        /* if tag.name() == "pass" {
+                            let (_, pprev_style, pprev_delta) =
+                                stack.get(stack.len() - 2).cloned().unwrap_or_default();
+                            new_style = prev_style.clone() + pprev_style;
+                            new_delta = pprev_delta - prev_style.clone();
+                        } else {
+                            new_style = prev_style.clone() + tag.clone().ansi;
+                            new_delta = tag.clone().ansi - prev_style.clone();
+                        } */
 
                         tag.ansi = new_delta.clone();
 
-                        stack.push((prev_name, prev_style, prev_delta));
                         stack.push((tag.name().clone(), new_style, new_delta));
                     }
 
@@ -415,6 +423,15 @@ impl Resolver {
                         }
 
                         tag.ansi = !(new_tag.2);
+
+                        if let Some((_, prev, _)) = stack.last() {
+                            if !prev.fg_color().is_empty() {
+                                tag.ansi.set_fg_color(prev.fg_color().clone());
+                            }
+                            if !prev.bg_color().is_empty() {
+                                tag.ansi.set_bg_color(prev.bg_color().clone());
+                            }
+                        }
                     }
 
                     TagType::SelfClose => {}

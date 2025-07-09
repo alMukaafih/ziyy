@@ -365,13 +365,11 @@ impl SubAssign for Ansi {
         self.set_negative(sub(self.negative(), rhs.negative()));
         self.set_strike(sub(self.strike(), rhs.strike()));
 
-        if !self.fg_color().is_empty() && !rhs.fg_color().is_empty() {
-            self.set_fg_color(Color::default());
-        }
+        // if !self.fg_color().is_empty() && !rhs.fg_color().is_empty() {}
+        // self.set_fg_color(self.fg_color().clone());
 
-        if !self.bg_color().is_empty() && !rhs.bg_color().is_empty() {
-            self.set_bg_color(Color::default());
-        }
+        // if !self.bg_color().is_empty() && !rhs.bg_color().is_empty() {}
+        // self.set_bg_color(self.bg_color().clone());
     }
 }
 
