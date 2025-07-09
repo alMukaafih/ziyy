@@ -1,54 +1,67 @@
-use core::iter::FromIterator;
-use proc_macro::{Literal, TokenStream, TokenTree};
+use proc_macro::TokenStream;
+use quote::quote_spanned;
+use syn::parse::{End, Parse, ParseStream, Result};
+use syn::punctuated::Punctuated;
+use syn::{Expr, LitStr, Token, parse_macro_input};
 
-fn style_with(item: TokenStream, styler: fn(String) -> String) -> TokenStream {
-    let mut tokens: Vec<_> = item.into_iter().collect();
+struct StyleFmt {
+    source: LitStr,
+    exprs: Option<Punctuated<Expr, Token![,]>>,
+}
 
-    if !tokens.is_empty() {
-        let token = tokens.get_mut(0).unwrap();
-
-        if let TokenTree::Literal(literal) = token {
-            let s: String = literal.to_string();
-            let strings: Vec<_> = s.split('"').collect();
-            let end = strings.len() - 1;
-            let s = strings[1..end].join("\"");
-            let parsed = styler(s);
-
-            let literal = Literal::string(&parsed);
-            *token = TokenTree::Literal(literal)
+impl Parse for StyleFmt {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let mut source: LitStr = input.parse()?;
+        let lookahead = input.lookahead1();
+        let exprs;
+        if lookahead.peek(Token![,]) {
+            let comma = input.parse::<Token![,]>()?;
+            source.set_span(comma.span);
+            exprs = Some(input.parse_terminated(Expr::parse, Token![,])?);
+        } else if lookahead.peek(End) {
+            exprs = None
+        } else {
+            return Err(lookahead.error());
         }
-    }
 
-    let token_stream = TokenStream::from_iter(tokens).to_string();
-    format!("format!({token_stream})").parse().unwrap()
+        Ok(Self { source, exprs })
+    }
+}
+
+/// Styles formatted text
+#[proc_macro]
+pub fn style_fmt(tokens: TokenStream) -> TokenStream {
+    let StyleFmt {
+        source,
+        exprs: idents,
+    } = parse_macro_input!(tokens as StyleFmt);
+
+    let span = source.span();
+    let parsed = match ziyy_core::try_style(source.value()) {
+        Ok(s) => s,
+        Err(e) => panic!("{e}"),
+    };
+
+    let expanded = quote_spanned! {
+        span => format!(#parsed, #idents)
+    };
+
+    TokenStream::from(expanded)
 }
 
 /// Styles text
 #[proc_macro]
-pub fn style_fmt(item: TokenStream) -> TokenStream {
-    style_with(item, ziyy_core::style::<String>)
-}
+pub fn style(tokens: TokenStream) -> TokenStream {
+    let source = parse_macro_input!(tokens as LitStr);
+    let span = source.span();
+    let parsed = match ziyy_core::try_style(source.value()) {
+        Ok(s) => s,
+        Err(e) => panic!("{e}"),
+    };
 
-#[proc_macro]
-pub fn style(item: TokenStream) -> TokenStream {
-    let mut tokens: Vec<_> = item.into_iter().collect();
+    let expanded = quote_spanned! {
+        span => #parsed
+    };
 
-    if !tokens.is_empty() && tokens.len() == 1 {
-        let token = tokens.get_mut(0).unwrap();
-
-        if let TokenTree::Literal(literal) = token {
-            let s: String = literal.to_string();
-            let strings: Vec<_> = s.split('"').collect();
-            let end = strings.len() - 1;
-            let s = strings[1..end].join("\"");
-            let parsed = ziyy_core::style(s);
-
-            let literal = Literal::string(&parsed);
-            *token = TokenTree::Literal(literal)
-        }
-
-        TokenStream::from_iter(tokens)
-    } else {
-        panic!("")
-    }
+    TokenStream::from(expanded)
 }
