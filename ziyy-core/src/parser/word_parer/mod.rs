@@ -1,4 +1,4 @@
-use super::ansi::{Effect, State};
+use super::ansi::{DuoEffect, Effect};
 use super::chunk::{Chunk, ChunkData};
 use super::color::{Ansi256, Color, Rgb};
 use super::tag_parer::tag::{Tag, TagType};
@@ -142,26 +142,30 @@ impl WordParser {
             };
 
             match num {
-                -1 => break,
-                0 => tag.reset_styles(),
+                0 => tag.clear_all(),
 
                 1 => {
-                    tag.set_brightness(State::A);
+                    tag.set_brightness(DuoEffect::A);
                 }
                 2 => {
-                    tag.set_brightness(State::B);
+                    tag.set_brightness(DuoEffect::B);
                 }
                 22 => {
                     let num = parts.peek();
                     if let Some(num) = num {
                         tag.set_brightness(match num {
-                            1 => State::BA,
-                            2 => State::AB,
-                            _ => State::E,
+                            1 => {
+                                parts.next();
+                                DuoEffect::BA
+                            }
+                            2 => {
+                                parts.next();
+                                DuoEffect::AB
+                            }
+                            _ => DuoEffect::E,
                         });
-                        parts.next();
                     } else {
-                        tag.set_brightness(State::E);
+                        tag.set_brightness(DuoEffect::E);
                     }
                 }
 
@@ -173,22 +177,27 @@ impl WordParser {
                 }
 
                 4 => {
-                    tag.set_under(State::A);
+                    tag.set_under(DuoEffect::A);
                 }
                 21 => {
-                    tag.set_under(State::B);
+                    tag.set_under(DuoEffect::B);
                 }
                 24 => {
                     let num = parts.peek();
                     if let Some(num) = num {
                         tag.set_under(match num {
-                            4 => State::BA,
-                            21 => State::AB,
-                            _ => State::E,
+                            4 => {
+                                parts.next();
+                                DuoEffect::BA
+                            }
+                            21 => {
+                                parts.next();
+                                DuoEffect::AB
+                            }
+                            _ => DuoEffect::E,
                         });
-                        parts.next();
                     } else {
-                        tag.set_under(State::E);
+                        tag.set_under(DuoEffect::E);
                     }
                 }
 

@@ -1,20 +1,20 @@
 use std::{collections::HashMap, sync::LazyLock};
 
-use crate::parser::ansi::{Ansi, AnsiOptions, Effect, State};
+use crate::parser::ansi::{Ansi, AnsiOptions, Effect, DuoEffect};
 
 pub static BUILTIN_STYLES: LazyLock<HashMap<&str, Ansi>> = LazyLock::new(|| {
     [
         (
             "b",
             Ansi::with(AnsiOptions {
-                brightness: State::A,
+                brightness: DuoEffect::A,
                 ..Default::default()
             }),
         ),
         (
             "d",
             Ansi::with(AnsiOptions {
-                brightness: State::B,
+                brightness: DuoEffect::B,
                 ..Default::default()
             }),
         ),
@@ -56,14 +56,14 @@ pub static BUILTIN_STYLES: LazyLock<HashMap<&str, Ansi>> = LazyLock::new(|| {
         (
             "u",
             Ansi::with(AnsiOptions {
-                under: State::A,
+                under: DuoEffect::A,
                 ..Default::default()
             }),
         ),
         (
             "uu",
             Ansi::with(AnsiOptions {
-                under: State::B,
+                under: DuoEffect::B,
                 ..Default::default()
             }),
         ),

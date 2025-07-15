@@ -5,7 +5,7 @@ use std::collections::VecDeque;
 use tag::{Tag, TagType};
 use token::{Token, TokenType::*};
 
-use super::ansi::{Effect, State};
+use super::ansi::{DuoEffect, Effect};
 use super::color::Color;
 
 mod scanner;
@@ -73,7 +73,7 @@ macro_rules! assign_prop_color {
     }};
 }
 
-macro_rules! assign_prop_style {
+macro_rules! assign_prop_effect {
     ( $tag:expr, $next:expr, $token:expr, $set_prop:tt ) => {{
         $token = $next()?;
         if $token.r#type == EQUAL {
@@ -95,15 +95,15 @@ macro_rules! assign_prop_style {
     }};
 }
 
-macro_rules! assign_prop_state {
-    ( $tag:expr, $next:expr, $token:expr, $set_prop:tt, $val:expr ) => {{
+macro_rules! assign_prop_duoeffect {
+    ( $tag:expr, $next:expr, $token:expr, $set_prop:tt, $val:expr, $clear:expr ) => {{
         $token = $next()?;
         if $token.r#type == EQUAL {
             $token = $next()?;
             expect(&$token, STRING, ErrorType::InvalidTagAttributeValue)?;
             let s = $token.literal.unwrap();
             if s == "false" {
-                // $tag.$set_prop(false);
+                $tag.$set_prop($clear);
             } else if s == "true" {
                 $tag.$set_prop($val);
             } else {
@@ -179,19 +179,19 @@ impl TagParser {
 
         match tag.name().to_lowercase().as_str() {
             "b" | "strong" => {
-                tag.set_brightness(State::A);
+                tag.set_brightness(DuoEffect::A);
             }
             "d" | "dim" => {
-                tag.set_brightness(State::B);
+                tag.set_brightness(DuoEffect::B);
             }
             "i" | "em" => {
                 tag.set_italics(Effect::Apply);
             }
             "u" | "ins" => {
-                tag.set_under(State::A);
+                tag.set_under(DuoEffect::A);
             }
             "uu" => {
-                tag.set_under(State::B);
+                tag.set_under(DuoEffect::B);
             }
             "k" | "blink" => {
                 tag.set_blink(Effect::Apply);
@@ -211,26 +211,44 @@ impl TagParser {
         let mut token = next()?;
         while token.r#type == IDENTIFIER {
             match token.lexeme.as_str() {
-                "b" | "bold" => assign_prop_state!(tag, next, token, set_brightness, State::A),
-                "d" | "dim" => assign_prop_state!(tag, next, token, set_brightness, State::B),
-                "k" | "blink" => assign_prop_style!(tag, next, token, set_blink),
+                "b" | "bold" => {
+                    assign_prop_duoeffect!(
+                        tag,
+                        next,
+                        token,
+                        set_brightness,
+                        DuoEffect::A,
+                        DuoEffect::AE
+                    )
+                }
+                "d" | "dim" => {
+                    assign_prop_duoeffect!(
+                        tag,
+                        next,
+                        token,
+                        set_brightness,
+                        DuoEffect::B,
+                        DuoEffect::BE
+                    )
+                }
+                "k" | "blink" => assign_prop_effect!(tag, next, token, set_blink),
                 "h" | "hidden" | "hide" | "invisible" => {
-                    assign_prop_style!(tag, next, token, set_hidden)
+                    assign_prop_effect!(tag, next, token, set_hidden)
                 }
                 "s" | "strike" | "strike-through" => {
-                    assign_prop_style!(tag, next, token, set_strike)
+                    assign_prop_effect!(tag, next, token, set_strike)
                 }
                 "i" | "italics" => {
-                    assign_prop_style!(tag, next, token, set_italics)
+                    assign_prop_effect!(tag, next, token, set_italics)
                 }
                 "r" | "invert" | "reverse" | "negative" => {
-                    assign_prop_style!(tag, next, token, set_negative)
+                    assign_prop_effect!(tag, next, token, set_negative)
                 }
                 "u" | "under" | "underline" => {
-                    assign_prop_state!(tag, next, token, set_under, State::A)
+                    assign_prop_duoeffect!(tag, next, token, set_under, DuoEffect::A, DuoEffect::AE)
                 }
                 "uu" | "double-under" | "double-underline" => {
-                    assign_prop_state!(tag, next, token, set_under, State::B)
+                    assign_prop_duoeffect!(tag, next, token, set_under, DuoEffect::B, DuoEffect::BE)
                 }
 
                 "c" | "fg" => assign_prop_color!(tag, set_fg_color, next, token, "f"),
@@ -244,6 +262,7 @@ impl TagParser {
                 "magenta" => assign_prop_color!(tag, next, token, 5),
                 "cyan" => assign_prop_color!(tag, next, token, 6),
                 "white" => assign_prop_color!(tag, next, token, 7),
+                "none" => assign_prop_color!(tag, next, token, 9),
                 "fixed" => {
                     token = next()?;
                     let token2: Token;
@@ -311,7 +330,7 @@ impl TagParser {
 
                 "double" => {
                     if matches!(tag.name().as_str(), "u" | "ins") {
-                        tag.set_under(State::B);
+                        tag.set_under(DuoEffect::B);
 
                         token = next()?;
                         if token.r#type == EQUAL {
@@ -319,7 +338,7 @@ impl TagParser {
                             expect(&token, STRING, ErrorType::InvalidTagAttributeValue)?;
                             let s = token.literal.unwrap();
                             if s == "false" {
-                                tag.set_under(State::A);
+                                tag.set_under(DuoEffect::A);
                             } else if s == "true" {
                             } else {
                                 // TODO: Throw error

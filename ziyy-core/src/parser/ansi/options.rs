@@ -1,29 +1,11 @@
 use crate::parser::color::Color;
 
-use super::State;
-
-#[derive(Default, Debug, PartialEq)]
-pub enum Effect {
-    #[default]
-    None,
-    Apply,
-    Clear,
-}
-
-impl Effect {
-    pub fn is_some(&self) -> bool {
-        !matches!(self, Effect::None)
-    }
-
-    pub fn is_none(&self) -> bool {
-        !self.is_some()
-    }
-}
+use super::{DuoEffect, Effect};
 
 #[derive(Default)]
 pub struct AnsiOptions {
-    pub brightness: State,
-    pub under: State,
+    pub brightness: DuoEffect,
+    pub under: DuoEffect,
     pub blink: Effect,
     pub hidden: Effect,
     pub italics: Effect,

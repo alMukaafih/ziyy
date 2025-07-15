@@ -397,18 +397,9 @@ impl Resolver {
                 match tag.r#type {
                     TagType::Open => {
                         let (_, prev_style, _) = stack.last().cloned().unwrap_or_default();
-                        // [prev_style]<pass>[prev_prev_style]</pass>[prev_style]
+                        //
                         let new_style = prev_style.clone() + tag.clone().ansi;
                         let new_delta = tag.clone().ansi - prev_style.clone();
-                        /* if tag.name() == "pass" {
-                            let (_, pprev_style, pprev_delta) =
-                                stack.get(stack.len() - 2).cloned().unwrap_or_default();
-                            new_style = prev_style.clone() + pprev_style;
-                            new_delta = pprev_delta - prev_style.clone();
-                        } else {
-                            new_style = prev_style.clone() + tag.clone().ansi;
-                            new_delta = tag.clone().ansi - prev_style.clone();
-                        } */
 
                         tag.ansi = new_delta.clone();
 
@@ -422,13 +413,14 @@ impl Resolver {
                             current_tag = stack.pop().unwrap_or_default();
                         }
 
-                        tag.ansi = !(new_tag.2);
+                        //
+                        tag.ansi = !new_tag.2.clone();
 
                         if let Some((_, prev, _)) = stack.last() {
-                            if !prev.fg_color().is_empty() {
+                            if !prev.fg_color().is_empty() && !tag.fg_color().is_empty() {
                                 tag.ansi.set_fg_color(prev.fg_color().clone());
                             }
-                            if !prev.bg_color().is_empty() {
+                            if !prev.bg_color().is_empty() && !tag.bg_color().is_empty() {
                                 tag.ansi.set_bg_color(prev.bg_color().clone());
                             }
                         }

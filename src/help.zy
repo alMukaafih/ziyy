@@ -1,6 +1,7 @@
 <ziyy>
     <let id="green" c="green" />
     <let id="cyan" c="cyan" />
+    <let id="pass" c="none" b="false" />
 
     <div>
         <p>Ziyy's compiler.</p>
@@ -63,7 +64,7 @@
             <tr>
                 <td></td>
                 <td class="b cyan">--tree</td>
-                <td>\x20Print tree representation of output [unstable]</td>
+                <td>\x20Print tree representation of output (unstable)</td>
             </tr>
         </table>
     </div>

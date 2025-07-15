@@ -56,7 +56,7 @@ impl Tag {
             };
 
             ( 2 $set_x:tt $x:tt ) => {
-                if self.$x().is_none() & src.$x().is_some() {
+                if self.$x().is_unset() & src.$x().is_set() {
                     self.$set_x(src.$x());
                 }
             };

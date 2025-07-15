@@ -1,12 +1,14 @@
 use crate::parser::color::Color;
-pub use options::{AnsiOptions, Effect};
-pub use state::State;
+// pub use effect::{DuoEffect, Effect};
+pub use options::AnsiOptions;
 use std::fmt::{Debug, Display, Write};
 use std::io::Write as _;
 use std::ops::{Add, AddAssign, Not, Sub, SubAssign};
 
+pub use effect::{DuoEffect, Effect};
+
+mod effect;
 mod options;
-mod state;
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct Ansi {
@@ -42,6 +44,18 @@ impl Ansi {
 
         ansi
     }
+
+    pub fn clear_all(&mut self) {
+        self.set_brightness(DuoEffect::E);
+        self.set_under(DuoEffect::E);
+        self.set_blink(Effect::Clear);
+        self.set_hidden(Effect::Clear);
+        self.set_italics(Effect::Clear);
+        self.set_negative(Effect::Clear);
+        self.set_strike(Effect::Clear);
+        self.set_fg_color(Color::four_bit(39));
+        self.set_bg_color(Color::four_bit(49));
+    }
 }
 
 fn get_style(style: &u32, offset: u32) -> bool {
@@ -67,61 +81,57 @@ macro_rules! impl_ansi {
             const L: u32 = 31;
 
         $(
-            pub fn $set_x(&mut self, value: State) {
+            pub fn $set_x(&mut self, value: DuoEffect) {
                 match value {
-                    State::None => {
+                    DuoEffect::None => {
                         set_style(&mut self.style, $i, false);
                         set_style(&mut self.style, $i + 1, false);
                         set_style(&mut self.style, $i + 2, false);
-                        set_style(&mut self.style, $i + 3, false);
                     }
-                    State::A => {
+                    DuoEffect::A => {
                         set_style(&mut self.style, $i, true);
                         set_style(&mut self.style, $i + 1, false);
                         set_style(&mut self.style, $i + 2, false);
-                        set_style(&mut self.style, $i + 3, false);
                     }
-                    State::B => {
+                    DuoEffect::B => {
                         set_style(&mut self.style, $i, false);
                         set_style(&mut self.style, $i + 1, true);
                         set_style(&mut self.style, $i + 2, false);
-                        set_style(&mut self.style, $i + 3, false);
                     }
-                    State::AB => {
+                    DuoEffect::AB => {
+                        set_style(&mut self.style, $i, true);
+                        set_style(&mut self.style, $i + 1, true);
+                        set_style(&mut self.style, $i + 2, false);
+                    }
+                    DuoEffect::BA => {
+                        set_style(&mut self.style, $i, false);
+                        set_style(&mut self.style, $i + 1, false);
+                        set_style(&mut self.style, $i + 2, true);
+                    }
+                    DuoEffect::AE => {
                         set_style(&mut self.style, $i, false);
                         set_style(&mut self.style, $i + 1, true);
                         set_style(&mut self.style, $i + 2, true);
-                        set_style(&mut self.style, $i + 3, false);
                     }
-                    State::BA => {
+                    DuoEffect::BE => {
                         set_style(&mut self.style, $i, true);
                         set_style(&mut self.style, $i + 1, false);
-                        set_style(&mut self.style, $i + 2, false);
-                        set_style(&mut self.style, $i + 3, true);
+                        set_style(&mut self.style, $i + 2, true);
                     }
-                    State::E => {
+                    DuoEffect::E => {
                         set_style(&mut self.style, $i, true);
                         set_style(&mut self.style, $i + 1, true);
                         set_style(&mut self.style, $i + 2, true);
-                        set_style(&mut self.style, $i + 3, true);
                     }
                 }
             }
 
-            pub fn $x(&self) -> State {
-                match (
+            pub fn $x(&self) -> DuoEffect {
+                (
                     get_style(&self.style, $i),
                     get_style(&self.style, $i + 1),
-                    get_style(&self.style, $i + 2),
-                    get_style(&self.style, $i +3)) {
-                        (false, false, false, false) => State::None,
-                        (true, false, false, false) => State::A,
-                        (false, true, false, false) => State::B,
-                        (false, true, true, false) => State::AB,
-                        (true, false, false, true) => State::BA,
-                        (true, true, true, true) => State::E,
-                        _ => panic!()
-                }
+                    get_style(&self.style, $i + 2)
+                ).into()
             }
         )*
 
@@ -130,27 +140,22 @@ macro_rules! impl_ansi {
                 match value {
                     Effect::None => {
                         set_style(&mut self.style, $j, false);
-                        set_style(&mut self.style, $j + 15, false);
+                        set_style(&mut self.style, $j + 1, false);
                     }
                     Effect::Apply =>  {
                         set_style(&mut self.style, $j, true);
-                        set_style(&mut self.style, $j + 15, false);
+                        set_style(&mut self.style, $j + 1, false);
                     },
                     Effect::Clear => {
                         set_style(&mut self.style, $j, false);
-                        set_style(&mut self.style, $j + 15, true);
+                        set_style(&mut self.style, $j + 1, true);
                     }
                 }
 
             }
 
             pub fn $y(&self) -> Effect {
-                match (get_style(&self.style, $j), get_style(&self.style, $j + 15)) {
-                    (false, false) => Effect::None,
-                    (true, false) => Effect::Apply,
-                    (false, true) => Effect::Clear,
-                    _ => panic!()
-                }
+                (get_style(&self.style, $j), get_style(&self.style, $j + 1)).into()
             }
         )*
 
@@ -169,13 +174,13 @@ macro_rules! impl_ansi {
 
 impl_ansi![
     (0, set_brightness, brightness),
-    (4, set_under, under);
+    (3, set_under, under);
 
-    (8, set_blink, blink),
-    (9, set_hidden, hidden),
+    (6, set_blink, blink),
+    (8, set_hidden, hidden),
     (10, set_italics, italics),
-    (11, set_negative, negative),
-    (12, set_strike, strike);
+    (12, set_negative, negative),
+    (14, set_strike, strike);
 
     (0, set_fg_color, fg_color),
     (1, set_bg_color, bg_color)
@@ -223,22 +228,22 @@ impl Display for Ansi {
         macro_rules! write_prop_state {
             ( $f:tt, $a:expr, $b:expr, $e:expr ) => {
                 match self.$f() {
-                    State::None => {}
-                    State::A => {
+                    DuoEffect::None => {}
+                    DuoEffect::A => {
                         let _ = buf.write($a);
                     }
-                    State::B => {
+                    DuoEffect::B => {
                         let _ = buf.write($b);
                     }
-                    State::AB => {
+                    DuoEffect::AB => {
                         let _ = buf.write($e);
                         let _ = buf.write($b);
                     }
-                    State::BA => {
+                    DuoEffect::BA => {
                         let _ = buf.write($e);
                         let _ = buf.write($a);
                     }
-                    State::E => {
+                    DuoEffect::E | DuoEffect::AE | DuoEffect::BE => {
                         let _ = buf.write($e);
                     }
                 }
@@ -275,46 +280,17 @@ impl Display for Ansi {
     }
 }
 
-pub fn merge(lhs: State, rhs: State) -> State {
-    match (lhs, rhs) {
-        (State::None, rhs) => rhs,
-        (lhs, State::None) => lhs,
-        (State::E, rhs) => rhs,
-        (_, State::E) => State::E,
-        (State::A | State::BA, State::A) => State::A,
-        (State::A | State::BA, State::B) => State::AB,
-        (State::B | State::AB, State::A) => State::BA,
-        (State::B | State::AB, State::B) => State::B,
-
-        (_, rhs) => rhs,
-    }
-}
-
-fn add(lhs: Effect, rhs: Effect) -> Effect {
-    match (lhs, rhs) {
-        (Effect::None, Effect::None) => Effect::None,
-        (Effect::None, Effect::Apply) => Effect::Apply,
-        (Effect::None, Effect::Clear) => Effect::Clear,
-        (Effect::Apply, Effect::None) => Effect::Apply,
-        (Effect::Apply, Effect::Apply) => Effect::Apply,
-        (Effect::Apply, Effect::Clear) => Effect::Clear,
-        (Effect::Clear, Effect::None) => Effect::Clear,
-        (Effect::Clear, Effect::Apply) => Effect::Apply,
-        (Effect::Clear, Effect::Clear) => Effect::Clear,
-    }
-}
-
 impl AddAssign for Ansi {
     /// Add two Ansi styles together.
     fn add_assign(&mut self, rhs: Self) {
-        self.set_brightness(merge(self.brightness(), rhs.brightness()));
-        self.set_under(merge(self.under(), rhs.under()));
+        self.set_brightness(self.brightness() + rhs.brightness());
+        self.set_under(self.under() + rhs.under());
 
-        self.set_blink(add(self.blink(), rhs.blink()));
-        self.set_hidden(add(self.hidden(), rhs.hidden()));
-        self.set_italics(add(self.italics(), rhs.italics()));
-        self.set_negative(add(self.negative(), rhs.negative()));
-        self.set_strike(add(self.strike(), rhs.strike()));
+        self.set_blink(self.blink() + rhs.blink());
+        self.set_hidden(self.hidden() + rhs.hidden());
+        self.set_italics(self.italics() + rhs.italics());
+        self.set_negative(self.negative() + rhs.negative());
+        self.set_strike(self.strike() + rhs.strike());
 
         self.colors[0] += rhs.colors[0].clone();
         self.colors[1] += rhs.colors[1].clone();
@@ -330,46 +306,17 @@ impl Add for Ansi {
     }
 }
 
-fn diff(lhs: State, rhs: State) -> State {
-    match (lhs, rhs) {
-        (State::None | State::E, _) => lhs,
-        (lhs, State::None | State::E) => lhs,
-        (State::A, State::A | State::BA) => State::None,
-        (State::B, State::A | State::BA) => State::AB,
-        (State::A, State::B | State::AB) => State::BA,
-        (State::B, State::B | State::AB) => State::None,
-
-        (lhs, _) => lhs,
-    }
-}
-
-fn sub(lhs: Effect, rhs: Effect) -> Effect {
-    match (lhs, rhs) {
-        (Effect::None, _) => Effect::None,
-        (Effect::Apply, Effect::Apply) => Effect::None,
-        (Effect::Clear, Effect::Clear) => Effect::None,
-        (Effect::Apply, _) => Effect::Apply,
-        (Effect::Clear, _) => Effect::Clear,
-    }
-}
-
 impl SubAssign for Ansi {
     /// Difference between self and rhs.
     fn sub_assign(&mut self, rhs: Self) {
-        self.set_brightness(diff(self.brightness(), rhs.brightness()));
-        self.set_under(diff(self.under(), rhs.under()));
+        self.set_brightness(self.brightness() - rhs.brightness());
+        self.set_under(self.under() - rhs.under());
 
-        self.set_blink(sub(self.blink(), rhs.blink()));
-        self.set_hidden(sub(self.hidden(), rhs.hidden()));
-        self.set_italics(sub(self.italics(), rhs.italics()));
-        self.set_negative(sub(self.negative(), rhs.negative()));
-        self.set_strike(sub(self.strike(), rhs.strike()));
-
-        // if !self.fg_color().is_empty() && !rhs.fg_color().is_empty() {}
-        // self.set_fg_color(self.fg_color().clone());
-
-        // if !self.bg_color().is_empty() && !rhs.bg_color().is_empty() {}
-        // self.set_bg_color(self.bg_color().clone());
+        self.set_blink(self.blink() - rhs.blink());
+        self.set_hidden(self.hidden() - rhs.hidden());
+        self.set_italics(self.italics() - rhs.italics());
+        self.set_negative(self.negative() - rhs.negative());
+        self.set_strike(self.strike() - rhs.strike());
     }
 }
 
@@ -382,36 +329,19 @@ impl Sub for Ansi {
     }
 }
 
-fn invert(value: State) -> State {
-    match value {
-        State::None => State::None,
-        State::A | State::B | State::AB | State::BA => State::E,
-        State::E => State::None,
-    }
-}
-
 impl Not for Ansi {
     type Output = Ansi;
 
     /// Invert Ansi style.
     fn not(mut self) -> Self::Output {
-        macro_rules! reverse {
-            ( $i:expr, $self:tt ) => {
-                let value1 = get_style(&self.style, $i);
-                let value2 = get_style(&self.style, $i + 15);
-                set_style(&mut $self.style, $i, value2);
-                set_style(&mut $self.style, $i + 15, value1);
-            };
-        }
+        self.set_brightness(!self.brightness());
+        self.set_under(!self.under());
 
-        self.set_brightness(invert(self.brightness()));
-        self.set_under(invert(self.under()));
-
-        reverse!(8, self);
-        reverse!(9, self);
-        reverse!(10, self);
-        reverse!(11, self);
-        reverse!(12, self);
+        self.set_blink(!self.blink());
+        self.set_hidden(!self.hidden());
+        self.set_italics(!self.italics());
+        self.set_negative(!self.negative());
+        self.set_strike(!self.strike());
 
         if !self.fg_color().is_empty() {
             self.set_fg_color(Color::four_bit(39));
@@ -427,15 +357,12 @@ impl Not for Ansi {
 
 #[cfg(test)]
 mod test {
-    use crate::parser::ansi::Effect;
-
-    use super::Ansi;
-    use super::State;
+    use super::*;
 
     #[test]
     fn test_ansi_add() {
         let mut lhs = Ansi::new();
-        lhs.set_brightness(State::A);
+        lhs.set_brightness(DuoEffect::A);
 
         let mut rhs = Ansi::new();
         rhs.set_blink(Effect::Apply);
@@ -443,8 +370,8 @@ mod test {
 
         lhs += rhs;
 
-        assert_eq!(lhs.brightness(), State::A);
-        assert_eq!(lhs.under(), State::None);
+        assert_eq!(lhs.brightness(), DuoEffect::A);
+        assert_eq!(lhs.under(), DuoEffect::None);
         assert_eq!(lhs.blink(), Effect::Apply);
         assert_eq!(lhs.hidden(), Effect::None);
         assert_eq!(lhs.strike(), Effect::None);
@@ -455,7 +382,7 @@ mod test {
     #[test]
     fn test_ansi_sub() {
         let mut lhs = Ansi::new();
-        lhs.set_brightness(State::B);
+        lhs.set_brightness(DuoEffect::B);
         lhs.set_blink(Effect::Apply);
         lhs.set_negative(Effect::Apply);
 
@@ -467,8 +394,8 @@ mod test {
 
         assert_ne!(lhs, rhs);
 
-        assert_eq!(lhs.brightness(), State::B);
-        assert_eq!(lhs.under(), State::None);
+        assert_eq!(lhs.brightness(), DuoEffect::B);
+        assert_eq!(lhs.under(), DuoEffect::None);
         assert_eq!(lhs.blink(), Effect::None);
         assert_eq!(lhs.hidden(), Effect::None);
         assert_eq!(lhs.strike(), Effect::None);
@@ -479,14 +406,14 @@ mod test {
     #[test]
     fn test_ansi_not() {
         let mut ansi = Ansi::new();
-        ansi.set_brightness(State::A);
+        ansi.set_brightness(DuoEffect::A);
         ansi.set_blink(Effect::Apply);
         ansi.set_negative(Effect::Apply);
 
         let not_ansi = !ansi.clone();
 
-        assert_eq!(ansi.brightness(), State::A);
-        assert_eq!(ansi.under(), State::None);
+        assert_eq!(ansi.brightness(), DuoEffect::A);
+        assert_eq!(ansi.under(), DuoEffect::None);
         assert_eq!(not_ansi.blink(), Effect::Clear);
         assert_eq!(not_ansi.hidden(), Effect::None);
         assert_eq!(not_ansi.strike(), Effect::None);
