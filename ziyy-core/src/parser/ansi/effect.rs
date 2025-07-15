@@ -26,7 +26,7 @@ impl Add for Effect {
         match (self, rhs) {
             (Effect::None, Effect::None) => Effect::None,
             (Effect::None, Effect::Apply) => Effect::Apply,
-            (Effect::None, Effect::Clear) => Effect::Clear,
+            (Effect::None, Effect::Clear) => Effect::None,
             (Effect::Apply, Effect::None) => Effect::Apply,
             (Effect::Apply, Effect::Apply) => Effect::Apply,
             (Effect::Apply, Effect::Clear) => Effect::Clear,
@@ -136,9 +136,9 @@ impl Add for DuoEffect {
             // track movement of effect
             (DuoEffect::B | DuoEffect::AB, DuoEffect::A) => DuoEffect::BA,
             // clear A and BA only
-            (DuoEffect::A | DuoEffect::BA, DuoEffect::AE) => DuoEffect::E,
+            (DuoEffect::A | DuoEffect::BA, DuoEffect::AE) => DuoEffect::AE,
             // clear B and AB only
-            (DuoEffect::B | DuoEffect::AB, DuoEffect::BE) => DuoEffect::E,
+            (DuoEffect::B | DuoEffect::AB, DuoEffect::BE) => DuoEffect::BE,
             // AE can only clear A and BA
             (lhs, DuoEffect::AE) => lhs,
             // BE can only clear B and AB
